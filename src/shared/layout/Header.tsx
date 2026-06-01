@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSessionStore } from "@/stores/session-store";
 import { Avatar, Badge } from "@/shared/ui";
 import { RoleSwitcher } from "./RoleSwitcher";
@@ -26,7 +27,10 @@ export function Header() {
 
   return (
     <header className="border-b bg-card/70 glass px-8 py-3 flex items-center justify-between sticky top-0 z-20">
-      <div className="flex items-center gap-3">
+      <Link
+        href="/profile"
+        className="flex items-center gap-3 rounded-lg px-2 py-1 -mx-2 hover:bg-muted/60 transition"
+      >
         <Avatar name={user.name} size={36} />
         <div>
           <div className="text-sm font-medium leading-tight">{user.name}</div>
@@ -39,7 +43,7 @@ export function Header() {
             )}
           </div>
         </div>
-      </div>
+      </Link>
       <div className="flex items-center gap-3">
         <NotificationsBell />
         <RoleSwitcher />

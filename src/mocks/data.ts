@@ -50,6 +50,12 @@ export const courses: Course[] = [
             durationMin: 15,
             due: "2026-06-10",
           },
+          {
+            id: "ma1",
+            type: "assignment",
+            title: "Домашнее задание: вычисление пределов",
+            due: "2026-06-12",
+          },
         ],
       },
     ],
@@ -250,6 +256,44 @@ export const gradebook: Record<string, GradeRow[]> = {
         { itemId: "a5", itemTitle: "Эссе: Каменский", grade: 88, max: 100 },
       ],
       total: 91.5,
+    },
+  ],
+  "c-matan": [
+    {
+      userId: "u-stud-2",
+      userName: "Иван Вагулин",
+      items: [
+        { itemId: "mq1", itemTitle: "Тест: Пределы", grade: null, max: 100 },
+        { itemId: "ma1", itemTitle: "ДЗ: вычисление пределов", grade: null, max: 100 },
+      ],
+      total: 0,
+    },
+    {
+      userId: "u-stud-1",
+      userName: "Анастасия Соколова",
+      items: [
+        { itemId: "mq1", itemTitle: "Тест: Пределы", grade: 95, max: 100 },
+        { itemId: "ma1", itemTitle: "ДЗ: вычисление пределов", grade: null, max: 100 },
+      ],
+      total: 47.5,
+    },
+    {
+      userId: "u-stud-3",
+      userName: "Кирилл Кузьмин",
+      items: [
+        { itemId: "mq1", itemTitle: "Тест: Пределы", grade: 88, max: 100 },
+        { itemId: "ma1", itemTitle: "ДЗ: вычисление пределов", grade: null, max: 100 },
+      ],
+      total: 44,
+    },
+    {
+      userId: "u-stud-6",
+      userName: "Полина Жукова",
+      items: [
+        { itemId: "mq1", itemTitle: "Тест: Пределы", grade: 82, max: 100 },
+        { itemId: "ma1", itemTitle: "ДЗ: вычисление пределов", grade: 88, max: 100 },
+      ],
+      total: 85,
     },
   ],
 };

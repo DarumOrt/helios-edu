@@ -6,9 +6,11 @@ import { Sparkles } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useSessionStore } from "@/stores/session-store";
 import { navForRole } from "@/shared/auth/permissions";
+import { roleMeta } from "@/shared/auth/role-meta";
 
 export function Sidebar() {
   const role = useSessionStore((s) => s.role);
+  const meta = roleMeta[role];
   const pathname = usePathname();
   const items = navForRole(role);
   const main = items.filter((i) => i.group === "main");
@@ -18,13 +20,16 @@ export function Sidebar() {
     <aside className="w-64 shrink-0 border-r bg-card/60 glass h-screen sticky top-0 flex flex-col">
       <div className="px-5 py-5 border-b">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center shadow-soft">
+          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${meta.gradient} text-white flex items-center justify-center shadow-soft`}>
             <Sparkles size={18} />
           </div>
           <div>
             <div className="font-semibold leading-tight">HeliosEDU</div>
             <div className="text-[11px] text-muted-foreground">ПНИПУ · ИНЭК</div>
           </div>
+        </div>
+        <div className={`mt-3 text-[11px] font-medium uppercase tracking-wider ${meta.accentText}`}>
+          {meta.workspace}
         </div>
       </div>
 

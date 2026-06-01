@@ -4,11 +4,30 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Download } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, DataState, Select, Button } from "@/shared/ui";
+import { PageHeader, DataState, Select, Button, Badge } from "@/shared/ui";
 import { GradeTable } from "@/features/gradebook/components/GradeTable";
+import { StudentGrades } from "@/features/gradebook/components/StudentGrades";
+import { useSessionStore } from "@/stores/session-store";
+import { can } from "@/shared/auth/permissions";
 import type { Course } from "@/shared/types/domain";
 
 export default function GradebookPage() {
+  const role = useSessionStore((s) => s.role);
+
+  // Студент видит только свои оценки
+  if (role === "student") {
+    return (
+      <div className="animate-fade-in">
+        <PageHeader title="Мои оценки" subtitle="Ваши результаты по курсам" />
+        <StudentGrades />
+      </div>
+    );
+  }
+
+  return <TeacherGradebook editable={can(role, "grade.edit")} />;
+}
+
+function TeacherGradebook({ editable }: { editable: boolean }) {
   const { data: courses, isLoading, error } = useSWR<Course[]>("/api/courses", fetcher);
   const [courseId, setCourseId] = useState<string>("");
   const selected = courseId || courses?.[0]?.id || "";
@@ -17,12 +36,15 @@ export default function GradebookPage() {
     <div className="animate-fade-in">
       <PageHeader
         title="Журнал оценок"
-        subtitle="Сводка по выбранному курсу"
+        subtitle="Оценки группы М1217 по курсу"
         actions={
-          <Button variant="outline">
-            <Download size={16} />
-            Экспорт CSV
-          </Button>
+          <>
+            {editable && <Badge tone="info">редактирование доступно</Badge>}
+            <Button variant="outline">
+              <Download size={16} />
+              Экспорт CSV
+            </Button>
+          </>
         }
       />
       <DataState loading={isLoading} error={error} empty={!courses?.length}>
@@ -36,7 +58,7 @@ export default function GradebookPage() {
             ))}
           </Select>
         </div>
-        {selected && <GradeTable courseId={selected} />}
+        {selected && <GradeTable courseId={selected} editable={editable} />}
       </DataState>
     </div>
   );

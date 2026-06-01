@@ -4,7 +4,10 @@ import {
   BookOpen,
   GraduationCap,
   ClipboardList,
+  ClipboardCheck,
+  BarChart3,
   Trophy,
+  Radar,
   Settings2,
   Users,
   UsersRound,
@@ -21,7 +24,8 @@ export type Action =
   | "grade.edit"
   | "submission.review"
   | "quiz.take"
-  | "assignment.submit";
+  | "assignment.submit"
+  | "analytics.view";
 
 const matrix: Record<Action, Role[]> = {
   "course.create": ["admin", "organizer"],
@@ -34,31 +38,63 @@ const matrix: Record<Action, Role[]> = {
   "submission.review": ["admin", "tutor"],
   "quiz.take": ["student"],
   "assignment.submit": ["student"],
+  "analytics.view": ["admin", "organizer", "tutor"],
 };
 
 export function can(role: Role, action: Action): boolean {
   return matrix[action]?.includes(role) ?? false;
 }
 
-interface NavItem {
+export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles: Role[];
   group: "main" | "admin";
 }
 
-const allItems: NavItem[] = [
-  { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard, roles: ["admin", "organizer", "tutor", "student"], group: "main" },
-  { href: "/courses", label: "Курсы", icon: BookOpen, roles: ["admin", "organizer", "tutor", "student"], group: "main" },
-  { href: "/programs", label: "Программы", icon: GraduationCap, roles: ["admin", "organizer", "tutor", "student"], group: "main" },
-  { href: "/hub", label: "Хаб группы", icon: Trophy, roles: ["admin", "organizer", "tutor", "student"], group: "main" },
-  { href: "/gradebook", label: "Журнал оценок", icon: ClipboardList, roles: ["admin", "organizer", "tutor", "student"], group: "main" },
-  { href: "/admin/courses", label: "Управление курсами", icon: Settings2, roles: ["admin", "organizer"], group: "admin" },
-  { href: "/admin/users", label: "Пользователи", icon: Users, roles: ["admin", "organizer"], group: "admin" },
-  { href: "/admin/cohorts", label: "Группы", icon: UsersRound, roles: ["admin", "organizer"], group: "admin" },
-];
+// Навигация собирается под конкретную роль — наборы и подписи отличаются.
+export function navForRole(role: Role): NavItem[] {
+  const items: NavItem[] = [];
+  const M = (href: string, label: string, icon: LucideIcon): NavItem => ({ href, label, icon, group: "main" });
+  const A = (href: string, label: string, icon: LucideIcon): NavItem => ({ href, label, icon, group: "admin" });
 
-export function navForRole(role: Role) {
-  return allItems.filter((item) => item.roles.includes(role));
+  // Дашборд — у всех
+  items.push(M("/dashboard", "Дашборд", LayoutDashboard));
+
+  if (role === "student") {
+    items.push(M("/courses", "Мои курсы", BookOpen));
+    items.push(M("/programs", "Программы обучения", GraduationCap));
+    items.push(M("/hub", "Хаб группы", Trophy));
+    items.push(M("/gradebook", "Мои оценки", ClipboardList));
+  }
+
+  if (role === "tutor") {
+    items.push(M("/courses", "Мои курсы", BookOpen));
+    items.push(M("/submissions", "Проверка работ", ClipboardCheck));
+    items.push(M("/analytics", "Аналитика групп", BarChart3));
+    items.push(M("/hub", "Мониторинг группы", Radar));
+    items.push(M("/gradebook", "Журнал оценок", ClipboardList));
+  }
+
+  if (role === "organizer") {
+    items.push(M("/courses", "Курсы", BookOpen));
+    items.push(M("/programs", "Программы обучения", GraduationCap));
+    items.push(M("/analytics", "Аналитика групп", BarChart3));
+    items.push(M("/gradebook", "Журнал оценок", ClipboardList));
+    items.push(A("/admin/courses", "Управление курсами", Settings2));
+    items.push(A("/admin/users", "Пользователи", Users));
+    items.push(A("/admin/cohorts", "Группы", UsersRound));
+  }
+
+  if (role === "admin") {
+    items.push(M("/courses", "Курсы", BookOpen));
+    items.push(M("/submissions", "Проверка работ", ClipboardCheck));
+    items.push(M("/analytics", "Аналитика групп", BarChart3));
+    items.push(M("/gradebook", "Журнал оценок", ClipboardList));
+    items.push(A("/admin/courses", "Управление курсами", Settings2));
+    items.push(A("/admin/users", "Пользователи", Users));
+    items.push(A("/admin/cohorts", "Группы", UsersRound));
+  }
+
+  return items;
 }
