@@ -32,4 +32,4 @@ export const api = {
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };
 
-export const fetcher = (url: string) => api.get(url);
+export const fetcher = <T = unknown>(url: string): Promise<T> => api.get<T>(url);

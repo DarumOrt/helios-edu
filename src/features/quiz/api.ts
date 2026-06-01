@@ -9,6 +9,6 @@ interface SubmitResult {
 
 export const quizApi = {
   questions: (quizId: string) => api.get<QuizQuestion[]>(`/api/quiz/${quizId}/questions`),
-  submit: (quizId: string, answers: Record<string, unknown>) =>
-    api.post<SubmitResult>(`/api/quiz/${quizId}/submit`, { answers }),
+  submit: (quizId: string, answers: Record<string, unknown>, userId: string) =>
+    api.post<SubmitResult>(`/api/quiz/${quizId}/submit`, { answers, userId }),
 };

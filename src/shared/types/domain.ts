@@ -17,7 +17,15 @@ export interface Tenant {
   slug: string;
 }
 
-export type ActivityType = "quiz" | "assignment" | "file" | "forum" | "page";
+export type ActivityType =
+  | "quiz"
+  | "assignment"
+  | "file"
+  | "forum"
+  | "page"
+  | "video"
+  | "pdf"
+  | "presentation";
 
 export interface Activity {
   id: string;
@@ -26,6 +34,10 @@ export interface Activity {
   durationMin?: number;
   completed?: boolean;
   due?: string;
+  /** для video — путь к файлу */
+  src?: string;
+  /** для pdf/presentation — число страниц/слайдов */
+  pages?: number;
 }
 
 export interface Section {

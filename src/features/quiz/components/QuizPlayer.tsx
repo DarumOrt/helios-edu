@@ -8,6 +8,7 @@ import { fetcher } from "@/shared/lib/api-client";
 import { Button, Card, CardBody, DataState, Progress, Badge } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
 import { quizApi } from "../api";
+import { useSessionStore } from "@/stores/session-store";
 import type { QuizQuestion } from "@/shared/types/domain";
 
 export function QuizPlayer({ quizId }: { quizId: string }) {
@@ -15,6 +16,7 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
     `/api/quiz/${quizId}/questions`,
     fetcher
   );
+  const user = useSessionStore((s) => s.user);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [result, setResult] = useState<{ score: number; max: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +28,7 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
   async function onSubmit() {
     setSubmitting(true);
     try {
-      const r = await quizApi.submit(quizId, answers);
+      const r = await quizApi.submit(quizId, answers, user.id);
       setResult({ score: r.score, max: r.max });
       toast.success("Тест отправлен", { description: `Результат: ${r.score} из ${r.max}` });
     } catch {

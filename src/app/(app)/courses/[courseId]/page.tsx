@@ -1,17 +1,22 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import useSWR from "swr";
-import { Users, BookOpen } from "lucide-react";
+import { Users, BookOpen, ListTree, BarChart3 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Card, CardBody, Badge, Progress, Breadcrumbs } from "@/shared/ui";
 import { CourseSection } from "@/features/courses/components/CourseSection";
-import { gradientFor } from "@/shared/lib/utils";
+import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
+import { gradientFor, cn } from "@/shared/lib/utils";
+import { useSessionStore } from "@/stores/session-store";
 import type { Course } from "@/shared/types/domain";
 
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const { data: course, error, isLoading } = useSWR<Course>(`/api/courses/${courseId}`, fetcher);
+  const role = useSessionStore((s) => s.role);
+  const canSeeStats = role === "tutor" || role === "admin" || role === "organizer";
+  const [tab, setTab] = useState<"content" | "stats">("content");
 
   return (
     <div className="animate-fade-in">
@@ -23,10 +28,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               subtitle={`${course.code} · ${course.category}`}
               breadcrumbs={
                 <Breadcrumbs
-                  items={[
-                    { label: "Курсы", href: "/courses" },
-                    { label: course.title },
-                  ]}
+                  items={[{ label: "Курсы", href: "/courses" }, { label: course.title }]}
                 />
               }
             />
@@ -47,12 +49,11 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 </div>
                 {course.progress != null && (
                   <div className="md:border-l md:pl-5">
-                    <div className="text-xs text-muted-foreground mb-1.5">Ваш прогресс</div>
+                    <div className="text-xs text-muted-foreground mb-1.5">
+                      {canSeeStats ? "Средний прогресс группы" : "Ваш прогресс"}
+                    </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-semibold">{course.progress}%</span>
-                      <Badge tone={course.progress >= 80 ? "success" : course.progress >= 40 ? "info" : "warning"}>
-                        {course.progress >= 80 ? "почти завершён" : course.progress >= 40 ? "в работе" : "только начат"}
-                      </Badge>
                     </div>
                     <Progress
                       value={course.progress}
@@ -64,14 +65,57 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               </CardBody>
             </Card>
 
-            <div className="space-y-3">
-              {course.sections?.map((s) => (
-                <CourseSection key={s.id} section={s} courseId={course.id} />
-              ))}
+            {/* Табы */}
+            <div className="flex gap-1 border-b mb-5">
+              <Tab active={tab === "content"} onClick={() => setTab("content")} icon={ListTree}>
+                Содержание
+              </Tab>
+              {canSeeStats && (
+                <Tab active={tab === "stats"} onClick={() => setTab("stats")} icon={BarChart3}>
+                  Статистика
+                </Tab>
+              )}
             </div>
+
+            {tab === "content" && (
+              <div className="space-y-3">
+                {course.sections?.map((s) => (
+                  <CourseSection key={s.id} section={s} courseId={course.id} />
+                ))}
+              </div>
+            )}
+
+            {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
           </>
         )}
       </DataState>
     </div>
+  );
+}
+
+function Tab({
+  active,
+  onClick,
+  icon: Icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: typeof BarChart3;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 px-4 py-2 text-sm border-b-2 -mb-px transition",
+        active
+          ? "border-primary text-primary font-medium"
+          : "border-transparent text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <Icon size={15} />
+      {children}
+    </button>
   );
 }

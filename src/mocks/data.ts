@@ -10,6 +10,51 @@ import type {
 
 export const courses: Course[] = [
   {
+    id: "c-matan",
+    code: "МАТ-101",
+    title: "Математический анализ",
+    description: "Пределы, производные и интегралы для студентов ИНЭК (группа М1217)",
+    category: "Математика",
+    tutorId: "u-tutor-1",
+    enrolled: 28,
+    progress: 35,
+    sections: [
+      {
+        id: "s1",
+        order: 1,
+        title: "Модуль 1. Пределы и непрерывность",
+        activities: [
+          {
+            id: "mv1",
+            type: "video",
+            title: "Видеолекция: Предел функции",
+            durationMin: 12,
+            src: "/media/lesson-matan.mp4",
+          },
+          {
+            id: "mp1",
+            type: "presentation",
+            title: "Презентация: Теоремы о пределах",
+            pages: 14,
+          },
+          {
+            id: "md1",
+            type: "pdf",
+            title: "Конспект: Непрерывность функции",
+            pages: 8,
+          },
+          {
+            id: "mq1",
+            type: "quiz",
+            title: "Тест: Пределы и непрерывность",
+            durationMin: 15,
+            due: "2026-06-10",
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "c-ped-101",
     code: "ПЕД-101",
     title: "Введение в педагогику",
@@ -104,6 +149,27 @@ export const programs: Program[] = [
 ];
 
 export const quizQuestions: Record<string, QuizQuestion[]> = {
+  mq1: [
+    {
+      id: "mq1q1",
+      type: "mcq",
+      text: "Чему равен предел sin(x)/x при x → 0?",
+      options: ["0", "1", "∞", "не существует"],
+      correct: 1,
+    },
+    {
+      id: "mq1q2",
+      type: "boolean",
+      text: "Функция, непрерывная на отрезке, ограничена на нём.",
+      correct: true,
+    },
+    {
+      id: "mq1q3",
+      type: "short",
+      text: "Как называется точка разрыва, в которой существуют конечные односторонние пределы?",
+      correct: "первого рода",
+    },
+  ],
   a3: [
     {
       id: "q1",
@@ -189,8 +255,12 @@ export const gradebook: Record<string, GradeRow[]> = {
 };
 
 export const cohorts: Cohort[] = [
-  { id: "co-1", name: "М1217", memberIds: ["u-stud-1", "u-stud-2", "u-stud-3"] },
-  { id: "co-2", name: "1237", memberIds: ["u-stud-4"] },
+  {
+    id: "co-1",
+    name: "М1217",
+    memberIds: ["u-stud-1", "u-stud-2", "u-stud-3", "u-stud-5", "u-stud-6", "u-stud-7", "u-stud-8"],
+  },
+  { id: "co-2", name: "ЭК-1237", memberIds: ["u-stud-4"] },
   { id: "co-3", name: "ПСХ-23-1", memberIds: [] },
 ];
 
@@ -198,6 +268,10 @@ export const users: User[] = [
   { id: "u-stud-1", name: "Анастасия Соколова", email: "sokolova@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
   { id: "u-stud-2", name: "Иван Вагулин", email: "vagulin@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
   { id: "u-stud-3", name: "Кирилл Кузьмин", email: "kuzmin@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
+  { id: "u-stud-5", name: "Дмитрий Орлов", email: "orlov@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
+  { id: "u-stud-6", name: "Полина Жукова", email: "zhukova@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
+  { id: "u-stud-7", name: "Артём Белов", email: "belov@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
+  { id: "u-stud-8", name: "Софья Морозова", email: "morozova@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "М1217" },
   { id: "u-stud-4", name: "Ольга Иванова", email: "ivanova@student.pspu.ru", role: "student", tenantId: "pspu", faculty: "ИНЭК", group: "ЭК-1237" },
   { id: "u-tutor-1", name: "Казаринова Наталья Леонидовна", email: "kazarinova@pspu.ru", role: "tutor", tenantId: "pspu", faculty: "ИНЭК" },
   { id: "u-org", name: "Анна Лебедева", email: "organizer@pspu.ru", role: "organizer", tenantId: "pspu", faculty: "ИНЭК" },

@@ -9,6 +9,9 @@ import {
   FileDown,
   MessagesSquare,
   ClipboardCheck,
+  Video,
+  Presentation,
+  Activity as ActivityIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/shared/ui";
@@ -22,6 +25,9 @@ const iconByType: Record<ActivityType, LucideIcon> = {
   file: FileDown,
   forum: MessagesSquare,
   page: FileText,
+  video: Video,
+  pdf: FileText,
+  presentation: Presentation,
 };
 
 const labelByType: Record<ActivityType, string> = {
@@ -30,7 +36,13 @@ const labelByType: Record<ActivityType, string> = {
   file: "Файл",
   forum: "Форум",
   page: "Страница",
+  video: "Видеолекция",
+  pdf: "Конспект (PDF)",
+  presentation: "Презентация",
 };
+
+// активности с трекингом просмотра
+const TRACKED: ActivityType[] = ["video", "pdf", "presentation"];
 
 export function CourseSection({ section, courseId }: { section: Section; courseId: string }) {
   const [open, setOpen] = useState(true);
@@ -69,7 +81,12 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
                 ? `/courses/${courseId}/quiz/${a.id}`
                 : a.type === "assignment"
                 ? `/courses/${courseId}/assignment/${a.id}`
+                : a.type === "video"
+                ? `/courses/${courseId}/video/${a.id}`
+                : a.type === "pdf" || a.type === "presentation"
+                ? `/courses/${courseId}/document/${a.id}`
                 : `/courses/${courseId}#a-${a.id}`;
+            const tracked = TRACKED.includes(a.type);
             return (
               <li key={a.id}>
                 <Link
@@ -96,14 +113,22 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
                       </div>
                     </div>
                   </div>
-                  {a.completed ? (
-                    <Badge tone="success">
-                      <CheckCircle2 size={11} />
-                      Завершено
-                    </Badge>
-                  ) : a.due ? (
-                    <Badge tone="warning">К сроку</Badge>
-                  ) : null}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {tracked && (
+                      <span className="hidden sm:flex items-center gap-1 text-[10px] text-primary/70">
+                        <ActivityIcon size={11} />
+                        отслеживается
+                      </span>
+                    )}
+                    {a.completed ? (
+                      <Badge tone="success">
+                        <CheckCircle2 size={11} />
+                        Завершено
+                      </Badge>
+                    ) : a.due ? (
+                      <Badge tone="warning">К сроку</Badge>
+                    ) : null}
+                  </div>
                 </Link>
               </li>
             );
