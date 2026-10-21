@@ -21,8 +21,9 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 
-# local agent settings (у каждого свои)
-.claude/settings.local.json
+# локальные данные агентов (worktrees, настройки у каждого свои); общие настройки — .claude/settings.json
+.claude/*
+!.claude/settings.json
 .codex/
 
 # test
