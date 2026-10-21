@@ -20,7 +20,7 @@ export function RoleHero({
 
   return (
     <div className="relative overflow-hidden rounded-xl border shadow-soft">
-      <div className={`absolute inset-0 bg-gradient-to-br ${meta.gradient}`} />
+      <div className={`absolute inset-0 bg-linear-to-br ${meta.gradient}`} />
       <div
         className="absolute inset-0"
         style={{
@@ -29,11 +29,9 @@ export function RoleHero({
         }}
       />
       <div className="relative px-8 py-8 text-white">
-        {kicker && (
-          <div className="text-[11px] uppercase tracking-[0.18em] opacity-85">{kicker}</div>
-        )}
-        <h2 className="mt-1.5 text-2xl md:text-3xl font-semibold tracking-tight">{title}</h2>
-        {subtitle && <p className="mt-2 text-sm text-white/85 max-w-xl">{subtitle}</p>}
+        {kicker && <div className="text-[11px] tracking-[0.18em] uppercase opacity-85">{kicker}</div>}
+        <h2 className="mt-1.5 text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
+        {subtitle && <p className="mt-2 max-w-xl text-sm text-white/85">{subtitle}</p>}
         {actions && <div className="mt-5 flex flex-wrap gap-2">{actions}</div>}
       </div>
     </div>

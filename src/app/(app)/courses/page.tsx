@@ -17,7 +17,7 @@ export default function CoursesPage() {
     (c) =>
       c.title.toLowerCase().includes(q.toLowerCase()) ||
       c.code.toLowerCase().includes(q.toLowerCase()) ||
-      c.category.toLowerCase().includes(q.toLowerCase())
+      c.category.toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
@@ -35,10 +35,10 @@ export default function CoursesPage() {
         }
       />
 
-      <div className="relative max-w-md mb-5">
+      <div className="relative mb-5 max-w-md">
         <Search
           size={15}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
         />
         <Input
           value={q}
@@ -54,8 +54,10 @@ export default function CoursesPage() {
         empty={!filtered.length}
         emptyTitle={q ? "Ничего не найдено" : "Курсов пока нет"}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((c) => <CourseCard key={c.id} course={c} />)}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((c) => (
+            <CourseCard key={c.id} course={c} />
+          ))}
         </div>
       </DataState>
     </div>

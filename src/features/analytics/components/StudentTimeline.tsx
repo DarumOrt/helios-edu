@@ -34,7 +34,7 @@ const verbColor: Record<string, string> = {
 export function StudentTimeline({ activityId, userId }: { activityId: string; userId: string }) {
   const { data, isLoading } = useSWR<LessonStatsResponse>(
     `/api/analytics/lesson/${activityId}?userId=${userId}`,
-    fetcher
+    fetcher,
   );
 
   if (isLoading) return <Skeleton className="h-24 w-full" />;
@@ -43,7 +43,7 @@ export function StudentTimeline({ activityId, userId }: { activityId: string; us
 
   if (!events.length) {
     return (
-      <div className="text-sm text-muted-foreground py-4 px-2">
+      <div className="px-2 py-4 text-sm text-muted-foreground">
         Нет детальных событий. Откройте материал под этим студентом, чтобы записать таймлайн.
       </div>
     );
@@ -51,12 +51,12 @@ export function StudentTimeline({ activityId, userId }: { activityId: string; us
 
   return (
     <div className="py-2">
-      <div className="text-xs font-medium text-muted-foreground mb-3">Таймлайн действий</div>
-      <ol className="relative border-l border-border ml-2 space-y-3">
+      <div className="mb-3 text-xs font-medium text-muted-foreground">Таймлайн действий</div>
+      <ol className="relative ml-2 space-y-3 border-l border-border">
         {events.map((e) => (
           <li key={e.id} className="ml-4">
             <span
-              className={`absolute -left-[5px] w-2.5 h-2.5 rounded-full ${verbColor[e.verb] ?? "bg-slate-300"}`}
+              className={`absolute left-[-5px] h-2.5 w-2.5 rounded-full ${verbColor[e.verb] ?? "bg-slate-300"}`}
             />
             <div className="flex items-center gap-2 text-sm">
               <span className="font-medium">{verbLabel[e.verb]}</span>

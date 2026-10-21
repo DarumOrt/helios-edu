@@ -26,8 +26,10 @@ export default function ProgramsPage() {
         }
       />
       <DataState loading={isLoading} error={error} empty={!data?.length}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data?.map((p) => <ProgramCard key={p.id} program={p} />)}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {data?.map((p) => (
+            <ProgramCard key={p.id} program={p} />
+          ))}
         </div>
       </DataState>
     </div>

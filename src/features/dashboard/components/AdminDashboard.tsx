@@ -64,14 +64,34 @@ export function AdminDashboard() {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={BookOpen} tone="bg-primary-soft text-primary" label="Курсов" value={courses?.length ?? 0} />
-        <StatCard icon={UsersIcon} tone="bg-success-soft text-success" label="Пользователей" value={users?.length ?? 0} />
-        <StatCard icon={UsersRound} tone="bg-violet-50 text-violet-600" label="Групп" value={cohorts?.length ?? 0} />
-        <StatCard icon={GraduationCap} tone="bg-warning-soft text-warning" label="Программ" value={programs?.length ?? 0} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          icon={BookOpen}
+          tone="bg-primary-soft text-primary"
+          label="Курсов"
+          value={courses?.length ?? 0}
+        />
+        <StatCard
+          icon={UsersIcon}
+          tone="bg-success-soft text-success"
+          label="Пользователей"
+          value={users?.length ?? 0}
+        />
+        <StatCard
+          icon={UsersRound}
+          tone="bg-violet-50 text-violet-600"
+          label="Групп"
+          value={cohorts?.length ?? 0}
+        />
+        <StatCard
+          icon={GraduationCap}
+          tone="bg-warning-soft text-warning"
+          label="Программ"
+          value={programs?.length ?? 0}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Widget
             title="Пользователи платформы"
@@ -128,19 +148,19 @@ export function AdminDashboard() {
         }
       >
         <DataState empty={!courses?.length}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {courses?.map((c) => (
               <Link
                 key={c.id}
                 href={`/courses/${c.id}`}
-                className="rounded-lg border p-3 hover:bg-muted/40 transition"
+                className="rounded-lg border p-3 transition hover:bg-muted/40"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{c.code}</span>
                   <Badge tone="outline">{c.category}</Badge>
                 </div>
-                <div className="font-medium text-sm mt-1 truncate">{c.title}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">{c.enrolled} участников</div>
+                <div className="mt-1 truncate text-sm font-medium">{c.title}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground">{c.enrolled} участников</div>
               </Link>
             ))}
           </div>
@@ -162,14 +182,14 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <Card className="p-4 hover:shadow-elevate transition">
+    <Card className="p-4 transition hover:shadow-elevate">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tone}`}>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={18} />
         </div>
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-xl font-semibold leading-tight">{value}</div>
+          <div className="truncate text-xs text-muted-foreground">{label}</div>
+          <div className="text-xl leading-tight font-semibold">{value}</div>
         </div>
       </div>
     </Card>

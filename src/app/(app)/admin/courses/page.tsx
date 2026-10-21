@@ -38,7 +38,9 @@ export default function AdminCoursesPage() {
                 <TR key={c.id}>
                   <TD>
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-md bg-gradient-to-br ${gradientFor(c.id)} text-white text-[10px] font-semibold flex items-center justify-center shrink-0`}>
+                      <div
+                        className={`h-8 w-8 rounded-md bg-linear-to-br ${gradientFor(c.id)} flex shrink-0 items-center justify-center text-[10px] font-semibold text-white`}
+                      >
                         {c.code.split("-")[0]}
                       </div>
                       <div>
@@ -47,9 +49,13 @@ export default function AdminCoursesPage() {
                       </div>
                     </div>
                   </TD>
-                  <TD><Badge tone="outline">{c.category}</Badge></TD>
+                  <TD>
+                    <Badge tone="outline">{c.category}</Badge>
+                  </TD>
                   <TD className="tabular-nums">{c.enrolled}</TD>
-                  <TD><Badge tone="success">опубликован</Badge></TD>
+                  <TD>
+                    <Badge tone="success">опубликован</Badge>
+                  </TD>
                   <TD>
                     <Button variant="ghost" size="sm">
                       <Edit2 size={13} />

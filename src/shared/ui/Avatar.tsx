@@ -1,20 +1,12 @@
 import { cn, gradientFor, initials } from "@/shared/lib/utils";
 
-export function Avatar({
-  name,
-  size = 32,
-  className,
-}: {
-  name: string;
-  size?: number;
-  className?: string;
-}) {
+export function Avatar({ name, size = 32, className }: { name: string; size?: number; className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-full bg-gradient-to-br text-white font-semibold flex items-center justify-center shrink-0",
+        "flex shrink-0 items-center justify-center rounded-full bg-linear-to-br font-semibold text-white",
         gradientFor(name),
-        className
+        className,
       )}
       style={{ width: size, height: size, fontSize: size * 0.38 }}
       aria-label={name}

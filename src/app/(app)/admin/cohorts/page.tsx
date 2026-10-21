@@ -36,7 +36,7 @@ export default function AdminCohortsPage() {
                 <TR key={c.id}>
                   <TD>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
                         <UsersRound size={15} />
                       </div>
                       <span className="font-medium">{c.name}</span>

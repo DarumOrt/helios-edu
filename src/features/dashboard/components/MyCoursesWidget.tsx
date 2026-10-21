@@ -20,23 +20,28 @@ export function MyCoursesWidget() {
             <li key={c.id}>
               <Link
                 href={`/courses/${c.id}`}
-                className="block group rounded-lg p-2.5 -mx-2.5 hover:bg-muted/60 transition"
+                className="group -mx-2.5 block rounded-lg p-2.5 transition hover:bg-muted/60"
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-9 h-9 rounded-md bg-gradient-to-br ${gradientFor(c.id)} text-white text-xs font-semibold flex items-center justify-center shrink-0`}
+                    className={`h-9 w-9 rounded-md bg-linear-to-br ${gradientFor(c.id)} flex shrink-0 items-center justify-center text-xs font-semibold text-white`}
                   >
                     {c.code.split("-")[0]}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-medium truncate">{c.title}</div>
-                      <span className="text-xs text-muted-foreground shrink-0">{c.progress ?? 0}%</span>
+                      <div className="truncate text-sm font-medium">{c.title}</div>
+                      <span className="shrink-0 text-xs text-muted-foreground">{c.progress ?? 0}%</span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{c.code} · {c.category}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {c.code} · {c.category}
+                    </div>
                     <Progress value={c.progress ?? 0} className="mt-1.5" />
                   </div>
-                  <ChevronRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition shrink-0" />
+                  <ChevronRight
+                    size={16}
+                    className="shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100"
+                  />
                 </div>
               </Link>
             </li>

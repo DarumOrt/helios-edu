@@ -18,14 +18,7 @@ export interface Tenant {
 }
 
 export type ActivityType =
-  | "quiz"
-  | "assignment"
-  | "file"
-  | "forum"
-  | "page"
-  | "video"
-  | "pdf"
-  | "presentation";
+  "quiz" | "assignment" | "file" | "forum" | "page" | "video" | "pdf" | "presentation";
 
 export interface Activity {
   id: string;

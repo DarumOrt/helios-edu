@@ -59,7 +59,9 @@ export default function AdminUsersPage() {
                   <TD className="text-muted-foreground">{u.email}</TD>
                   <TD>{u.faculty ?? "—"}</TD>
                   <TD>{u.group ?? "—"}</TD>
-                  <TD><Badge tone={roleTone[u.role]}>{roleLabel[u.role]}</Badge></TD>
+                  <TD>
+                    <Badge tone={roleTone[u.role]}>{roleLabel[u.role]}</Badge>
+                  </TD>
                   <TD>
                     <Button variant="ghost" size="sm">
                       <Edit2 size={13} />

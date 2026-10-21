@@ -7,26 +7,26 @@ import type { Course } from "@/shared/types/domain";
 export function CourseCard({ course }: { course: Course }) {
   return (
     <Link href={`/courses/${course.id}`} className="group block">
-      <Card className="h-full overflow-hidden hover:shadow-elevate hover:-translate-y-0.5 transition">
+      <Card className="h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-elevate">
         <div
-          className={`relative h-24 bg-gradient-to-br ${gradientFor(course.id)} px-5 py-4 flex items-start justify-between text-white`}
+          className={`relative h-24 bg-linear-to-br ${gradientFor(course.id)} flex items-start justify-between px-5 py-4 text-white`}
         >
           <div>
-            <div className="text-[11px] uppercase tracking-wider opacity-80">{course.code}</div>
-            <div className="text-xs font-medium mt-1 opacity-90">{course.category}</div>
+            <div className="text-[11px] tracking-wider uppercase opacity-80">{course.code}</div>
+            <div className="mt-1 text-xs font-medium opacity-90">{course.category}</div>
           </div>
-          <div className="w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
             <ArrowUpRight size={16} />
           </div>
         </div>
 
         <div className="p-5">
-          <h3 className="font-semibold leading-snug line-clamp-2">{course.title}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1.5">{course.description}</p>
+          <h3 className="line-clamp-2 leading-snug font-semibold">{course.title}</h3>
+          <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{course.description}</p>
 
           {course.progress != null && (
             <div className="mt-4">
-              <div className="flex items-center justify-between text-xs mb-1.5">
+              <div className="mb-1.5 flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Прогресс</span>
                 <span className="font-medium">{course.progress}%</span>
               </div>
@@ -34,7 +34,7 @@ export function CourseCard({ course }: { course: Course }) {
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-4 pt-3 border-t">
+          <div className="mt-4 flex items-center justify-between border-t pt-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users size={13} />
               {course.enrolled} участников

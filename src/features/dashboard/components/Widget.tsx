@@ -16,7 +16,7 @@ export function Widget({
   children: ReactNode;
 }) {
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader
         title={title}
         subtitle={subtitle}

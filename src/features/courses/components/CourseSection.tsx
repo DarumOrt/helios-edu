@@ -50,18 +50,18 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
   const done = section.activities.filter((a) => a.completed).length;
 
   return (
-    <div className="bg-card border rounded-xl shadow-soft overflow-hidden">
+    <div className="overflow-hidden rounded-xl border bg-card shadow-soft">
       <button
-        className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-muted/40 transition"
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-muted/40"
         onClick={() => setOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary-soft text-primary text-xs font-semibold flex items-center justify-center">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-xs font-semibold text-primary">
             {section.order}
           </div>
           <div>
             <div className="font-semibold">{section.title}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">
+            <div className="mt-0.5 text-xs text-muted-foreground">
               {done} из {total} активностей завершено
             </div>
           </div>
@@ -73,39 +73,37 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
       </button>
 
       {open && (
-        <ul className="border-t divide-y">
+        <ul className="divide-y border-t">
           {section.activities.map((a) => {
             const Icon = iconByType[a.type];
             const href =
               a.type === "quiz"
                 ? `/courses/${courseId}/quiz/${a.id}`
                 : a.type === "assignment"
-                ? `/courses/${courseId}/assignment/${a.id}`
-                : a.type === "video"
-                ? `/courses/${courseId}/video/${a.id}`
-                : a.type === "pdf" || a.type === "presentation"
-                ? `/courses/${courseId}/document/${a.id}`
-                : `/courses/${courseId}#a-${a.id}`;
+                  ? `/courses/${courseId}/assignment/${a.id}`
+                  : a.type === "video"
+                    ? `/courses/${courseId}/video/${a.id}`
+                    : a.type === "pdf" || a.type === "presentation"
+                      ? `/courses/${courseId}/document/${a.id}`
+                      : `/courses/${courseId}#a-${a.id}`;
             const tracked = TRACKED.includes(a.type);
             return (
               <li key={a.id}>
                 <Link
                   href={href}
-                  className="px-5 py-3 flex items-center justify-between hover:bg-muted/40 transition group"
+                  className="group flex items-center justify-between px-5 py-3 transition hover:bg-muted/40"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
                       className={cn(
-                        "w-8 h-8 rounded-md flex items-center justify-center shrink-0",
-                        a.completed
-                          ? "bg-success-soft text-success"
-                          : "bg-muted text-muted-foreground"
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
+                        a.completed ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
                       )}
                     >
                       <Icon size={15} />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{a.title}</div>
+                      <div className="truncate text-sm font-medium">{a.title}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {labelByType[a.type]}
                         {a.durationMin ? ` · ${a.durationMin} мин` : ""}
@@ -113,9 +111,9 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex shrink-0 items-center gap-2">
                     {tracked && (
-                      <span className="hidden sm:flex items-center gap-1 text-[10px] text-primary/70">
+                      <span className="hidden items-center gap-1 text-[10px] text-primary/70 sm:flex">
                         <ActivityIcon size={11} />
                         отслеживается
                       </span>

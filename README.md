@@ -1,14 +1,21 @@
 # HeliosEDU — LMS (web-first, аналог Moodle + Прометей)
 
-Next.js (App Router) + TypeScript + Tailwind + SWR + Zustand.
+Next.js 16 (App Router) + React 19 + TypeScript 6 + Tailwind 4 + SWR + Zustand.
 Мокап LMS с трекингом изучения материалов и ролевой моделью. Данные — ПГГПУ/ПНИПУ, факультет ИНЭК, группа М1217.
 
 ## Запуск
 
+Нужен Node 24 LTS (см. `.nvmrc`).
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
+
+Или в Docker: `docker compose up --build`.
+
+Перед PR: `npm run check` (typecheck + lint + prettier) и `npm run build` — то же самое гоняет GitHub Actions.
+Правила для людей и ИИ-агентов (Codex / Claude Code) — в [AGENTS.md](AGENTS.md).
 
 http://localhost:3000 · Роль переключается в правом верхнем углу (RoleSwitcher).
 
@@ -62,7 +69,7 @@ src/
 
 ## Стек
 
-Next.js 15 · React 19 · TypeScript · Tailwind · SWR (server state) · Zustand (session/role) · lucide-react · sonner · class-variance-authority.
+Next.js 16 · React 19 · TypeScript 6 · Tailwind 4 · SWR (server state) · Zustand (session/role) · lucide-react · sonner · class-variance-authority · ESLint 9 + Prettier · Docker (standalone) · GitHub Actions.
 
 ## Архитектура
 

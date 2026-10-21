@@ -6,12 +6,12 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     <input
       ref={ref}
       className={cn(
-        "h-9 w-full rounded-md border bg-card px-3 text-sm shadow-soft placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring transition",
-        className
+        "h-9 w-full rounded-md border bg-card px-3 text-sm shadow-soft transition placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden",
+        className,
       )}
       {...rest}
     />
-  )
+  ),
 );
 Input.displayName = "Input";
 
@@ -20,11 +20,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
     <textarea
       ref={ref}
       className={cn(
-        "w-full rounded-md border bg-card px-3 py-2 text-sm shadow-soft placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring transition",
-        className
+        "w-full rounded-md border bg-card px-3 py-2 text-sm shadow-soft transition placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden",
+        className,
       )}
       {...rest}
     />
-  )
+  ),
 );
 Textarea.displayName = "Textarea";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { ClipboardCheck, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Card, Avatar, Badge, EmptyState } from "@/shared/ui";
 import { ReviewPanel } from "@/features/submissions/components/ReviewPanel";
@@ -20,7 +20,7 @@ export default function SubmissionsPage() {
 
   const { data, error, isLoading } = useSWR<{ items: SubmissionFull[] }>(
     `/api/submissions${filter === "all" ? "" : `?status=${filter}`}`,
-    fetcher
+    fetcher,
   );
 
   if (role !== "tutor" && role !== "admin") {
@@ -46,7 +46,7 @@ export default function SubmissionsPage() {
     <div className="animate-fade-in">
       <PageHeader title="Проверка работ" subtitle="Сданные задания группы М1217" />
 
-      <div className="flex gap-1 border-b mb-5">
+      <div className="mb-5 flex gap-1 border-b">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -55,10 +55,10 @@ export default function SubmissionsPage() {
               setSelectedId(null);
             }}
             className={cn(
-              "px-4 py-2 text-sm border-b-2 -mb-px transition",
+              "-mb-px border-b-2 px-4 py-2 text-sm transition",
               filter === t.key
-                ? "border-primary text-primary font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-primary font-medium text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {t.label}
@@ -66,7 +66,7 @@ export default function SubmissionsPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="overflow-hidden">
           <DataState
             loading={isLoading}
@@ -81,21 +81,21 @@ export default function SubmissionsPage() {
                   <button
                     onClick={() => setSelectedId(s.id)}
                     className={cn(
-                      "w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition",
-                      selectedId === s.id && "bg-primary-soft/50"
+                      "flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40",
+                      selectedId === s.id && "bg-primary-soft/50",
                     )}
                   >
                     <Avatar name={s.userName} size={36} />
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-sm truncate">{s.userName}</span>
+                        <span className="truncate text-sm font-medium">{s.userName}</span>
                         {s.status === "reviewed" ? (
                           <Badge tone="success">{s.grade} баллов</Badge>
                         ) : (
                           <Badge tone="warning">ждёт</Badge>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{s.assignmentTitle}</div>
+                      <div className="truncate text-xs text-muted-foreground">{s.assignmentTitle}</div>
                       <div className="text-[11px] text-muted-foreground/70">
                         {s.courseTitle} · {formatDateTime(s.submittedAt)}
                       </div>
@@ -107,8 +107,11 @@ export default function SubmissionsPage() {
           </DataState>
         </Card>
 
-        <div className="lg:sticky lg:top-24 h-fit">
-          <ReviewPanel submission={selected} />
+        <div className="h-fit lg:sticky lg:top-24">
+          <ReviewPanel
+            key={selected ? `${selected.id}:${selected.grade ?? ""}:${selected.feedback ?? ""}` : "none"}
+            submission={selected}
+          />
         </div>
       </div>
     </div>

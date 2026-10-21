@@ -12,10 +12,7 @@ import { useSessionStore } from "@/stores/session-store";
 import type { QuizQuestion } from "@/shared/types/domain";
 
 export function QuizPlayer({ quizId }: { quizId: string }) {
-  const { data, error, isLoading } = useSWR<QuizQuestion[]>(
-    `/api/quiz/${quizId}/questions`,
-    fetcher
-  );
+  const { data, error, isLoading } = useSWR<QuizQuestion[]>(`/api/quiz/${quizId}/questions`, fetcher);
   const user = useSessionStore((s) => s.user);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [result, setResult] = useState<{ score: number; max: number } | null>(null);
@@ -42,13 +39,13 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
     <DataState loading={isLoading} error={error} empty={!data?.length}>
       {result ? (
         <Card className="overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-success to-emerald-400" />
-          <CardBody className="text-center py-12">
-            <div className="w-16 h-16 rounded-full bg-success-soft text-success mx-auto flex items-center justify-center">
+          <div className="h-1 bg-linear-to-r from-success to-emerald-400" />
+          <CardBody className="py-12 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success">
               <Trophy size={28} />
             </div>
             <div className="mt-4 text-sm text-muted-foreground">Тест завершён</div>
-            <div className="text-5xl font-bold mt-2 tabular-nums">
+            <div className="mt-2 text-5xl font-bold tabular-nums">
               {result.score}
               <span className="text-2xl text-muted-foreground"> / {result.max}</span>
             </div>
@@ -61,7 +58,7 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
         <div className="space-y-4">
           <Card>
             <CardBody className="py-3">
-              <div className="flex items-center justify-between text-sm mb-1.5">
+              <div className="mb-1.5 flex items-center justify-between text-sm">
                 <span className="font-medium">Прогресс</span>
                 <span className="text-muted-foreground tabular-nums">
                   {answered} из {total}
@@ -74,13 +71,15 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
           {data?.map((q, idx) => (
             <Card key={q.id}>
               <CardBody>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-7 h-7 rounded-md bg-primary-soft text-primary text-xs font-semibold flex items-center justify-center">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary">
                     {idx + 1}
                   </span>
-                  <span className="text-xs text-muted-foreground">Вопрос {idx + 1} из {total}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Вопрос {idx + 1} из {total}
+                  </span>
                 </div>
-                <div className="font-medium text-base mb-4">{q.text}</div>
+                <div className="mb-4 text-base font-medium">{q.text}</div>
 
                 {q.type === "mcq" && (
                   <div className="grid gap-2">
@@ -90,10 +89,8 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
                         <label
                           key={i}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-md border cursor-pointer transition",
-                            selected
-                              ? "border-primary bg-primary-soft"
-                              : "border-border hover:bg-muted/40"
+                            "flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 transition",
+                            selected ? "border-primary bg-primary-soft" : "border-border hover:bg-muted/40",
                           )}
                         >
                           <input
@@ -105,11 +102,11 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
                           />
                           <span
                             className={cn(
-                              "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                              selected ? "border-primary" : "border-muted-foreground/40"
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
+                              selected ? "border-primary" : "border-muted-foreground/40",
                             )}
                           >
-                            {selected && <span className="w-2 h-2 rounded-full bg-primary" />}
+                            {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
                           </span>
                           <span className="text-sm">{opt}</span>
                         </label>
@@ -131,13 +128,13 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
                           type="button"
                           onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.v }))}
                           className={cn(
-                            "px-4 py-3 rounded-md border text-sm font-medium transition",
+                            "rounded-md border px-4 py-3 text-sm font-medium transition",
                             selected
                               ? "border-primary bg-primary-soft text-primary"
-                              : "border-border hover:bg-muted/40"
+                              : "border-border hover:bg-muted/40",
                           )}
                         >
-                          {selected && <CheckCircle2 size={14} className="inline mr-2" />}
+                          {selected && <CheckCircle2 size={14} className="mr-2 inline" />}
                           {o.l}
                         </button>
                       );
@@ -148,7 +145,7 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
                 {q.type === "short" && (
                   <input
                     type="text"
-                    className="w-full border rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring"
+                    className="w-full rounded-md border px-3 py-2 text-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
                     value={(answers[q.id] as string) ?? ""}
                     onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
                     placeholder="Ваш ответ"

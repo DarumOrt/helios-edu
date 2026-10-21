@@ -43,7 +43,7 @@ export function GradeTable({ courseId, editable = false }: { courseId: string; e
   return (
     <Card className="overflow-hidden">
       {editable && (
-        <div className="px-4 py-2 bg-primary-soft/40 border-b text-xs text-primary flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 border-b bg-primary-soft/40 px-4 py-2 text-xs text-primary">
           <Pencil size={12} /> Режим редактирования: нажмите на оценку, чтобы изменить
         </div>
       )}
@@ -86,7 +86,7 @@ export function GradeTable({ courseId, editable = false }: { courseId: string; e
                         </Badge>
                       )}
                     </TD>
-                  )
+                  ),
                 )}
                 <TD>
                   <span
@@ -95,10 +95,10 @@ export function GradeTable({ courseId, editable = false }: { courseId: string; e
                       row.total >= 80
                         ? "text-success"
                         : row.total >= 60
-                        ? "text-primary"
-                        : row.total >= 40
-                        ? "text-warning"
-                        : "text-danger"
+                          ? "text-primary"
+                          : row.total >= 40
+                            ? "text-warning"
+                            : "text-danger",
                     )}
                   >
                     {row.total.toFixed(1)}
@@ -145,7 +145,7 @@ function EditableGrade({
             setEditing(false);
           }
         }}
-        className="w-16 h-7 rounded border px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        className="h-7 w-16 rounded border px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
       />
     );
   }
@@ -161,7 +161,7 @@ function EditableGrade({
       title="Изменить оценку"
     >
       {value == null ? (
-        <span className="text-muted-foreground border border-dashed rounded px-2 py-0.5 text-xs">
+        <span className="rounded border border-dashed px-2 py-0.5 text-xs text-muted-foreground">
           поставить
         </span>
       ) : (
@@ -169,7 +169,7 @@ function EditableGrade({
           {value}/{max}
         </Badge>
       )}
-      <Pencil size={11} className="opacity-0 group-hover:opacity-60 text-muted-foreground" />
+      <Pencil size={11} className="text-muted-foreground opacity-0 group-hover:opacity-60" />
     </button>
   );
 }

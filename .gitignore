@@ -1,9 +1,31 @@
+# deps
 node_modules/
+
+# next
 .next/
 out/
+next-env.d.ts
+*.tsbuildinfo
+
+# env
 .env*
 !.env.example
+
+# logs / os / ide
 *.log
+npm-debug.log*
 .DS_Store
-.vscode/
+Thumbs.db
 .idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# local agent settings (у каждого свои)
+.claude/settings.local.json
+.codex/
+
+# test
+coverage/
+playwright-report/
+test-results/

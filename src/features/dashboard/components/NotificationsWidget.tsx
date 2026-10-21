@@ -34,17 +34,21 @@ export function NotificationsWidget() {
           {data?.slice(0, 5).map((n) => {
             const Icon = iconByType[n.type];
             return (
-              <li key={n.id} className="flex gap-3 p-2 -mx-2 rounded-md hover:bg-muted/60 transition">
-                <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${toneByType[n.type]}`}>
+              <li key={n.id} className="-mx-2 flex gap-3 rounded-md p-2 transition hover:bg-muted/60">
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${toneByType[n.type]}`}
+                >
                   <Icon size={15} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <div className="text-sm font-medium truncate">{n.title}</div>
-                    {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                    <div className="truncate text-sm font-medium">{n.title}</div>
+                    {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">{n.body}</div>
-                  <div className="text-[11px] text-muted-foreground/70 mt-0.5">{formatDateTime(n.createdAt)}</div>
+                  <div className="truncate text-xs text-muted-foreground">{n.body}</div>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground/70">
+                    {formatDateTime(n.createdAt)}
+                  </div>
                 </div>
               </li>
             );

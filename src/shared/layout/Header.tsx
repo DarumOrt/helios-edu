@@ -26,19 +26,20 @@ export function Header() {
   const role = useSessionStore((s) => s.role);
 
   return (
-    <header className="border-b bg-card/70 glass px-8 py-3 flex items-center justify-between sticky top-0 z-20">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-card/70 px-8 py-3 glass">
       <Link
         href="/profile"
-        className="flex items-center gap-3 rounded-lg px-2 py-1 -mx-2 hover:bg-muted/60 transition"
+        className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1 transition hover:bg-muted/60"
       >
         <Avatar name={user.name} size={36} />
         <div>
-          <div className="text-sm font-medium leading-tight">{user.name}</div>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="text-sm leading-tight font-medium">{user.name}</div>
+          <div className="mt-0.5 flex items-center gap-2">
             <Badge tone={roleTone[role]}>{roleLabel[role]}</Badge>
             {user.faculty && (
               <span className="text-[11px] text-muted-foreground">
-                {user.faculty}{user.group ? ` · ${user.group}` : ""}
+                {user.faculty}
+                {user.group ? ` · ${user.group}` : ""}
               </span>
             )}
           </div>

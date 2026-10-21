@@ -41,9 +41,9 @@ export default function HubPage() {
 
       {isTeacher ? (
         <>
-          <Card className="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="mb-5 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50">
             <CardBody className="flex items-center gap-4 py-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white flex items-center justify-center shrink-0">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 text-white">
                 <Radar size={22} />
               </div>
               <div>
@@ -58,26 +58,26 @@ export default function HubPage() {
         </>
       ) : (
         <>
-          <Card className="mb-5 bg-gradient-to-r from-primary-soft to-violet-50 border-primary/20">
+          <Card className="mb-5 border-primary/20 bg-linear-to-r from-primary-soft to-violet-50">
             <CardBody className="flex items-center gap-4 py-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center shrink-0">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent text-white">
                 <Trophy size={22} />
               </div>
               <div className="flex-1">
                 <div className="font-semibold">Соревнование недели</div>
                 <div className="text-sm text-muted-foreground">
-                  Балл = 50% покрытие материалов + 30% результаты тестов + 20% завершённость.
-                  Перемотка и фоновые вкладки не засчитываются.
+                  Балл = 50% покрытие материалов + 30% результаты тестов + 20% завершённость. Перемотка и
+                  фоновые вкладки не засчитываются.
                 </div>
               </div>
             </CardBody>
           </Card>
           <Leaderboard courseId={courseId} />
           <div className="mt-5 flex items-start gap-2 text-xs text-muted-foreground">
-            <Info size={14} className="shrink-0 mt-0.5" />
+            <Info size={14} className="mt-0.5 shrink-0" />
             <p>
-              Метрики отражают вовлечённость (контакт с материалом), а не усвоение. Отображение
-              одногруппникам — по согласию; преподавателю доступна детальная статистика.
+              Метрики отражают вовлечённость (контакт с материалом), а не усвоение. Отображение одногруппникам
+              — по согласию; преподавателю доступна детальная статистика.
             </p>
           </div>
         </>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, FileText, Presentation, Activity, Eye, CheckCircle2 } from "lucide-react";
-import { Card, CardBody, Badge, Progress, Button } from "@/shared/ui";
+import { Card, CardBody, Progress, Button } from "@/shared/ui";
 import { tracker, newSessionId } from "@/shared/lib/tracking/tracker";
 import { useSessionStore } from "@/stores/session-store";
 import { fmtDuration } from "@/shared/lib/format";
@@ -17,7 +17,6 @@ const PROGRESS_EVERY_MS = 4000;
 export function DocumentReader({
   activityId,
   kind,
-  title,
   totalPages,
   pageTitles,
 }: {
@@ -35,6 +34,8 @@ export function DocumentReader({
   const lastSent = useRef(0);
 
   const [page, setPage] = useState(0);
+  // снимок для рендера: ref нужен таймеру, state — разметке
+  const [viewedPages, setViewedPages] = useState<ReadonlySet<number>>(() => new Set([0]));
   const [coverage, setCoverage] = useState(Math.round((1 / totalPages) * 100));
   const [activeTime, setActiveTime] = useState(0);
   const [completed, setCompleted] = useState(false);
@@ -55,13 +56,14 @@ export function DocumentReader({
         totalPages,
         ts: Date.now(),
       },
-      useBeacon
+      useBeacon,
     );
   }
 
   useEffect(() => {
+    const sessionId = sessionRef.current;
     tracker.event({
-      sessionId: sessionRef.current,
+      sessionId,
       userId: user.id,
       activityId,
       activityType: kind,
@@ -70,7 +72,7 @@ export function DocumentReader({
     return () => {
       sendProgress(true);
       tracker.event({
-        sessionId: sessionRef.current,
+        sessionId,
         userId: user.id,
         activityId,
         activityType: kind,
@@ -114,6 +116,7 @@ export function DocumentReader({
     setPage(p);
     if (!viewed.current.has(p)) {
       viewed.current.add(p);
+      setViewedPages(new Set(viewed.current));
       tracker.event({
         sessionId: sessionRef.current,
         userId: user.id,
@@ -126,19 +129,19 @@ export function DocumentReader({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-2 space-y-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="space-y-3 lg:col-span-2">
         <Card className="overflow-hidden">
           {/* область рендера страницы (заглушка) */}
-          <div className="relative bg-muted/40 aspect-[4/3] flex flex-col items-center justify-center border-b">
+          <div className="relative flex aspect-4/3 flex-col items-center justify-center border-b bg-muted/40">
             <Icon size={40} className="text-muted-foreground/40" />
             <div className="mt-4 text-lg font-semibold text-foreground/70">
               {pageTitles?.[page] ?? `Страница ${page + 1}`}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="mt-1 text-xs text-muted-foreground">
               {kind === "pdf" ? "PDF-документ" : "Презентация"} · {page + 1} из {totalPages}
             </div>
-            <div className="absolute bottom-3 right-3 text-[10px] text-muted-foreground/60">
+            <div className="absolute right-3 bottom-3 text-[10px] text-muted-foreground/60">
               демо-рендер · в проде здесь PDF.js
             </div>
           </div>
@@ -149,7 +152,12 @@ export function DocumentReader({
             <span className="text-sm text-muted-foreground tabular-nums">
               {page + 1} / {totalPages}
             </span>
-            <Button variant="outline" size="sm" onClick={() => go(page + 1)} disabled={page === totalPages - 1}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => go(page + 1)}
+              disabled={page === totalPages - 1}
+            >
               Вперёд <ChevronRight size={15} />
             </Button>
           </CardBody>
@@ -162,12 +170,12 @@ export function DocumentReader({
               key={i}
               onClick={() => go(i)}
               className={cn(
-                "w-8 h-8 rounded-md text-xs font-medium border transition",
+                "h-8 w-8 rounded-md border text-xs font-medium transition",
                 i === page
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : viewed.current.has(i)
-                  ? "bg-success-soft text-success border-success/20"
-                  : "bg-card text-muted-foreground hover:bg-muted"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : viewedPages.has(i)
+                    ? "border-success/20 bg-success-soft text-success"
+                    : "bg-card text-muted-foreground hover:bg-muted",
               )}
             >
               {i + 1}
@@ -184,10 +192,10 @@ export function DocumentReader({
             <span className="ml-auto text-[10px] font-normal text-muted-foreground">live</span>
           </div>
           <div>
-            <div className="flex items-center justify-between text-xs mb-1.5">
+            <div className="mb-1.5 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Просмотрено страниц</span>
               <span className="font-semibold tabular-nums">
-                {viewed.current.size} / {totalPages}
+                {viewedPages.size} / {totalPages}
               </span>
             </div>
             <Progress value={coverage} tone={completed ? "success" : "primary"} />
@@ -197,18 +205,16 @@ export function DocumentReader({
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <Eye size={11} /> Время чтения
               </div>
-              <div className="text-sm font-semibold tabular-nums mt-0.5">{fmtDuration(activeTime)}</div>
+              <div className="mt-0.5 text-sm font-semibold tabular-nums">{fmtDuration(activeTime)}</div>
             </div>
             <div className="rounded-md border bg-muted/30 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                покрытие
-              </div>
-              <div className="text-sm font-semibold tabular-nums mt-0.5">{coverage}%</div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">покрытие</div>
+              <div className="mt-0.5 text-sm font-semibold tabular-nums">{coverage}%</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 pt-2 border-t text-xs">
+          <div className="flex items-center gap-2 border-t pt-2 text-xs">
             {completed ? (
-              <span className="flex items-center gap-1.5 text-success font-medium">
+              <span className="flex items-center gap-1.5 font-medium text-success">
                 <CheckCircle2 size={14} /> Материал изучен
               </span>
             ) : (

@@ -11,25 +11,27 @@ const ruleLabel: Record<Program["rule"], string> = {
 
 export function ProgramCard({ program }: { program: Program }) {
   return (
-    <Card className="overflow-hidden hover:shadow-elevate transition group">
-      <div className={`h-1 bg-gradient-to-r ${gradientFor(program.id)}`} />
+    <Card className="group overflow-hidden transition hover:shadow-elevate">
+      <div className={`h-1 bg-linear-to-r ${gradientFor(program.id)}`} />
       <CardBody>
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${gradientFor(program.id)} text-white flex items-center justify-center shrink-0`}>
+        <div className="mb-3 flex items-start gap-3">
+          <div
+            className={`h-10 w-10 rounded-lg bg-linear-to-br ${gradientFor(program.id)} flex shrink-0 items-center justify-center text-white`}
+          >
             <GraduationCap size={18} />
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold leading-snug">{program.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{program.description}</p>
+          <div className="min-w-0 flex-1">
+            <h3 className="leading-snug font-semibold">{program.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{program.description}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between pt-3 border-t">
+        <div className="flex items-center justify-between border-t pt-3">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <BookOpen size={13} /> {program.courseIds.length} курсов
           </div>
           <Badge tone="info">{ruleLabel[program.rule]}</Badge>
         </div>
-        <button className="mt-4 w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-primary group-hover:gap-3 transition-all">
+        <button className="mt-4 inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3">
           Перейти <ArrowRight size={14} />
         </button>
       </CardBody>
