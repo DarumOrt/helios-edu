@@ -14,6 +14,9 @@ LMS-мокап (аналог Moodle / «Прометей»): Next.js App Router,
 Node 24 LTS · npm 11 · Next.js 16 (Turbopack) · React 19 · TypeScript 6 · Tailwind CSS 4 · SWR · Zustand ·
 ESLint 9 (flat config) · Prettier 3.
 
+Бэкенд: ASP.NET Core (.NET 10) · EF Core · PostgreSQL. NuGet-версии — в
+`backend/HeliosEdu.Api/HeliosEdu.Api.csproj` и `packages.lock.json`.
+
 ## Команды
 
 ```bash
@@ -24,6 +27,8 @@ npm run lint:fix    # автоисправление ESLint
 npm run format      # Prettier на весь проект
 npm run build       # production-сборка
 docker compose up --build
+docker compose --profile backend up -d --build db api
+node --test backend/tests/auth.test.mjs
 ```
 
 **Definition of done:** `npm run check` и `npm run build` проходят без ошибок и предупреждений.
@@ -36,12 +41,18 @@ src/features/   фичи (dashboard, courses, player, quiz, gradebook, submissio
 src/shared/     ui-кит, auth (permissions, role-meta, RoleGate), lib, types, layout
 src/stores/     zustand (session, ui)
 src/mocks/      данные и in-memory stores (живут на globalThis, переживают HMR)
+backend/HeliosEdu.Api/   C# API, серверные сессии, права, EF Core и миграции
+backend/tests/          проверки API на настоящем PostgreSQL
 ```
 
 - `shared` **не импортирует** `features` и `app` (проверяет ESLint). Исключение — `shared/layout`.
 - Фича не лезет во внутренности другой фичи; общее — выносим в `shared`.
 - Все данные — только через `/api/*` (API-first). Компоненты не импортируют `@/mocks` напрямую.
-- Права — только через `shared/auth/permissions.ts` (`can`, `navForRole`) и `RoleGate`. Не проверять `role === "..."` в разметке там, где есть право.
+- Права интерфейса — через `shared/auth/permissions.ts` (`can`, `navForRole`) и `RoleGate`. Не проверять `role === "..."` в разметке там, где есть право.
+- Серверные права — через `backend/HeliosEdu.Api/Auth/AccessRules.cs` и `RequireAuthorization`.
+  Проверки интерфейса не заменяют серверные. Пользователь и роль берутся из серверной сессии,
+  а не из `userId`, `role` в теле запроса или localStorage. Моковый режим без `BACKEND_API_URL`
+  сохраняет демонстрационный переключатель ролей.
 
 ## Соглашения по коду
 

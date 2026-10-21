@@ -1,6 +1,6 @@
 "use client";
 
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
@@ -14,7 +14,7 @@ const tabs = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const pathname = usePathname();
 
   if (role !== "admin" && role !== "organizer") {

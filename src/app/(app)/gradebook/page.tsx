@@ -7,12 +7,12 @@ import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Select, Button, Badge } from "@/shared/ui";
 import { GradeTable } from "@/features/gradebook/components/GradeTable";
 import { StudentGrades } from "@/features/gradebook/components/StudentGrades";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import type { Course } from "@/shared/types/domain";
 
 export default function GradebookPage() {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
 
   // Студент видит только свои оценки
   if (role === "student") {

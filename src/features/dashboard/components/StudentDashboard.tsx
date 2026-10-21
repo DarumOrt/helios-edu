@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import Link from "next/link";
 import { Flame, Star, Trophy } from "lucide-react";
 import { Button } from "@/shared/ui";
@@ -18,7 +18,7 @@ import { WeekSchedule } from "./WeekSchedule";
 import { Classmates } from "./Classmates";
 
 export function StudentDashboard() {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data: courses } = useSWR<Course[]>("/api/courses?sections=1", fetcher);
   const { data: notifs } = useSWR<Notification[]>("/api/notifications", fetcher);
 

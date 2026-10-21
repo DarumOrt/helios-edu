@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Update="Data/courses.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="Data/users.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

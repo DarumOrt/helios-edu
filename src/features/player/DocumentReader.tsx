@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, FileText, Presentation, Activity, Eye, CheckCircle2 } from "lucide-react";
 import { Card, CardBody, Progress, Button } from "@/shared/ui";
 import { tracker, newSessionId } from "@/shared/lib/tracking/tracker";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { fmtDuration } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 
@@ -26,7 +26,7 @@ export function DocumentReader({
   totalPages: number;
   pageTitles?: string[];
 }) {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const sessionRef = useRef(newSessionId());
   const viewed = useRef<Set<number>>(new Set([0]));
   const activeSec = useRef(0);

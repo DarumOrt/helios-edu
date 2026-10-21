@@ -1,14 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
+import { apiUrl, login, get as authenticatedGet } from "./client.mjs";
 
 const courses = JSON.parse(
   await readFile(new URL("../HeliosEdu.Api/Data/courses.json", import.meta.url), "utf8"),
 );
-const apiUrl = process.env.TEST_API_URL ?? "http://127.0.0.1:8080";
+const { cookie } = await login(apiUrl);
 
 async function get(baseUrl, path) {
-  return fetch(`${baseUrl}${path}`, { signal: AbortSignal.timeout(10_000) });
+  return authenticatedGet(baseUrl, path, cookie);
 }
 
 test("API: процесс и база данных готовы к работе", async () => {
@@ -44,3 +45,10 @@ for (const [name, baseUrl] of [
     assert.deepEqual(await response.json(), { error: "not found" });
   });
 }
+
+if (process.env.TEST_WEB_URL)
+  test("Next.js: дашборд получает доступные курсы вместе с разделами", async () => {
+    const response = await get(process.env.TEST_WEB_URL, "/api/courses?sections=1");
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), courses);
+  });

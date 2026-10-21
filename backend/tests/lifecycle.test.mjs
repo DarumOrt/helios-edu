@@ -3,9 +3,11 @@ import { execFile } from "node:child_process";
 import { setTimeout } from "node:timers/promises";
 import { promisify } from "node:util";
 import { test } from "node:test";
+import { createHash } from "node:crypto";
+import { apiUrl, login } from "./client.mjs";
 
 const exec = promisify(execFile);
-const apiUrl = process.env.TEST_API_URL ?? "http://127.0.0.1:8080";
+const { cookie } = await login(apiUrl);
 const compose = (...args) =>
   exec("docker", ["compose", "--profile", "backend", ...args], { timeout: 30_000 });
 const sql = (query) =>
@@ -25,7 +27,7 @@ const sql = (query) =>
   );
 const literal = (value) => `'${value.replaceAll("'", "''")}'`;
 const getCourse = async () => {
-  const response = await fetch(`${apiUrl}/api/courses/c-matan`);
+  const response = await fetch(`${apiUrl}/api/courses/c-matan`, { headers: { Cookie: cookie } });
   assert.equal(response.status, 200);
   return response.json();
 };
@@ -57,7 +59,9 @@ test("PostgreSQL сохраняет изменения; перезапуск н�
     assert.equal((await getCourse()).title, changedTitle);
 
     if (process.env.TEST_WEB_URL) {
-      const response = await fetch(`${process.env.TEST_WEB_URL}/api/courses/c-matan`);
+      const response = await fetch(`${process.env.TEST_WEB_URL}/api/courses/c-matan`, {
+        headers: { Cookie: cookie },
+      });
       assert.equal(response.status, 200);
       assert.equal((await response.json()).title, changedTitle);
 
@@ -72,4 +76,58 @@ test("PostgreSQL сохраняет изменения; перезапуск н�
     await sql(`UPDATE "Courses" SET "Title" = ${literal(original.title)} WHERE "Id" = 'c-matan'`);
   }
   assert.deepEqual(await getCourse(), original);
+});
+
+test("Отсутствие записи на курс скрывает его и не позволяет открыть по ID", async () => {
+  const courseId = "c-psych-110";
+  try {
+    await sql(`DELETE FROM "Enrollments" WHERE "AccountId" = 'u-stud-2' AND "CourseId" = '${courseId}'`);
+    for (const baseUrl of [apiUrl, ...(process.env.TEST_WEB_URL ? [process.env.TEST_WEB_URL] : [])]) {
+      const headers = { Cookie: cookie };
+      const response = await fetch(`${baseUrl}/api/courses/${courseId}`, { headers });
+      assert.equal(response.status, 404);
+      const list = await fetch(`${baseUrl}/api/courses`, { headers });
+      assert.equal(list.status, 200);
+      assert.ok(!(await list.json()).some((course) => course.id === courseId));
+    }
+  } finally {
+    await sql(
+      `INSERT INTO "Enrollments" ("AccountId", "CourseId") VALUES ('u-stud-2', '${courseId}') ON CONFLICT DO NOTHING`,
+    );
+  }
+});
+
+test("Преподаватель не открывает курс без своего назначения", async () => {
+  const session = await login(apiUrl, "kazarinova@pspu.ru");
+  try {
+    await sql(`UPDATE "Courses" SET "TutorId" = 'unassigned' WHERE "Id" = 'c-psych-110'`);
+    const response = await fetch(`${apiUrl}/api/courses/c-psych-110`, {
+      headers: { Cookie: session.cookie },
+    });
+    assert.equal(response.status, 404);
+  } finally {
+    await sql(`UPDATE "Courses" SET "TutorId" = 'u-tutor-1' WHERE "Id" = 'c-psych-110'`);
+  }
+});
+
+test("Изменение роли в базе действует на уже выданную сессию", async () => {
+  const session = await login(apiUrl, "admin@pspu.ru");
+  try {
+    await sql(`UPDATE "Accounts" SET "Role" = 'student' WHERE "Id" = 'u-admin'`);
+    const response = await fetch(`${apiUrl}/api/users`, { headers: { Cookie: session.cookie } });
+    assert.equal(response.status, 403);
+  } finally {
+    await sql(`UPDATE "Accounts" SET "Role" = 'admin' WHERE "Id" = 'u-admin'`);
+  }
+});
+
+test("Истёкшая сессия больше не открывает курсы", async () => {
+  const session = await login(apiUrl);
+  const token = session.cookie.slice("helios-auth=".length);
+  const tokenHash = createHash("sha256").update(token).digest("hex").toUpperCase();
+  await sql(
+    `UPDATE "LoginSessions" SET "ExpiresAt" = '2000-01-01T00:00:00Z' WHERE "TokenHash" = '${tokenHash}'`,
+  );
+  const response = await fetch(`${apiUrl}/api/courses`, { headers: { Cookie: session.cookie } });
+  assert.equal(response.status, 401);
 });

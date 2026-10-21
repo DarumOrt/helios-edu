@@ -6,7 +6,7 @@ import { ShieldAlert } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Card, Avatar, Badge, EmptyState } from "@/shared/ui";
 import { ReviewPanel } from "@/features/submissions/components/ReviewPanel";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { SubmissionFull } from "@/features/submissions/api";
@@ -14,7 +14,7 @@ import type { SubmissionFull } from "@/features/submissions/api";
 type Filter = "submitted" | "reviewed" | "all";
 
 export default function SubmissionsPage() {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const [filter, setFilter] = useState<Filter>("submitted");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 

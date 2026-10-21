@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Card, CardBody, Badge, Progress } from "@/shared/ui";
 import { Eye, Gauge, MousePointerClick, Pause, CheckCircle2, Activity } from "lucide-react";
 import { tracker, newSessionId } from "@/shared/lib/tracking/tracker";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { fmtDuration } from "@/shared/lib/format";
 
 const BUCKET_SEC = 5; // размер корзины покрытия
@@ -25,7 +25,7 @@ interface LiveStats {
 }
 
 export function VideoPlayer({ activityId, src, title }: { activityId: string; src: string; title: string }) {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const sessionRef = useRef(newSessionId());

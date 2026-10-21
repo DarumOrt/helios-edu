@@ -1,18 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useSessionStore } from "@/stores/session-store";
-import { Avatar } from "@/shared/ui";
+import { useSession } from "@/shared/auth/session";
+import { Avatar, Button } from "@/shared/ui";
+import { LogOut } from "lucide-react";
+import { useState } from "react";
+import { api } from "@/shared/lib/api-client";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { NotificationsBell } from "@/features/notifications/components/NotificationsBell";
 
 export function Header() {
-  const user = useSessionStore((s) => s.user);
-  const role = useSessionStore((s) => s.role);
+  const user = useSession((s) => s.user);
+  const role = useSession((s) => s.role);
+  const backendEnabled = useSession((s) => s.backendEnabled);
+  const [pending, setPending] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  async function logout() {
+    setPending(true);
+    setLogoutError("");
+    try {
+      await api.post("/api/auth/logout", {});
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- При выходе очищаем SWR и состояние пользователя вместе с документом.
+      window.location.assign("/login");
+    } catch {
+      setPending(false);
+      setLogoutError("Не удалось выйти. Попробуйте ещё раз.");
+    }
+  }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-end gap-2 bg-background px-8">
+    <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center justify-end gap-2 bg-background px-4 py-2 sm:px-8">
       <RoleSwitcher />
       <NotificationsBell />
       <Link
@@ -28,6 +46,17 @@ export function Header() {
           </div>
         </div>
       </Link>
+      {backendEnabled && (
+        <Button variant="ghost" size="sm" onClick={logout} disabled={pending}>
+          <LogOut size={16} />
+          {pending ? "Выходим…" : "Выйти"}
+        </Button>
+      )}
+      {logoutError && (
+        <span role="alert" className="text-xs text-danger">
+          {logoutError}
+        </span>
+      )}
     </header>
   );
 }

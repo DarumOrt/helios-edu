@@ -1,6 +1,6 @@
 "use client";
 
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { Select } from "@/shared/ui";
 import type { Role } from "@/shared/types/domain";
 
@@ -13,8 +13,10 @@ const roles: { value: Role; label: string }[] = [
 
 // Переключатель роли — инструмент демо, поэтому оформлен как служебный, а не как часть продукта.
 export function RoleSwitcher() {
-  const role = useSessionStore((s) => s.role);
-  const setRole = useSessionStore((s) => s.setRole);
+  const role = useSession((s) => s.role);
+  const setRole = useSession((s) => s.setRole);
+  const backendEnabled = useSession((s) => s.backendEnabled);
+  if (backendEnabled) return null;
 
   return (
     <label className="mr-2 flex items-center gap-2 font-mono text-xs text-muted-foreground">

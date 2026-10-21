@@ -7,7 +7,7 @@ const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const IMAGE_DATA_URL = /^data:image\/(png|jpe?g|webp);base64,/;
 
 // PUT { coverColor } — сменить цвет шаблона; { cover: dataURL } — своя картинка; { cover: null } — убрать картинку.
-// Права проверяет UI через can(role, "course.edit"); в мокапе сессии на сервере нет.
+// UI проверяет course.edit; при подключённом бэкенде proxy.ts проверяет сессию и доступ к курсу.
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const course = courses.find((c) => c.id === id);
