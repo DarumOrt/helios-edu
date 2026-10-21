@@ -6,3 +6,34 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    profiles: [backend]
+    environment:
+      POSTGRES_DB: helios_edu
+      POSTGRES_USER: helios
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helios_local_only}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helios -d helios_edu"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    profiles: [backend]
+    environment:
+      ConnectionStrings__Database: Host=db;Database=helios_edu;Username=helios;Password=${POSTGRES_PASSWORD:-helios_local_only}
+      Database__ApplyMigrations: "true"
+      Database__SeedDemoData: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
