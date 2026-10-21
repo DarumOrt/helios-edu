@@ -48,16 +48,16 @@ export function NotificationsBell() {
       >
         <Bell size={18} />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-medium text-white">
+          <span className="absolute top-1 right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 font-mono text-xs leading-none font-medium text-white">
             {unread}
           </span>
         )}
       </Button>
       {open && (
-        <div className="absolute top-11 right-0 z-30 w-80 animate-fade-in overflow-hidden rounded-xl border bg-card shadow-elevate">
+        <div className="absolute top-11 right-0 z-30 w-80 origin-top-right animate-pop-in overflow-hidden rounded-xl border bg-card shadow-elevate">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <span className="text-sm font-semibold">Уведомления</span>
-            {unread > 0 && <span className="text-[11px] text-muted-foreground">{unread} новых</span>}
+            {unread > 0 && <span className="text-xs text-muted-foreground">{unread} новых</span>}
           </div>
           <ul className="max-h-96 scrollbar-thin overflow-y-auto">
             {(data ?? []).map((n) => {
@@ -82,9 +82,7 @@ export function NotificationsBell() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{n.title}</div>
                       <div className="line-clamp-2 text-xs text-muted-foreground">{n.body}</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground/70">
-                        {formatDateTime(n.createdAt)}
-                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{formatDateTime(n.createdAt)}</div>
                     </div>
                   </div>
                 </li>

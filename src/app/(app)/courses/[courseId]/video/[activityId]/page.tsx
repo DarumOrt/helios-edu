@@ -22,7 +22,7 @@ export default function VideoLessonPage({
     .find((a) => a.id === activityId);
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <DataState loading={isLoading} error={error} empty={!activity}>
         {activity && (
           <>

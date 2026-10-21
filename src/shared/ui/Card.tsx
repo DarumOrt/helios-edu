@@ -1,10 +1,14 @@
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 
+// Карточка — белый лист на небесном фоне: без рамки, с едва заметной тенью.
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-xl border bg-card text-card-foreground shadow-soft transition", className)}
+      className={cn(
+        "rounded-2xl border border-transparent bg-card text-card-foreground shadow-card",
+        className,
+      )}
       {...rest}
     />
   );
@@ -24,16 +28,12 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-start justify-between border-b p-5", className)}>
-      <div className="flex items-center gap-3">
-        {icon && (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-            {icon}
-          </div>
-        )}
-        <div>
+    <div className={cn("flex items-start justify-between gap-3 px-5 pt-5 pb-2", className)}>
+      <div className="flex min-w-0 items-start gap-2.5">
+        {icon && <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>}
+        <div className="min-w-0">
           <h3 className="leading-tight font-semibold text-foreground">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
       {action}
@@ -46,5 +46,5 @@ export function CardBody({ className, ...rest }: HTMLAttributes<HTMLDivElement>)
 }
 
 export function CardFooter({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-b-xl border-t bg-muted/30 px-5 py-3", className)} {...rest} />;
+  return <div className={cn("rounded-b-2xl border-t bg-muted/40 px-5 py-3", className)} {...rest} />;
 }

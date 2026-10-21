@@ -4,10 +4,12 @@ import { use, useState } from "react";
 import useSWR from "swr";
 import { Users, BookOpen, ListTree, BarChart3 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, DataState, Card, CardBody, Progress, Breadcrumbs } from "@/shared/ui";
+import { PageHeader, DataState, Card, CardBody, CourseCover, Progress, Breadcrumbs } from "@/shared/ui";
 import { CourseSection } from "@/features/courses/components/CourseSection";
 import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
-import { gradientFor, cn } from "@/shared/lib/utils";
+import { CoverEditor } from "@/features/courses/components/CoverEditor";
+import { can } from "@/shared/auth/permissions";
+import { cn } from "@/shared/lib/utils";
 import { useSessionStore } from "@/stores/session-store";
 import type { Course } from "@/shared/types/domain";
 
@@ -15,11 +17,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const { courseId } = use(params);
   const { data: course, error, isLoading } = useSWR<Course>(`/api/courses/${courseId}`, fetcher);
   const role = useSessionStore((s) => s.role);
-  const canSeeStats = role === "tutor" || role === "admin" || role === "organizer";
+  const canSeeStats = can(role, "analytics.view");
+  const canEdit = can(role, "course.edit");
   const [tab, setTab] = useState<"content" | "stats">("content");
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <DataState loading={isLoading} error={error} empty={!course}>
         {course && (
           <>
@@ -32,27 +35,32 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             />
 
             <Card className="mb-6 overflow-hidden">
-              <div className={`h-2 bg-linear-to-r ${gradientFor(course.id)}`} />
+              <div className="relative">
+                <CourseCover course={course} variant="banner" className="h-36 md:h-44" />
+                {canEdit && (
+                  <div className="absolute top-4 right-4">
+                    <CoverEditor course={course} />
+                  </div>
+                )}
+              </div>
               <CardBody className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
-                  <p className="text-sm text-foreground/80">{course.description}</p>
-                  <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+                  <p className="text-foreground/80">{course.description}</p>
+                  <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1.5">
-                      <Users size={13} /> {course.enrolled} участников
+                      <Users size={14} /> {course.enrolled} участников
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <BookOpen size={13} /> {course.sections?.length ?? 0} секций
+                      <BookOpen size={14} /> {course.sections?.length ?? 0} модулей
                     </span>
                   </div>
                 </div>
                 {course.progress != null && (
                   <div className="md:border-l md:pl-5">
-                    <div className="mb-1.5 text-xs text-muted-foreground">
+                    <div className="mb-1.5 text-sm text-muted-foreground">
                       {canSeeStats ? "Средний прогресс группы" : "Ваш прогресс"}
                     </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-semibold">{course.progress}%</span>
-                    </div>
+                    <div className="font-mono text-3xl font-semibold tabular-nums">{course.progress}%</div>
                     <Progress
                       value={course.progress}
                       tone={course.progress >= 80 ? "success" : "primary"}

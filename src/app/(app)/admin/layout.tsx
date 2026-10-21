@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="mb-6 flex gap-1 border-b">
         {tabs.map((t) => {
           const active = pathname === t.href;

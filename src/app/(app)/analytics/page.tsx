@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader
         title="Аналитика групп"
         subtitle="Изучение материалов группой М1217 по курсам"

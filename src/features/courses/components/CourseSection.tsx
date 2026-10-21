@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/shared/ui";
 import { formatDate } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
+import { activityHref } from "@/shared/lib/activity-href";
 import type { Section, ActivityType } from "@/shared/types/domain";
 
 const iconByType: Record<ActivityType, LucideIcon> = {
@@ -76,16 +77,7 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
         <ul className="divide-y border-t">
           {section.activities.map((a) => {
             const Icon = iconByType[a.type];
-            const href =
-              a.type === "quiz"
-                ? `/courses/${courseId}/quiz/${a.id}`
-                : a.type === "assignment"
-                  ? `/courses/${courseId}/assignment/${a.id}`
-                  : a.type === "video"
-                    ? `/courses/${courseId}/video/${a.id}`
-                    : a.type === "pdf" || a.type === "presentation"
-                      ? `/courses/${courseId}/document/${a.id}`
-                      : `/courses/${courseId}#a-${a.id}`;
+            const href = activityHref(courseId, a);
             const tracked = TRACKED.includes(a.type);
             return (
               <li key={a.id}>
@@ -104,7 +96,7 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
                     </div>
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{a.title}</div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-xs text-muted-foreground">
                         {labelByType[a.type]}
                         {a.durationMin ? ` · ${a.durationMin} мин` : ""}
                         {a.due ? ` · до ${formatDate(a.due)}` : ""}
@@ -113,7 +105,7 @@ export function CourseSection({ section, courseId }: { section: Section; courseI
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {tracked && (
-                      <span className="hidden items-center gap-1 text-[10px] text-primary/70 sm:flex">
+                      <span className="hidden items-center gap-1 text-xs text-primary/70 sm:flex">
                         <ActivityIcon size={11} />
                         отслеживается
                       </span>

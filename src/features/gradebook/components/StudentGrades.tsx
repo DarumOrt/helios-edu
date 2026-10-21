@@ -1,11 +1,10 @@
 "use client";
 
 import useSWR from "swr";
-import { GraduationCap, Award } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { Card, CardBody, DataState, Badge, Progress } from "@/shared/ui";
 import { useSessionStore } from "@/stores/session-store";
-import { gradientFor } from "@/shared/lib/utils";
 import type { StudentCourseGrades } from "../api";
 
 function tone(grade: number | null, max: number): "success" | "info" | "warning" | "danger" | "neutral" {
@@ -35,14 +34,12 @@ export function StudentGrades() {
       emptyTitle="Оценок пока нет"
       emptyDescription="Здесь появятся ваши оценки по курсам"
     >
-      <Card className="mb-5 border-primary/20 bg-linear-to-r from-primary-soft to-violet-50">
-        <CardBody className="flex items-center gap-4 py-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent text-white">
-            <Award size={22} />
-          </div>
-          <div>
-            <div className="text-sm text-muted-foreground">Средний балл по всем курсам</div>
-            <div className="text-2xl font-bold">{avg.toFixed(1)}</div>
+      <Card className="mb-5">
+        <CardBody className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-4">
+          <div className="text-sm text-muted-foreground">Средний итог по курсам</div>
+          <div className="font-mono text-2xl font-semibold tabular-nums">
+            {avg.toFixed(1)}
+            <span className="text-base font-normal text-muted-foreground"> / 100</span>
           </div>
         </CardBody>
       </Card>
@@ -50,14 +47,13 @@ export function StudentGrades() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {courses.map((c) => (
           <Card key={c.courseId} className="overflow-hidden">
-            <div className={`h-1.5 bg-linear-to-r ${gradientFor(c.courseId)}`} />
             <CardBody>
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <GraduationCap size={16} className="text-muted-foreground" />
                   <div>
                     <div className="text-sm font-semibold">{c.courseTitle}</div>
-                    <div className="text-[11px] text-muted-foreground">{c.courseCode}</div>
+                    <div className="font-mono text-xs text-muted-foreground">{c.courseCode}</div>
                   </div>
                 </div>
                 <Badge tone={c.total >= 80 ? "success" : c.total >= 50 ? "info" : "warning"}>

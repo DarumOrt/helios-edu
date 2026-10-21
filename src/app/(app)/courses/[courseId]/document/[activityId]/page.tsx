@@ -24,7 +24,7 @@ export default function DocumentLessonPage({
   const kind = activity?.type === "presentation" ? "presentation" : "pdf";
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <DataState loading={isLoading} error={error} empty={!activity}>
         {activity && (
           <>

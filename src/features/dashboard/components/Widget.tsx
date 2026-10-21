@@ -23,7 +23,7 @@ export function Widget({
         icon={Icon ? <Icon size={18} /> : undefined}
         action={action}
       />
-      <CardBody className="flex-1">{children}</CardBody>
+      <CardBody className="flex-1 pt-3">{children}</CardBody>
     </Card>
   );
 }

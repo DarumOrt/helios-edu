@@ -6,11 +6,14 @@ import type {
   GradeRow,
   Cohort,
   User,
+  ScheduleSlot,
+  PairTime,
 } from "@/shared/types/domain";
 
 export const courses: Course[] = [
   {
     id: "c-matan",
+    coverColor: "sky",
     code: "МАТ-101",
     title: "Математический анализ",
     description: "Пределы, производные и интегралы для студентов ИНЭК (группа М1217)",
@@ -62,6 +65,7 @@ export const courses: Course[] = [
   },
   {
     id: "c-ped-101",
+    coverColor: "teal",
     code: "ПЕД-101",
     title: "Введение в педагогику",
     description: "Базовый курс для студентов 1 курса педагогического направления",
@@ -101,6 +105,7 @@ export const courses: Course[] = [
   },
   {
     id: "c-info-201",
+    coverColor: "iris",
     code: "ИНФ-201",
     title: "Информационные технологии в образовании",
     description: "Цифровые инструменты для будущего педагога",
@@ -123,6 +128,7 @@ export const courses: Course[] = [
   },
   {
     id: "c-psych-110",
+    coverColor: "apricot",
     code: "ПСХ-110",
     title: "Возрастная психология",
     description: "Развитие личности от младенчества до зрелости",
@@ -413,3 +419,28 @@ export const users: User[] = [
     faculty: "ИНЭК",
   },
 ];
+
+// Звонки — условные, для мокапа. Для реального ПНИПУ взять из расписания вуза.
+export const pairTimes: PairTime[] = [
+  { n: 1, start: "08:00", end: "09:35" },
+  { n: 2, start: "09:45", end: "11:20" },
+  { n: 3, start: "11:30", end: "13:05" },
+  { n: 4, start: "13:55", end: "15:30" },
+  { n: 5, start: "15:40", end: "17:15" },
+];
+
+// Расписание группы М1217 на неделю
+export const schedule: Record<string, ScheduleSlot[]> = {
+  М1217: [
+    { id: "sl1", courseId: "c-matan", weekday: 1, pair: 1, kind: "lecture", room: "Г-312" },
+    { id: "sl2", courseId: "c-psych-110", weekday: 1, pair: 3, kind: "lecture", room: "К-105" },
+    { id: "sl3", courseId: "c-ped-101", weekday: 2, pair: 2, kind: "lecture", room: "К-201" },
+    { id: "sl4", courseId: "c-info-201", weekday: 2, pair: 3, kind: "practice", room: "Г-415" },
+    { id: "sl5", courseId: "c-matan", weekday: 3, pair: 1, kind: "practice", room: "Г-310" },
+    { id: "sl6", courseId: "c-ped-101", weekday: 3, pair: 4, kind: "seminar", room: "К-204" },
+    { id: "sl7", courseId: "c-info-201", weekday: 4, pair: 2, kind: "lecture", room: "Г-401" },
+    { id: "sl8", courseId: "c-psych-110", weekday: 4, pair: 4, kind: "seminar", room: "К-108" },
+    { id: "sl9", courseId: "c-matan", weekday: 5, pair: 2, kind: "practice", room: "Г-310" },
+    { id: "sl10", courseId: "c-info-201", weekday: 5, pair: 3, kind: "practice", room: "Г-415" },
+  ],
+};

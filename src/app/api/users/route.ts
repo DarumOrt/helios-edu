@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { users } from "@/mocks/data";
 
-export async function GET() {
-  return NextResponse.json(users);
+// GET ?group=М1217 — только участники группы
+export async function GET(req: Request) {
+  const group = new URL(req.url).searchParams.get("group");
+  return NextResponse.json(group ? users.filter((u) => u.group === group) : users);
 }

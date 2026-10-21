@@ -3,8 +3,19 @@
 import useSWR from "swr";
 import { Plus, Edit2 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, DataState, Card, Table, THead, TR, TH, TD, Button, Badge } from "@/shared/ui";
-import { gradientFor } from "@/shared/lib/utils";
+import {
+  PageHeader,
+  DataState,
+  Card,
+  Table,
+  THead,
+  TR,
+  TH,
+  TD,
+  Button,
+  Badge,
+  CourseCover,
+} from "@/shared/ui";
 import type { Course } from "@/shared/types/domain";
 
 export default function AdminCoursesPage() {
@@ -38,14 +49,10 @@ export default function AdminCoursesPage() {
                 <TR key={c.id}>
                   <TD>
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`h-8 w-8 rounded-md bg-linear-to-br ${gradientFor(c.id)} flex shrink-0 items-center justify-center text-[10px] font-semibold text-white`}
-                      >
-                        {c.code.split("-")[0]}
-                      </div>
+                      <CourseCover course={c} variant="thumb" className="h-8 w-12 shrink-0 rounded-md" />
                       <div>
                         <div className="font-medium">{c.title}</div>
-                        <div className="text-[11px] text-muted-foreground">{c.code}</div>
+                        <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
                       </div>
                     </div>
                   </TD>

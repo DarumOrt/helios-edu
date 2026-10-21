@@ -17,7 +17,7 @@ export function DataState({
   loading,
   error,
   empty,
-  emptyTitle = "Пока пусто",
+  emptyTitle = "Здесь пока ничего нет",
   emptyDescription,
   skeleton,
   children,
@@ -38,7 +38,7 @@ export function DataState({
       <EmptyState
         icon={TriangleAlert}
         title="Не удалось загрузить данные"
-        description="Попробуйте обновить страницу"
+        description="Обновите страницу — обычно это помогает"
       />
     );
   }

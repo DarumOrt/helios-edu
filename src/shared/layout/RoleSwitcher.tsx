@@ -1,6 +1,5 @@
 "use client";
 
-import { UserCog } from "lucide-react";
 import { useSessionStore } from "@/stores/session-store";
 import { Select } from "@/shared/ui";
 import type { Role } from "@/shared/types/domain";
@@ -12,18 +11,18 @@ const roles: { value: Role; label: string }[] = [
   { value: "student", label: "Студент" },
 ];
 
+// Переключатель роли — инструмент демо, поэтому оформлен как служебный, а не как часть продукта.
 export function RoleSwitcher() {
   const role = useSessionStore((s) => s.role);
   const setRole = useSessionStore((s) => s.setRole);
 
   return (
-    <div className="flex items-center gap-2">
-      <UserCog size={14} className="text-muted-foreground" />
+    <label className="mr-2 flex items-center gap-2 font-mono text-xs text-muted-foreground">
+      демо-роль
       <Select
         value={role}
         onChange={(e) => setRole(e.target.value as Role)}
-        className="h-8 text-xs"
-        aria-label="Сменить роль"
+        className="h-8 border-dashed bg-transparent text-xs"
       >
         {roles.map((r) => (
           <option key={r.value} value={r.value}>
@@ -31,6 +30,6 @@ export function RoleSwitcher() {
           </option>
         ))}
       </Select>
-    </div>
+    </label>
   );
 }

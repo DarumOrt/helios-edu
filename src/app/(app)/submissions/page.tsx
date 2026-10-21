@@ -43,7 +43,7 @@ export default function SubmissionsPage() {
   ];
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader title="Проверка работ" subtitle="Сданные задания группы М1217" />
 
       <div className="mb-5 flex gap-1 border-b">
@@ -96,7 +96,7 @@ export default function SubmissionsPage() {
                         )}
                       </div>
                       <div className="truncate text-xs text-muted-foreground">{s.assignmentTitle}</div>
-                      <div className="text-[11px] text-muted-foreground/70">
+                      <div className="text-xs text-muted-foreground">
                         {s.courseTitle} · {formatDateTime(s.submittedAt)}
                       </div>
                     </div>

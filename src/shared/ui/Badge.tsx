@@ -3,17 +3,18 @@ import type { HTMLAttributes } from "react";
 import { cn } from "@/shared/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+  "inline-flex items-center gap-1 rounded-full border px-2 py-px text-xs font-medium whitespace-nowrap",
   {
     variants: {
       tone: {
         neutral: "border-transparent bg-muted text-muted-foreground",
-        primary: "border-primary/10 bg-primary-soft text-primary",
-        success: "border-success/10 bg-success-soft text-success",
-        warning: "border-warning/10 bg-warning-soft text-warning",
-        info: "border-primary/10 bg-primary-soft text-primary",
-        danger: "border-danger/10 bg-danger-soft text-danger",
-        outline: "bg-transparent text-foreground",
+        primary: "border-transparent bg-primary-soft text-primary",
+        success: "border-transparent bg-success-soft text-success",
+        warning: "border-transparent bg-warning-soft text-warning",
+        info: "border-transparent bg-muted text-foreground",
+        danger: "border-transparent bg-danger-soft text-danger",
+        highlight: "border-transparent bg-highlight text-highlight-foreground",
+        outline: "bg-transparent text-muted-foreground",
       },
     },
     defaultVariants: { tone: "neutral" },
