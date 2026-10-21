@@ -3,5 +3,8 @@ out/
 node_modules/
 coverage/
 package-lock.json
+**/packages.lock.json
 public/
 *.md
+**/bin/
+**/obj/

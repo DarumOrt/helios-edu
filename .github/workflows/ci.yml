@@ -18,6 +18,34 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
+  backend:
+    name: C# API · PostgreSQL · Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: docker compose --profile backend up -d --build db api
+      - name: Wait for database and API
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8080/api/health/ready && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/api/health/ready
+      - run: node --test backend/tests/api.test.mjs
+      - name: Check persistence and seed on restart
+        run: node --test backend/tests/lifecycle.test.mjs
+      - run: node --test backend/tests/api.test.mjs
+      - name: Backend logs
+        if: failure()
+        run: docker compose --profile backend logs db api
+      - name: Stop backend
+        if: always()
+        run: docker compose --profile backend down
+
   quality:
     name: Typecheck · Lint · Format
     runs-on: ubuntu-latest
