@@ -43,5 +43,15 @@ export default defineConfig([
     },
   },
   prettier,
-  globalIgnores([".next/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "coverage/**",
+    "next-env.d.ts",
+    ".claude/**",
+    ".codex/**",
+    "**/bin/**",
+    "**/obj/**",
+  ]),
 ]);
