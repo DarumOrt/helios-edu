@@ -141,7 +141,7 @@ export function DocumentReader({
             <div className="mt-1 text-xs text-muted-foreground">
               {kind === "pdf" ? "PDF-документ" : "Презентация"} · {page + 1} из {totalPages}
             </div>
-            <div className="absolute right-3 bottom-3 text-[10px] text-muted-foreground/60">
+            <div className="absolute right-3 bottom-3 text-xs text-muted-foreground">
               демо-рендер · в проде здесь PDF.js
             </div>
           </div>
@@ -189,7 +189,7 @@ export function DocumentReader({
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Activity size={16} className="text-primary" />
             Ваша активность
-            <span className="ml-auto text-[10px] font-normal text-muted-foreground">live</span>
+            <span className="ml-auto text-xs font-normal text-muted-foreground">live</span>
           </div>
           <div>
             <div className="mb-1.5 flex items-center justify-between text-xs">
@@ -202,13 +202,13 @@ export function DocumentReader({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-md border bg-muted/30 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Eye size={11} /> Время чтения
               </div>
               <div className="mt-0.5 text-sm font-semibold tabular-nums">{fmtDuration(activeTime)}</div>
             </div>
             <div className="rounded-md border bg-muted/30 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">покрытие</div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">покрытие</div>
               <div className="mt-0.5 text-sm font-semibold tabular-nums">{coverage}%</div>
             </div>
           </div>

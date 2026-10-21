@@ -2,18 +2,12 @@
 
 import Link from "next/link";
 import useSWR from "swr";
-import {
-  ClipboardCheck,
-  Gauge,
-  Users,
-  AlertTriangle,
-  BarChart3,
-  ChevronRight,
-  type LucideIcon,
-} from "lucide-react";
+import { ClipboardCheck, AlertTriangle, BarChart3, ChevronRight } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { Button, Card, Avatar, Badge, Progress, DataState } from "@/shared/ui";
+import { useSessionStore } from "@/stores/session-store";
+import { Button, Avatar, Badge, Progress, DataState } from "@/shared/ui";
 import { RoleHero } from "./RoleHero";
+import { FactStrip } from "./FactStrip";
 import { Widget } from "./Widget";
 import { NotificationsWidget } from "./NotificationsWidget";
 import { formatDateTime } from "@/shared/lib/format";
@@ -24,6 +18,7 @@ import type { CourseActivityStat } from "@/features/analytics/api";
 const COURSE = "c-matan";
 
 export function TeacherDashboard() {
+  const user = useSessionStore((s) => s.user);
   const { data: subs } = useSWR<{ items: SubmissionFull[] }>("/api/submissions?status=submitted", fetcher);
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
     `/api/hub/leaderboard?courseId=${COURSE}`,
@@ -47,18 +42,21 @@ export function TeacherDashboard() {
   return (
     <div className="space-y-6">
       <RoleHero
-        kicker="ИНЭК · группа М1217"
-        title="Кабинет преподавателя"
-        subtitle="Контроль изучения материалов, проверка работ и аналитика вовлечённости группы."
+        name={user.name.split(" ")[0]}
+        subtitle={
+          pending.length
+            ? `${pending.length} ${pending.length === 1 ? "работа ждёт" : "работы ждут"} проверки. Начнём с них?`
+            : "Все работы проверены — можно заглянуть в аналитику группы."
+        }
         actions={
           <>
             <Link href="/submissions">
-              <Button className="bg-white text-blue-700 hover:bg-white/90">
+              <Button>
                 <ClipboardCheck size={16} /> Проверить работы
               </Button>
             </Link>
             <Link href="/analytics">
-              <Button variant="ghost" className="text-white hover:bg-white/10">
+              <Button variant="outline">
                 <BarChart3 size={16} /> Аналитика групп
               </Button>
             </Link>
@@ -66,32 +64,24 @@ export function TeacherDashboard() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          icon={ClipboardCheck}
-          tone="bg-warning-soft text-warning"
-          label="На проверке"
-          value={pending.length}
-        />
-        <StatCard
-          icon={Gauge}
-          tone="bg-primary-soft text-primary"
-          label="Средний прогресс группы"
-          value={`${avgProgress}%`}
-        />
-        <StatCard
-          icon={Users}
-          tone="bg-success-soft text-success"
-          label="Приступили"
-          value={`${active}/${entries.length}`}
-        />
-        <StatCard
-          icon={AlertTriangle}
-          tone="bg-danger-soft text-danger"
-          label="Отстают"
-          value={lagging.length}
-        />
-      </div>
+      <FactStrip
+        facts={[
+          {
+            label: "На проверке",
+            value: pending.length,
+            tone: pending.length ? "warning" : "default",
+            href: "/submissions",
+          },
+          { label: "Средний прогресс группы", value: `${avgProgress}%` },
+          { label: "Приступили", value: `${active}/${entries.length}` },
+          {
+            label: "Отстают",
+            value: lagging.length,
+            tone: lagging.length ? "danger" : "default",
+            href: "/hub",
+          },
+        ]}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Очередь проверки */}
@@ -116,9 +106,9 @@ export function TeacherDashboard() {
                     <Avatar name={s.userName} size={32} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{s.userName}</div>
-                      <div className="truncate text-[11px] text-muted-foreground">{s.assignmentTitle}</div>
+                      <div className="truncate text-xs text-muted-foreground">{s.assignmentTitle}</div>
                     </div>
-                    <span className="shrink-0 text-[10px] text-muted-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground">
                       {formatDateTime(s.submittedAt)}
                     </span>
                   </Link>
@@ -194,31 +184,5 @@ export function TeacherDashboard() {
         </DataState>
       </Widget>
     </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  tone,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  tone: string;
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <Card className="p-4 transition hover:shadow-elevate">
-      <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
-          <Icon size={18} />
-        </div>
-        <div className="min-w-0">
-          <div className="truncate text-xs text-muted-foreground">{label}</div>
-          <div className="text-xl leading-tight font-semibold">{value}</div>
-        </div>
-      </div>
-    </Card>
   );
 }

@@ -52,7 +52,7 @@ export function CourseStatsPanel({ courseId }: { courseId: string }) {
       </DataState>
 
       {selectedAct && (
-        <div className="animate-fade-in">
+        <div>
           <LessonStatsPanel activityId={selectedAct.activityId} title={`Детально: ${selectedAct.title}`} />
         </div>
       )}
@@ -79,7 +79,7 @@ function ActivityStatCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition hover:shadow-elevate",
+        "cursor-pointer transition-colors hover:border-primary/40",
         active && "border-primary/40 ring-2 ring-primary/40",
       )}
       onClick={onClick}
@@ -96,7 +96,7 @@ function ActivityStatCard({
                 {completionPct}%
               </Badge>
             </div>
-            <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+            <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <CheckCircle2 size={12} /> {stat.completed}/{stat.total} изучили
               </span>
@@ -106,7 +106,7 @@ function ActivityStatCard({
               {stat.type !== "quiz" && <span>⌀ {fmtDuration(stat.avgTimeSec)}</span>}
             </div>
             <div className="mt-2.5">
-              <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+              <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                 <span>средн. покрытие группы</span>
                 <span className="tabular-nums">{stat.avgCoverage}%</span>
               </div>

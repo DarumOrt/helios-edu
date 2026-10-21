@@ -21,7 +21,7 @@ export default function CoursesPage() {
   );
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader
         title="Мои курсы"
         subtitle="Все доступные вам курсы"

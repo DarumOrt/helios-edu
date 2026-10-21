@@ -17,7 +17,7 @@ export default function GradebookPage() {
   // Студент видит только свои оценки
   if (role === "student") {
     return (
-      <div className="animate-fade-in">
+      <div>
         <PageHeader title="Мои оценки" subtitle="Ваши результаты по курсам" />
         <StudentGrades />
       </div>
@@ -33,7 +33,7 @@ function TeacherGradebook({ editable }: { editable: boolean }) {
   const selected = courseId || courses?.[0]?.id || "";
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader
         title="Журнал оценок"
         subtitle="Оценки группы М1217 по курсу"

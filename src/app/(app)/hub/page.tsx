@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Trophy, Info, Radar } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, Select, Card, CardBody } from "@/shared/ui";
+import { PageHeader, Select } from "@/shared/ui";
 import { Leaderboard } from "@/features/hub/components/Leaderboard";
 import { GroupMonitor } from "@/features/hub/components/GroupMonitor";
 import { useSessionStore } from "@/stores/session-store";
@@ -20,7 +20,7 @@ export default function HubPage() {
   const [courseId, setCourseId] = useState("c-matan");
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader
         title={isTeacher ? "Мониторинг группы М1217" : "Хаб группы М1217"}
         subtitle={
@@ -41,37 +41,19 @@ export default function HubPage() {
 
       {isTeacher ? (
         <>
-          <Card className="mb-5 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50">
-            <CardBody className="flex items-center gap-4 py-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 text-white">
-                <Radar size={22} />
-              </div>
-              <div>
-                <div className="font-semibold">Режим мониторинга</div>
-                <div className="text-sm text-muted-foreground">
-                  Список отсортирован от отстающих к лучшим, чтобы быстро увидеть, кому нужна помощь.
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+          <p className="mb-5 flex items-start gap-2 text-sm text-muted-foreground">
+            <Radar size={16} className="mt-0.5 shrink-0" aria-hidden />
+            Список отсортирован от отстающих к лучшим, чтобы быстро увидеть, кому нужна помощь.
+          </p>
           <GroupMonitor courseId={courseId} />
         </>
       ) : (
         <>
-          <Card className="mb-5 border-primary/20 bg-linear-to-r from-primary-soft to-violet-50">
-            <CardBody className="flex items-center gap-4 py-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent text-white">
-                <Trophy size={22} />
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold">Соревнование недели</div>
-                <div className="text-sm text-muted-foreground">
-                  Балл = 50% покрытие материалов + 30% результаты тестов + 20% завершённость. Перемотка и
-                  фоновые вкладки не засчитываются.
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+          <p className="mb-5 flex items-start gap-2 text-sm text-muted-foreground">
+            <Trophy size={16} className="mt-0.5 shrink-0" aria-hidden />
+            Балл = 50% покрытие материалов + 30% результаты тестов + 20% завершённость. Перемотка и фоновые
+            вкладки не засчитываются.
+          </p>
           <Leaderboard courseId={courseId} />
           <div className="mt-5 flex items-start gap-2 text-xs text-muted-foreground">
             <Info size={14} className="mt-0.5 shrink-0" />

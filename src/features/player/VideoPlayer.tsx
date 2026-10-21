@@ -219,7 +219,7 @@ export function VideoPlayer({ activityId, src, title }: { activityId: string; sr
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Activity size={16} className="text-primary" />
             Ваша активность
-            <span className="ml-auto text-[10px] font-normal text-muted-foreground">live</span>
+            <span className="ml-auto text-xs font-normal text-muted-foreground">live</span>
           </div>
 
           <div>
@@ -228,7 +228,7 @@ export function VideoPlayer({ activityId, src, title }: { activityId: string; sr
               <span className="font-semibold tabular-nums">{stats.coverage}%</span>
             </div>
             <Progress value={stats.coverage} tone={stats.completed ? "success" : "primary"} />
-            <div className="mt-1 text-[10px] text-muted-foreground">
+            <div className="mt-1 text-xs text-muted-foreground">
               засчитывается только просмотр с активной вкладкой, перемотка не считается
             </div>
           </div>
@@ -258,7 +258,7 @@ export function VideoPlayer({ activityId, src, title }: { activityId: string; sr
 function Metric({ icon: Icon, label, value }: { icon: typeof Eye; label: string; value: string }) {
   return (
     <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Icon size={11} />
         {label}
       </div>

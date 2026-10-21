@@ -39,7 +39,6 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
     <DataState loading={isLoading} error={error} empty={!data?.length}>
       {result ? (
         <Card className="overflow-hidden">
-          <div className="h-1 bg-linear-to-r from-success to-emerald-400" />
           <CardBody className="py-12 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success">
               <Trophy size={28} />

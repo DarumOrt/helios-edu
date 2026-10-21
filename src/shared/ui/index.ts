@@ -11,3 +11,5 @@ export { Breadcrumbs } from "./Breadcrumbs";
 export { EmptyState } from "./EmptyState";
 export { Input, Textarea } from "./Input";
 export { Select } from "./Select";
+export { BrandMark } from "./BrandMark";
+export { CourseCover } from "./CourseCover";

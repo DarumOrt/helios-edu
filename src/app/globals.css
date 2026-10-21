@@ -1,7 +1,20 @@
 @import "tailwindcss";
 
+/* Брендкод EDU, палитра «Ясное небо» (см. docs/design-audit).
+   Ясный синий — действия. Солнце — достижения, серия, тепло. Маркер — «сейчас / следующий шаг».
+   Градиент разрешён только для неба в приветствии: он показывает время суток.
+   Все пары текст/фон — не ниже 4.5:1 (WCAG AA). Солнце и маркер — только заливка под тёмным текстом. */
+
 @theme {
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-golos), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Consolas, monospace;
+  --font-serif: var(--font-literata), Georgia, "Times New Roman", serif;
+
+  /* Шкала текста: ничего мельче 12px */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.375rem;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -16,8 +29,11 @@
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-primary-soft: hsl(var(--primary-soft));
 
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-highlight: hsl(var(--highlight));
+  --color-highlight-foreground: hsl(var(--highlight-foreground));
+
+  --color-sun: hsl(var(--sun));
+  --color-sun-soft: hsl(var(--sun-soft));
 
   --color-success: hsl(var(--success));
   --color-success-soft: hsl(var(--success-soft));
@@ -31,33 +47,74 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  --radius-2xl: calc(var(--radius) + 8px);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 6px);
 
-  --shadow-soft: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
-  --shadow-elevate: 0 8px 24px -8px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.06);
+  /* Карточки отделяет белый фон и едва заметная тень, а не рамка */
+  --shadow-soft: 0 1px 2px 0 rgb(20 33 61 / 0.04);
+  --shadow-card: 0 1px 2px 0 rgb(20 33 61 / 0.04), 0 6px 20px -10px rgb(20 33 61 / 0.1);
+  --shadow-elevate: 0 14px 32px -14px rgb(20 33 61 / 0.25), 0 2px 6px -2px rgb(20 33 61 / 0.06);
 
-  --animate-fade-in: fade-in 0.2s ease-out;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
   --animate-shimmer: shimmer 1.6s infinite linear;
+  --animate-pop-in: pop-in 160ms var(--ease-out);
+  --animate-rise: rise 900ms var(--ease-out) both;
+  --animate-glow: glow 6s ease-in-out infinite;
+  --animate-enter: enter 420ms var(--ease-out) both;
 
-  @keyframes fade-in {
+  /* Солнце в приветствии поднимается один раз при открытии кабинета */
+  @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(24px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
+  @keyframes glow {
+    0%,
+    100% {
+      opacity: 0.18;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.32;
+      transform: scale(1.08);
+    }
+  }
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @keyframes shimmer {
     0% {
       background-position: -200% 0;
     }
     100% {
       background-position: 200% 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 }
@@ -68,10 +125,13 @@
   border-radius: var(--radius);
 }
 
-@utility glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: saturate(140%) blur(8px);
-  -webkit-backdrop-filter: saturate(140%) blur(8px);
+/* Миллиметровка — фон для обложек и пустых областей */
+@utility graph-paper {
+  background-color: hsl(var(--muted));
+  background-image:
+    linear-gradient(hsl(var(--grid)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--grid)) 1px, transparent 1px);
+  background-size: 12px 12px;
 }
 
 @utility scrollbar-thin {
@@ -80,36 +140,68 @@
 
 @layer base {
   :root {
-    --background: 220 25% 97%;
-    --foreground: 222 47% 11%;
+    --background: 213 60% 97%; /* #F3F7FC небо */
+    --foreground: 221 51% 16%; /* #14213D глубокий синий */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 221 51% 16%;
 
-    --muted: 220 15% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 214 50% 95%; /* #EAF0F8 */
+    --muted-foreground: 218 19% 42%; /* #56657E */
 
-    --primary: 222 70% 48%;
+    --primary: 215 75% 46%; /* #1D66CC ясный синий */
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 222 90% 96%;
+    --primary-soft: 214 81% 94%; /* #E3EEFC */
 
-    --accent: 250 95% 65%;
-    --accent-foreground: 0 0% 100%;
+    --highlight: 47 100% 74%; /* #FFE27A маркер */
+    --highlight-foreground: 221 51% 16%;
 
-    --success: 152 60% 38%;
-    --success-soft: 152 70% 95%;
+    --sun: 42 100% 62%; /* #FFC53D солнце Гелиоса */
+    --sun-soft: 44 100% 91%; /* #FFF3D1 */
 
-    --warning: 35 92% 50%;
-    --warning-soft: 35 100% 95%;
+    --success: 153 61% 30%; /* #1E7A50 */
+    --success-soft: 147 45% 91%;
 
-    --danger: 0 75% 55%;
-    --danger-soft: 0 90% 96%;
+    --warning: 34 100% 30%; /* #9A5600 */
+    --warning-soft: 38 91% 92%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 222 70% 48%;
+    --danger: 3 63% 44%; /* #B8302A */
+    --danger-soft: 5 81% 94%;
 
-    --radius: 0.75rem;
+    --border: 213 39% 91%; /* #DFE7F1 */
+    --input: 214 35% 87%;
+    --ring: 215 75% 46%;
+    --grid: 214 47% 93%;
+
+    --radius: 0.75rem; /* 12px — мягкая, дружелюбная форма */
+  }
+
+  /* Тёмная тема: токены готовы, переключатель — отдельной задачей */
+  [data-theme="dark"] {
+    --background: 221 39% 10%; /* #0F1522 */
+    --foreground: 216 43% 93%;
+    --card: 220 35% 13%; /* #161E2E */
+    --card-foreground: 216 43% 93%;
+    --muted: 219 33% 16%;
+    --muted-foreground: 217 22% 67%;
+    --primary: 214 87% 70%; /* #6FA8F5 */
+    --primary-foreground: 221 39% 10%;
+    --primary-soft: 219 54% 19%;
+    --highlight: 47 78% 60%;
+    --highlight-foreground: 221 51% 16%;
+    --sun: 42 100% 62%;
+    --sun-soft: 43 57% 15%;
+    --success: 150 50% 57%;
+    --success-soft: 151 39% 12%;
+    --warning: 35 84% 64%;
+    --warning-soft: 38 55% 13%;
+    --danger: 4 82% 72%;
+    --danger-soft: 4 38% 16%;
+    --border: 221 34% 21%;
+    --input: 221 32% 25%;
+    --ring: 214 87% 70%;
+    --grid: 221 36% 15%;
+    color-scheme: dark;
   }
 
   *,
@@ -122,9 +214,7 @@
 
   html,
   body {
-    background:
-      radial-gradient(1200px 600px at -10% -20%, hsl(222 90% 96%) 0%, transparent 60%),
-      radial-gradient(1000px 500px at 110% 0%, hsl(250 90% 97%) 0%, transparent 55%), hsl(var(--background));
+    background: hsl(var(--background));
     color: hsl(var(--foreground));
     min-height: 100vh;
   }
@@ -135,9 +225,24 @@
     text-rendering: optimizeLegibility;
   }
 
+  ::selection {
+    background: hsl(var(--highlight));
+    color: hsl(var(--highlight-foreground));
+  }
+
   *,
   *::before,
   *::after {
     box-sizing: border-box;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

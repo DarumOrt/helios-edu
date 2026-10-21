@@ -22,17 +22,14 @@ export default function ProfilePage() {
   const me = lb?.entries?.find((e) => e.isCurrentUser);
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader title="Профиль" subtitle="Учётная запись и информация" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* карточка пользователя */}
         <Card className="overflow-hidden">
-          <div className={`h-20 bg-linear-to-br ${meta.gradient}`} />
-          <CardBody className="-mt-12">
-            <div className="w-fit rounded-full ring-4 ring-card">
-              <Avatar name={user.name} size={72} />
-            </div>
+          <CardBody>
+            <Avatar name={user.name} size={64} />
             <h2 className="mt-3 text-lg font-semibold">{user.name}</h2>
             <Badge tone={meta.badgeTone}>{meta.label}</Badge>
             <ul className="mt-4 space-y-2.5 text-sm">
@@ -122,8 +119,8 @@ export default function ProfilePage() {
                         "Настройки системы",
                       ]
                   ).map((t) => (
-                    <li key={t} className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
-                      <span className={`h-1.5 w-1.5 rounded-full bg-current ${meta.accentText}`} />
+                    <li key={t} className="flex items-center gap-2 rounded-md border px-3 py-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                       {t}
                     </li>
                   ))}
@@ -141,7 +138,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border bg-muted/30 px-4 py-3 text-center">
       <div className="text-2xl font-bold tabular-nums">{value}</div>
-      <div className="mt-0.5 text-[11px] text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }

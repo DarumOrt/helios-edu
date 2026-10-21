@@ -59,14 +59,14 @@ export function Leaderboard({ courseId }: { courseId: string }) {
 }
 
 function PodiumCard({ entry, place }: { entry: LeaderboardEntry; place: number }) {
-  const ring = place === 1 ? "ring-amber-400" : place === 2 ? "ring-slate-300" : "ring-orange-300";
+  const ring = place === 1 ? "ring-highlight" : "ring-border";
   const Icon = place === 1 ? Crown : place === 2 ? Trophy : Medal;
-  const iconColor = place === 1 ? "text-amber-500" : place === 2 ? "text-slate-400" : "text-orange-400";
+  const iconColor = place === 1 ? "text-warning" : "text-muted-foreground";
   return (
     <Card
       className={cn(
         "text-center transition",
-        place === 1 ? "-translate-y-1 shadow-elevate" : "",
+        place === 1 ? "border-foreground/20" : "",
         entry.isCurrentUser && "border-primary/50",
       )}
     >
@@ -78,10 +78,10 @@ function PodiumCard({ entry, place }: { entry: LeaderboardEntry; place: number }
           <Icon size={place === 1 ? 22 : 18} className={cn("absolute -top-2 -right-1", iconColor)} />
         </div>
         <div className="mt-3 max-w-full truncate text-sm leading-tight font-semibold">{entry.userName}</div>
-        <div className="text-[11px] text-muted-foreground">{entry.group}</div>
-        <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{entry.score}</div>
-        <div className="text-[10px] text-muted-foreground">баллов</div>
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-orange-500">
+        <div className="text-xs text-muted-foreground">{entry.group}</div>
+        <div className="mt-2 font-mono text-2xl font-semibold text-primary tabular-nums">{entry.score}</div>
+        <div className="text-xs text-muted-foreground">баллов</div>
+        <div className="mt-1.5 flex items-center gap-1 text-xs text-warning">
           <Flame size={12} /> {entry.streak} дн
         </div>
       </CardBody>
@@ -94,7 +94,7 @@ function RowContent({ entry }: { entry: LeaderboardEntry }) {
     <div className="flex items-center gap-3">
       <div
         className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-mono text-sm font-semibold",
           entry.isCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
         )}
       >
@@ -106,7 +106,7 @@ function RowContent({ entry }: { entry: LeaderboardEntry }) {
           <span className="truncate text-sm font-medium">{entry.userName}</span>
           {entry.isCurrentUser && <Badge tone="primary">вы</Badge>}
         </div>
-        <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <BookOpen size={11} /> {entry.materialsCompleted}/{entry.materialsTotal}
           </span>
@@ -114,7 +114,7 @@ function RowContent({ entry }: { entry: LeaderboardEntry }) {
             <Target size={11} /> {entry.avgCoverage}%
           </span>
           {entry.quizAvg != null && <span>тест {entry.quizAvg}%</span>}
-          <span className="flex items-center gap-1 text-orange-500">
+          <span className="flex items-center gap-1 text-warning">
             <Flame size={11} /> {entry.streak}
           </span>
         </div>
@@ -123,8 +123,8 @@ function RowContent({ entry }: { entry: LeaderboardEntry }) {
         <Progress value={entry.avgCoverage} tone={entry.avgCoverage >= 80 ? "success" : "primary"} />
       </div>
       <div className="w-14 shrink-0 text-right">
-        <div className="font-bold tabular-nums">{entry.score}</div>
-        <div className="text-[10px] text-muted-foreground">баллов</div>
+        <div className="font-mono font-semibold tabular-nums">{entry.score}</div>
+        <div className="text-xs text-muted-foreground">баллов</div>
       </div>
     </div>
   );

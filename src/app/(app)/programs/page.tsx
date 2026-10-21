@@ -12,7 +12,7 @@ export default function ProgramsPage() {
   const { data, error, isLoading } = useSWR<Program[]>("/api/programs", fetcher);
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader
         title="Программы обучения"
         subtitle="Наборы курсов с правилами прохождения"

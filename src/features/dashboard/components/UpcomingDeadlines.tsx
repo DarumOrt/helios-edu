@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 import { CalendarClock, FileText, ClipboardCheck } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
@@ -17,7 +18,7 @@ interface DeadlineItem {
 export function UpcomingDeadlines() {
   // фиксируем "сейчас" один раз: Date.now() в рендере нечист и ломает гидратацию
   const [now] = useState(() => Date.now());
-  const { data, error, isLoading } = useSWR<Course[]>("/api/courses", fetcher);
+  const { data, error, isLoading } = useSWR<Course[]>("/api/courses?sections=1", fetcher);
 
   const items: DeadlineItem[] = (data ?? [])
     .flatMap((c) =>
@@ -29,37 +30,50 @@ export function UpcomingDeadlines() {
     .sort((a, b) => (a.activity.due ?? "").localeCompare(b.activity.due ?? ""));
 
   return (
-    <Widget title="Дедлайны" subtitle="Ближайшие 5 задач" icon={CalendarClock}>
-      <DataState loading={isLoading} error={error} empty={!items.length} emptyTitle="Нет дедлайнов">
-        <ul className="space-y-2.5">
-          {items.slice(0, 5).map(({ course, activity }) => {
+    <Widget title="Сдать" icon={CalendarClock}>
+      <DataState loading={isLoading} error={error} empty={!items.length} emptyTitle="Сдавать пока нечего">
+        <ul className="-my-1 divide-y">
+          {items.slice(0, 3).map(({ course, activity }) => {
             const Icon = activity.type === "quiz" ? ClipboardCheck : FileText;
             const daysLeft = activity.due
               ? Math.ceil((new Date(activity.due).getTime() - now) / 86400000)
               : null;
+            const overdue = daysLeft != null && daysLeft < 0;
             const tone =
-              daysLeft != null && daysLeft <= 3
+              overdue || (daysLeft != null && daysLeft <= 3)
                 ? "danger"
                 : daysLeft != null && daysLeft <= 7
                   ? "warning"
-                  : "info";
+                  : "neutral";
+            const when = overdue
+              ? "просрочено"
+              : daysLeft === 0
+                ? "сегодня"
+                : daysLeft != null && daysLeft <= 7
+                  ? `через ${daysLeft} дн`
+                  : null;
             return (
-              <li
-                key={activity.id}
-                className="-mx-2 flex items-center gap-3 rounded-md p-2 transition hover:bg-muted/60"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-warning-soft text-warning">
-                  <Icon size={15} />
-                </div>
+              <li key={`${course}-${activity.id}`} className="flex gap-3 py-2.5">
+                <Icon size={16} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{activity.title}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">{course}</div>
+                  <div className="line-clamp-2 text-sm leading-snug font-medium">{activity.title}</div>
+                  <div className="mt-0.5 truncate text-xs text-muted-foreground">{course}</div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    {when && <Badge tone={tone as "danger" | "warning" | "neutral"}>{when}</Badge>}
+                    <span className="font-mono text-xs text-muted-foreground">
+                      до {formatDate(activity.due)}
+                    </span>
+                  </div>
                 </div>
-                <Badge tone={tone as "danger" | "warning" | "info"}>{formatDate(activity.due)}</Badge>
               </li>
             );
           })}
         </ul>
+        {items.length > 3 && (
+          <Link href="/courses" className="mt-3 inline-block text-sm text-primary hover:underline">
+            Ещё {items.length - 3} — все задания
+          </Link>
+        )}
       </DataState>
     </Widget>
   );
