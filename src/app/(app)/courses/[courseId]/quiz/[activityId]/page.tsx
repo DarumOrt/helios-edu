@@ -4,14 +4,10 @@ import { use } from "react";
 import { PageHeader, Breadcrumbs } from "@/shared/ui";
 import { QuizPlayer } from "@/features/quiz/components/QuizPlayer";
 
-export default function QuizPage({
-  params,
-}: {
-  params: Promise<{ courseId: string; activityId: string }>;
-}) {
+export default function QuizPage({ params }: { params: Promise<{ courseId: string; activityId: string }> }) {
   const { courseId, activityId } = use(params);
   return (
-    <div className="animate-fade-in max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl animate-fade-in">
       <PageHeader
         title="Тестирование"
         subtitle="Ответьте на все вопросы и завершите тест"

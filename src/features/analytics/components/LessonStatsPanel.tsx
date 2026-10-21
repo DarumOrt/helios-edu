@@ -21,7 +21,7 @@ export function LessonStatsPanel({ activityId, title }: { activityId: string; ti
   const { data, error, isLoading } = useSWR<LessonStatsResponse>(
     `/api/analytics/lesson/${activityId}`,
     fetcher,
-    { refreshInterval: 5000 }
+    { refreshInterval: 5000 },
   );
   const [openUser, setOpenUser] = useState<string | null>(null);
 
@@ -102,13 +102,13 @@ function RowWithDetail({
           </Badge>
         </TD>
         <TD>
-          <div className="flex items-center gap-2 min-w-[120px]">
+          <div className="flex min-w-[120px] items-center gap-2">
             <Progress
               value={row.coverage}
               tone={row.coverage >= 80 ? "success" : "primary"}
               className="flex-1"
             />
-            <span className="text-xs tabular-nums w-9 text-right">{row.coverage}%</span>
+            <span className="w-9 text-right text-xs tabular-nums">{row.coverage}%</span>
           </div>
         </TD>
         <TD className="tabular-nums">{fmtDuration(row.activeTimeSec)}</TD>
@@ -116,15 +116,15 @@ function RowWithDetail({
           {row.totalPages != null
             ? `${row.pagesViewed ?? 0}/${row.totalPages} стр.`
             : row.seeks != null
-            ? `${row.seeks} перемоток`
-            : "—"}
+              ? `${row.seeks} перемоток`
+              : "—"}
         </TD>
         <TD className="text-xs text-muted-foreground">{timeAgo(row.lastAt)}</TD>
         <TD>
           <button
             onClick={onToggle}
             disabled={row.status === "not_started"}
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition"
+            className="text-muted-foreground transition hover:text-foreground disabled:opacity-30"
           >
             <ChevronDown size={16} className={cn("transition-transform", open && "rotate-180")} />
           </button>

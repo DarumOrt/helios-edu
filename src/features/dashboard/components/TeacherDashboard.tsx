@@ -28,12 +28,12 @@ export function TeacherDashboard() {
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
     `/api/hub/leaderboard?courseId=${COURSE}`,
     fetcher,
-    { refreshInterval: 5000 }
+    { refreshInterval: 5000 },
   );
   const { data: cs } = useSWR<{ activities: CourseActivityStat[] }>(
     `/api/analytics/course/${COURSE}`,
     fetcher,
-    { refreshInterval: 5000 }
+    { refreshInterval: 5000 },
   );
 
   const pending = subs?.items ?? [];
@@ -66,14 +66,34 @@ export function TeacherDashboard() {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={ClipboardCheck} tone="bg-warning-soft text-warning" label="На проверке" value={pending.length} />
-        <StatCard icon={Gauge} tone="bg-primary-soft text-primary" label="Средний прогресс группы" value={`${avgProgress}%`} />
-        <StatCard icon={Users} tone="bg-success-soft text-success" label="Приступили" value={`${active}/${entries.length}`} />
-        <StatCard icon={AlertTriangle} tone="bg-danger-soft text-danger" label="Отстают" value={lagging.length} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          icon={ClipboardCheck}
+          tone="bg-warning-soft text-warning"
+          label="На проверке"
+          value={pending.length}
+        />
+        <StatCard
+          icon={Gauge}
+          tone="bg-primary-soft text-primary"
+          label="Средний прогресс группы"
+          value={`${avgProgress}%`}
+        />
+        <StatCard
+          icon={Users}
+          tone="bg-success-soft text-success"
+          label="Приступили"
+          value={`${active}/${entries.length}`}
+        />
+        <StatCard
+          icon={AlertTriangle}
+          tone="bg-danger-soft text-danger"
+          label="Отстают"
+          value={lagging.length}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Очередь проверки */}
         <Widget
           title="Требует проверки"
@@ -91,14 +111,14 @@ export function TeacherDashboard() {
                 <li key={s.id}>
                   <Link
                     href="/submissions"
-                    className="flex items-center gap-3 p-2 -mx-2 rounded-md hover:bg-muted/60 transition"
+                    className="-mx-2 flex items-center gap-3 rounded-md p-2 transition hover:bg-muted/60"
                   >
                     <Avatar name={s.userName} size={32} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{s.userName}</div>
-                      <div className="text-[11px] text-muted-foreground truncate">{s.assignmentTitle}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{s.userName}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">{s.assignmentTitle}</div>
                     </div>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
+                    <span className="shrink-0 text-[10px] text-muted-foreground">
                       {formatDateTime(s.submittedAt)}
                     </span>
                   </Link>
@@ -124,8 +144,8 @@ export function TeacherDashboard() {
               {lagging.slice(0, 5).map((e) => (
                 <li key={e.userId} className="flex items-center gap-3">
                   <Avatar name={e.userName} size={32} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{e.userName}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{e.userName}</div>
                     <Progress value={e.avgCoverage} tone="warning" className="mt-1" />
                   </div>
                   <Badge tone={e.avgCoverage < 30 ? "danger" : "warning"}>{e.avgCoverage}%</Badge>
@@ -144,7 +164,10 @@ export function TeacherDashboard() {
         subtitle="Математический анализ · средн. покрытие по каждому материалу"
         icon={BarChart3}
         action={
-          <Link href={`/courses/${COURSE}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+          <Link
+            href={`/courses/${COURSE}`}
+            className="flex items-center gap-1 text-xs text-primary hover:underline"
+          >
             Детально <ChevronRight size={13} />
           </Link>
         }
@@ -153,7 +176,7 @@ export function TeacherDashboard() {
           <div className="space-y-3">
             {cs?.activities.map((a) => (
               <div key={a.activityId} className="flex items-center gap-3">
-                <div className="w-48 shrink-0 text-sm truncate">{a.title}</div>
+                <div className="w-48 shrink-0 truncate text-sm">{a.title}</div>
                 <Progress
                   value={a.avgCoverage}
                   tone={a.avgCoverage >= 70 ? "success" : "primary"}
@@ -186,14 +209,14 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <Card className="p-4 hover:shadow-elevate transition">
+    <Card className="p-4 transition hover:shadow-elevate">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tone}`}>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={18} />
         </div>
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-xl font-semibold leading-tight">{value}</div>
+          <div className="truncate text-xs text-muted-foreground">{label}</div>
+          <div className="text-xl leading-tight font-semibold">{value}</div>
         </div>
       </div>
     </Card>

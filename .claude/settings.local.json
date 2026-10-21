@@ -8,7 +8,13 @@
       "PowerShell($dst = \"D:\\\\IT\\\\HeliosEDU\\\\public\\\\media\"; New-Item -ItemType Directory -Force -Path $dst | Out-Null; Copy-Item \"E:\\\\ПТПИТ\\\\МАТАНАЛИЗ\\\\videoplayback \\(1\\).mp4\" -Destination \"$dst\\\\lesson-matan.mp4\" -Force; Get-ChildItem $dst | Select-Object Name, @{n='MB';e={[math]::Round\\($_.Length/1MB,1\\)}})",
       "PowerShell(cd D:\\\\IT\\\\HeliosEDU; npx tsc --noEmit 2>&1 | Select-Object -First 40; \"EXIT=$LASTEXITCODE\")",
       "PowerShell(cd D:\\\\IT\\\\HeliosEDU; $env:PORT=3000; npm run dev)",
-      "PowerShell($ok=$false; for\\($i=0;$i -lt 30;$i++\\){ try { $r=Invoke-WebRequest \"http://localhost:3001/api/courses\" -UseBasicParsing -TimeoutSec 3; if\\($r.StatusCode -eq 200\\){ \"READY\"; $ok=$true; break } } catch { Start-Sleep -Seconds 2 } }; if\\(-not $ok\\){\"NOT_READY\"})"
+      "PowerShell($ok=$false; for\\($i=0;$i -lt 30;$i++\\){ try { $r=Invoke-WebRequest \"http://localhost:3001/api/courses\" -UseBasicParsing -TimeoutSec 3; if\\($r.StatusCode -eq 200\\){ \"READY\"; $ok=$true; break } } catch { Start-Sleep -Seconds 2 } }; if\\(-not $ok\\){\"NOT_READY\"})",
+      "Bash(mkdir -p \"/c/Users/Ivan/zapiska-build\")",
+      "Read(//c/Users/Ivan/**)",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(node -e \"require\\('docx'\\); console.log\\('docx OK'\\)\")",
+      "Bash(npm -v)"
     ]
   }
 }

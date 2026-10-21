@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
     role === "student" ? `/api/hub/leaderboard?courseId=c-matan&userId=${user.id}` : null,
-    fetcher
+    fetcher,
   );
   const me = lb?.entries?.find((e) => e.isCurrentUser);
 
@@ -25,12 +25,12 @@ export default function ProfilePage() {
     <div className="animate-fade-in">
       <PageHeader title="Профиль" subtitle="Учётная запись и информация" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* карточка пользователя */}
         <Card className="overflow-hidden">
-          <div className={`h-20 bg-gradient-to-br ${meta.gradient}`} />
+          <div className={`h-20 bg-linear-to-br ${meta.gradient}`} />
           <CardBody className="-mt-12">
-            <div className="ring-4 ring-card rounded-full w-fit">
+            <div className="w-fit rounded-full ring-4 ring-card">
               <Avatar name={user.name} size={72} />
             </div>
             <h2 className="mt-3 text-lg font-semibold">{user.name}</h2>
@@ -57,11 +57,15 @@ export default function ProfilePage() {
         </Card>
 
         {/* контекст роли */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           {role === "student" && (
             <>
               <Card>
-                <CardHeader title="Моя вовлечённость" subtitle="Математический анализ" icon={<Trophy size={18} />} />
+                <CardHeader
+                  title="Моя вовлечённость"
+                  subtitle="Математический анализ"
+                  icon={<Trophy size={18} />}
+                />
                 <CardBody>
                   {me ? (
                     <div className="grid grid-cols-3 gap-4">
@@ -70,7 +74,9 @@ export default function ProfilePage() {
                       <Stat label="Покрытие" value={`${me.avgCoverage}%`} />
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Начните изучать материалы, чтобы появилась статистика.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Начните изучать материалы, чтобы появилась статистика.
+                    </p>
                   )}
                 </CardBody>
               </Card>
@@ -82,7 +88,9 @@ export default function ProfilePage() {
                       <li key={c.id} className="flex items-center gap-3">
                         <span className="flex-1 text-sm">{c.title}</span>
                         <Progress value={c.progress ?? 0} className="w-28" />
-                        <span className="text-xs text-muted-foreground w-9 text-right">{c.progress ?? 0}%</span>
+                        <span className="w-9 text-right text-xs text-muted-foreground">
+                          {c.progress ?? 0}%
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -99,13 +107,23 @@ export default function ProfilePage() {
                 icon={<Shield size={18} />}
               />
               <CardBody>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
+                <ul className="grid grid-cols-1 gap-2.5 text-sm sm:grid-cols-2">
                   {(role === "tutor"
-                    ? ["Проверка работ группы М1217", "Аналитика изучения материалов", "Журнал оценок", "Ведение курсов"]
-                    : ["Управление курсами и программами", "Пользователи и группы", "Аналитика по платформе", "Настройки системы"]
+                    ? [
+                        "Проверка работ группы М1217",
+                        "Аналитика изучения материалов",
+                        "Журнал оценок",
+                        "Ведение курсов",
+                      ]
+                    : [
+                        "Управление курсами и программами",
+                        "Пользователи и группы",
+                        "Аналитика по платформе",
+                        "Настройки системы",
+                      ]
                   ).map((t) => (
                     <li key={t} className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
-                      <span className={`w-1.5 h-1.5 rounded-full bg-current ${meta.accentText}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full bg-current ${meta.accentText}`} />
                       {t}
                     </li>
                   ))}
@@ -123,7 +141,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border bg-muted/30 px-4 py-3 text-center">
       <div className="text-2xl font-bold tabular-nums">{value}</div>
-      <div className="text-[11px] text-muted-foreground mt-0.5">{label}</div>
+      <div className="mt-0.5 text-[11px] text-muted-foreground">{label}</div>
     </div>
   );
 }

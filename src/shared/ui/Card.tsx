@@ -4,10 +4,7 @@ import { cn } from "@/shared/lib/utils";
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "bg-card text-card-foreground border rounded-xl shadow-soft transition",
-        className
-      )}
+      className={cn("rounded-xl border bg-card text-card-foreground shadow-soft transition", className)}
       {...rest}
     />
   );
@@ -27,16 +24,16 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-start justify-between p-5 border-b", className)}>
+    <div className={cn("flex items-start justify-between border-b p-5", className)}>
       <div className="flex items-center gap-3">
         {icon && (
-          <div className="w-9 h-9 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
             {icon}
           </div>
         )}
         <div>
-          <h3 className="font-semibold text-foreground leading-tight">{title}</h3>
-          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+          <h3 className="leading-tight font-semibold text-foreground">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
       {action}
@@ -49,5 +46,5 @@ export function CardBody({ className, ...rest }: HTMLAttributes<HTMLDivElement>)
 }
 
 export function CardFooter({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-5 py-3 border-t bg-muted/30 rounded-b-xl", className)} {...rest} />;
+  return <div className={cn("rounded-b-xl border-t bg-muted/30 px-5 py-3", className)} {...rest} />;
 }

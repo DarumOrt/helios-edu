@@ -53,6 +53,6 @@ export const useSessionStore = create<SessionState>()(
       user: usersByRole.student,
       setRole: (role) => set({ role, user: usersByRole[role] }),
     }),
-    { name: "helios-session" }
-  )
+    { name: "helios-session" },
+  ),
 );

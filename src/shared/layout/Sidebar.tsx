@@ -17,30 +17,30 @@ export function Sidebar() {
   const admin = items.filter((i) => i.group === "admin");
 
   return (
-    <aside className="w-64 shrink-0 border-r bg-card/60 glass h-screen sticky top-0 flex flex-col">
-      <div className="px-5 py-5 border-b">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r bg-card/60 glass">
+      <div className="border-b px-5 py-5">
         <div className="flex items-center gap-2">
-          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${meta.gradient} text-white flex items-center justify-center shadow-soft`}>
+          <div
+            className={`h-9 w-9 rounded-lg bg-linear-to-br ${meta.gradient} flex items-center justify-center text-white shadow-soft`}
+          >
             <Sparkles size={18} />
           </div>
           <div>
-            <div className="font-semibold leading-tight">HeliosEDU</div>
+            <div className="leading-tight font-semibold">HeliosEDU</div>
             <div className="text-[11px] text-muted-foreground">ПНИПУ · ИНЭК</div>
           </div>
         </div>
-        <div className={`mt-3 text-[11px] font-medium uppercase tracking-wider ${meta.accentText}`}>
+        <div className={`mt-3 text-[11px] font-medium tracking-wider uppercase ${meta.accentText}`}>
           {meta.workspace}
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
         <NavGroup label="Основное" items={main} pathname={pathname} />
         {admin.length > 0 && <NavGroup label="Администрирование" items={admin} pathname={pathname} />}
       </nav>
 
-      <div className="px-5 py-3 border-t text-[11px] text-muted-foreground">
-        v0.1 · mockup
-      </div>
+      <div className="border-t px-5 py-3 text-[11px] text-muted-foreground">v0.1 · mockup</div>
     </aside>
   );
 }
@@ -56,7 +56,7 @@ function NavGroup({
 }) {
   return (
     <div>
-      <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+      <div className="mb-1.5 px-3 text-[10px] font-semibold tracking-wider text-muted-foreground/70 uppercase">
         {label}
       </div>
       <ul className="space-y-0.5">
@@ -68,17 +68,17 @@ function NavGroup({
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm rounded-md transition group",
+                  "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition",
                   active
                     ? "bg-primary text-primary-foreground shadow-soft"
-                    : "text-foreground/80 hover:bg-muted"
+                    : "text-foreground/80 hover:bg-muted",
                 )}
               >
                 <Icon
                   size={16}
                   className={cn(
                     "shrink-0",
-                    active ? "" : "text-muted-foreground group-hover:text-foreground"
+                    active ? "" : "text-muted-foreground group-hover:text-foreground",
                   )}
                 />
                 <span className="flex-1 truncate">{item.label}</span>

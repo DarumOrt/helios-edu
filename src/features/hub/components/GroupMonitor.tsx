@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { Users, Gauge, AlertTriangle, CircleDashed, CheckCircle2 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { Card, CardBody, DataState, Table, THead, TR, TH, TD, Avatar, Badge, Progress } from "@/shared/ui";
+import { Card, DataState, Table, THead, TR, TH, TD, Avatar, Badge, Progress } from "@/shared/ui";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
 
 interface Resp {
@@ -11,11 +11,9 @@ interface Resp {
 }
 
 export function GroupMonitor({ courseId }: { courseId: string }) {
-  const { data, error, isLoading } = useSWR<Resp>(
-    `/api/hub/leaderboard?courseId=${courseId}`,
-    fetcher,
-    { refreshInterval: 5000 }
-  );
+  const { data, error, isLoading } = useSWR<Resp>(`/api/hub/leaderboard?courseId=${courseId}`, fetcher, {
+    refreshInterval: 5000,
+  });
 
   const entries = data?.entries ?? [];
   const total = entries.length;
@@ -30,21 +28,27 @@ export function GroupMonitor({ courseId }: { courseId: string }) {
   function risk(e: LeaderboardEntry) {
     if (e.avgCoverage === 0) return { label: "не начал", tone: "danger" as const, icon: CircleDashed };
     if (e.avgCoverage < 50) return { label: "отстаёт", tone: "warning" as const, icon: AlertTriangle };
-    if (e.materialsCompleted === e.materialsTotal) return { label: "всё изучил", tone: "success" as const, icon: CheckCircle2 };
+    if (e.materialsCompleted === e.materialsTotal)
+      return { label: "всё изучил", tone: "success" as const, icon: CheckCircle2 };
     return { label: "в норме", tone: "info" as const, icon: Gauge };
   }
 
   return (
     <DataState loading={isLoading} error={error} empty={!entries.length}>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Mini icon={Gauge} tone="bg-primary-soft text-primary" label="Средний прогресс" value={`${avg}%`} />
-        <Mini icon={CheckCircle2} tone="bg-success-soft text-success" label="Прошли всё" value={`${done}/${total}`} />
+        <Mini
+          icon={CheckCircle2}
+          tone="bg-success-soft text-success"
+          label="Прошли всё"
+          value={`${done}/${total}`}
+        />
         <Mini icon={AlertTriangle} tone="bg-warning-soft text-warning" label="Отстают" value={lagging} />
         <Mini icon={CircleDashed} tone="bg-danger-soft text-danger" label="Не начали" value={notStarted} />
       </div>
 
       <Card className="overflow-hidden">
-        <div className="px-4 py-2.5 border-b flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 border-b px-4 py-2.5 text-sm">
           <Users size={15} className="text-muted-foreground" />
           <span className="font-medium">Группа М1217</span>
           <span className="text-xs text-muted-foreground">— сначала те, кому нужна помощь</span>
@@ -72,13 +76,13 @@ export function GroupMonitor({ courseId }: { courseId: string }) {
                     </div>
                   </TD>
                   <TD>
-                    <div className="flex items-center gap-2 min-w-[140px]">
+                    <div className="flex min-w-[140px] items-center gap-2">
                       <Progress
                         value={e.avgCoverage}
                         tone={e.avgCoverage >= 70 ? "success" : e.avgCoverage >= 40 ? "primary" : "warning"}
                         className="flex-1"
                       />
-                      <span className="text-xs tabular-nums w-9 text-right">{e.avgCoverage}%</span>
+                      <span className="w-9 text-right text-xs tabular-nums">{e.avgCoverage}%</span>
                     </div>
                   </TD>
                   <TD className="tabular-nums">
@@ -121,12 +125,12 @@ function Mini({
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tone}`}>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={18} />
         </div>
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-xl font-semibold leading-tight">{value}</div>
+          <div className="truncate text-xs text-muted-foreground">{label}</div>
+          <div className="text-xl leading-tight font-semibold">{value}</div>
         </div>
       </div>
     </Card>

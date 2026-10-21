@@ -48,7 +48,7 @@ function TeacherGradebook({ editable }: { editable: boolean }) {
         }
       />
       <DataState loading={isLoading} error={error} empty={!courses?.length}>
-        <div className="flex items-center gap-3 mb-5">
+        <div className="mb-5 flex items-center gap-3">
           <label className="text-sm text-muted-foreground">Курс:</label>
           <Select value={selected} onChange={(e) => setCourseId(e.target.value)} className="min-w-[320px]">
             {courses?.map((c) => (

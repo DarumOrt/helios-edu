@@ -24,15 +24,7 @@ interface LiveStats {
   position: number;
 }
 
-export function VideoPlayer({
-  activityId,
-  src,
-  title,
-}: {
-  activityId: string;
-  src: string;
-  title: string;
-}) {
+export function VideoPlayer({ activityId, src, title }: { activityId: string; src: string; title: string }) {
   const user = useSessionStore((s) => s.user);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -59,8 +51,9 @@ export function VideoPlayer({
 
   // открытие
   useEffect(() => {
+    const sessionId = sessionRef.current;
     tracker.event({
-      sessionId: sessionRef.current,
+      sessionId,
       userId: user.id,
       activityId,
       activityType: "video",
@@ -69,7 +62,7 @@ export function VideoPlayer({
     return () => {
       sendProgress(true);
       tracker.event({
-        sessionId: sessionRef.current,
+        sessionId,
         userId: user.id,
         activityId,
         activityType: "video",
@@ -107,7 +100,7 @@ export function VideoPlayer({
         durationSec: v?.duration ?? 0,
         ts: Date.now(),
       },
-      useBeacon
+      useBeacon,
     );
   }
 
@@ -169,7 +162,11 @@ export function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ev = (verb: "played" | "paused" | "seeked" | "ratechanged", position?: number, payload?: Record<string, unknown>) =>
+  const ev = (
+    verb: "played" | "paused" | "seeked" | "ratechanged",
+    position?: number,
+    payload?: Record<string, unknown>,
+  ) =>
     tracker.event({
       sessionId: sessionRef.current,
       userId: user.id,
@@ -181,14 +178,14 @@ export function VideoPlayer({
     });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <Card className="overflow-hidden">
           <video
             ref={videoRef}
             src={src}
             controls
-            className="w-full bg-black aspect-video"
+            className="aspect-video w-full bg-black"
             onPlay={(e) => ev("played", e.currentTarget.currentTime)}
             onPause={(e) => {
               if (e.currentTarget.ended) return;
@@ -226,12 +223,12 @@ export function VideoPlayer({
           </div>
 
           <div>
-            <div className="flex items-center justify-between text-xs mb-1.5">
+            <div className="mb-1.5 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Покрытие материала</span>
               <span className="font-semibold tabular-nums">{stats.coverage}%</span>
             </div>
             <Progress value={stats.coverage} tone={stats.completed ? "success" : "primary"} />
-            <div className="text-[10px] text-muted-foreground mt-1">
+            <div className="mt-1 text-[10px] text-muted-foreground">
               засчитывается только просмотр с активной вкладкой, перемотка не считается
             </div>
           </div>
@@ -243,15 +240,13 @@ export function VideoPlayer({
             <Metric icon={Pause} label="Пауз" value={String(stats.pauses)} />
           </div>
 
-          <div className="flex items-center gap-2 pt-2 border-t text-xs">
+          <div className="flex items-center gap-2 border-t pt-2 text-xs">
             {stats.completed ? (
-              <span className="flex items-center gap-1.5 text-success font-medium">
+              <span className="flex items-center gap-1.5 font-medium text-success">
                 <CheckCircle2 size={14} /> Материал изучен
               </span>
             ) : (
-              <span className="text-muted-foreground">
-                Досмотрите до {COMPLETE_AT}% покрытия для зачёта
-              </span>
+              <span className="text-muted-foreground">Досмотрите до {COMPLETE_AT}% покрытия для зачёта</span>
             )}
           </div>
         </CardBody>
@@ -260,22 +255,14 @@ export function VideoPlayer({
   );
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Eye;
-  label: string;
-  value: string;
-}) {
+function Metric({ icon: Icon, label, value }: { icon: typeof Eye; label: string; value: string }) {
   return (
     <div className="rounded-md border bg-muted/30 px-3 py-2">
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <Icon size={11} />
         {label}
       </div>
-      <div className="text-sm font-semibold tabular-nums mt-0.5">{value}</div>
+      <div className="mt-0.5 text-sm font-semibold tabular-nums">{value}</div>
     </div>
   );
 }

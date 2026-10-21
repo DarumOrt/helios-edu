@@ -11,7 +11,7 @@ export default function AssignmentPage({
 }) {
   const { courseId, activityId } = use(params);
   return (
-    <div className="animate-fade-in max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl animate-fade-in">
       <PageHeader
         title="Задание"
         subtitle="Загрузите работу для проверки"

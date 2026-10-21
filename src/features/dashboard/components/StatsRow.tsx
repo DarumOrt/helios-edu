@@ -40,18 +40,18 @@ export function StatsRow() {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {stats.map((s) => {
         const Icon = s.icon;
         return (
-          <Card key={s.label} className="p-4 hover:shadow-elevate transition">
+          <Card key={s.label} className="p-4 transition hover:shadow-elevate">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${toneClasses[s.tone]}`}>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${toneClasses[s.tone]}`}>
                 <Icon size={18} />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">{s.label}</div>
-                <div className="text-xl font-semibold leading-tight">{s.value}</div>
+                <div className="text-xl leading-tight font-semibold">{s.value}</div>
               </div>
             </div>
           </Card>

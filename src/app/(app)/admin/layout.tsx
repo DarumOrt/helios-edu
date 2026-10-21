@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="animate-fade-in">
-      <div className="flex gap-1 border-b mb-6">
+      <div className="mb-6 flex gap-1 border-b">
         {tabs.map((t) => {
           const active = pathname === t.href;
           return (
@@ -37,10 +37,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               key={t.href}
               href={t.href}
               className={cn(
-                "px-4 py-2 text-sm border-b-2 -mb-px transition",
+                "-mb-px border-b-2 px-4 py-2 text-sm transition",
                 active
-                  ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "border-primary font-medium text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               {t.label}

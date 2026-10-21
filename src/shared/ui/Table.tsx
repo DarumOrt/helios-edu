@@ -11,14 +11,16 @@ export function Table({ className, ...rest }: HTMLAttributes<HTMLTableElement>) 
 
 export function THead({ children }: { children: React.ReactNode }) {
   return (
-    <thead className="bg-muted/50 text-muted-foreground text-left text-xs uppercase tracking-wider">
+    <thead className="bg-muted/50 text-left text-xs tracking-wider text-muted-foreground uppercase">
       {children}
     </thead>
   );
 }
 
 export function TR({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <tr className={cn("border-b last:border-b-0 hover:bg-muted/30 transition", className)}>{children}</tr>;
+  return (
+    <tr className={cn("border-b transition last:border-b-0 hover:bg-muted/30", className)}>{children}</tr>
+  );
 }
 
 export function TH({ children }: { children?: React.ReactNode }) {

@@ -28,15 +28,13 @@ export function SubmissionForm({ assignmentId }: { assignmentId: string }) {
   if (submitted) {
     return (
       <Card className="overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-success to-emerald-400" />
-        <CardBody className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-success-soft text-success mx-auto flex items-center justify-center">
+        <div className="h-1 bg-linear-to-r from-success to-emerald-400" />
+        <CardBody className="py-12 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success">
             <CheckCircle2 size={28} />
           </div>
           <h3 className="mt-4 text-lg font-semibold">Работа отправлена</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Преподаватель проверит её в ближайшее время
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Преподаватель проверит её в ближайшее время</p>
         </CardBody>
       </Card>
     );
@@ -46,7 +44,7 @@ export function SubmissionForm({ assignmentId }: { assignmentId: string }) {
     <Card>
       <CardBody className="space-y-5">
         <div>
-          <label className="text-sm font-medium block mb-1.5">Текст ответа</label>
+          <label className="mb-1.5 block text-sm font-medium">Текст ответа</label>
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -56,8 +54,8 @@ export function SubmissionForm({ assignmentId }: { assignmentId: string }) {
         </div>
 
         <div>
-          <label className="text-sm font-medium block mb-1.5">Файл (опционально)</label>
-          <label className="flex items-center gap-3 px-4 py-6 rounded-md border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary-soft/40 transition cursor-pointer">
+          <label className="mb-1.5 block text-sm font-medium">Файл (опционально)</label>
+          <label className="flex cursor-pointer items-center gap-3 rounded-md border-2 border-dashed border-border px-4 py-6 transition hover:border-primary/50 hover:bg-primary-soft/40">
             <Upload size={18} className="text-muted-foreground" />
             <div className="flex-1">
               <div className="text-sm font-medium">
@@ -65,11 +63,7 @@ export function SubmissionForm({ assignmentId }: { assignmentId: string }) {
               </div>
               <div className="text-xs text-muted-foreground">PDF, DOCX, ZIP — до 50 МБ</div>
             </div>
-            <input
-              type="file"
-              className="sr-only"
-              onChange={(e) => setFileName(e.target.files?.[0]?.name)}
-            />
+            <input type="file" className="sr-only" onChange={(e) => setFileName(e.target.files?.[0]?.name)} />
           </label>
         </div>
 

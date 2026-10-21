@@ -32,7 +32,12 @@ export function getCourseGrades(courseId: string): GradeRow[] {
   return store.byCourse[courseId] ?? [];
 }
 
-export function setGrade(courseId: string, userId: string, itemId: string, grade: number | null): GradeRow | null {
+export function setGrade(
+  courseId: string,
+  userId: string,
+  itemId: string,
+  grade: number | null,
+): GradeRow | null {
   seed();
   const rows = store.byCourse[courseId];
   if (!rows) return null;

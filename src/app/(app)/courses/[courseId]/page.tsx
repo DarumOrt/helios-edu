@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import useSWR from "swr";
 import { Users, BookOpen, ListTree, BarChart3 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, DataState, Card, CardBody, Badge, Progress, Breadcrumbs } from "@/shared/ui";
+import { PageHeader, DataState, Card, CardBody, Progress, Breadcrumbs } from "@/shared/ui";
 import { CourseSection } from "@/features/courses/components/CourseSection";
 import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
 import { gradientFor, cn } from "@/shared/lib/utils";
@@ -27,18 +27,16 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               title={course.title}
               subtitle={`${course.code} · ${course.category}`}
               breadcrumbs={
-                <Breadcrumbs
-                  items={[{ label: "Курсы", href: "/courses" }, { label: course.title }]}
-                />
+                <Breadcrumbs items={[{ label: "Курсы", href: "/courses" }, { label: course.title }]} />
               }
             />
 
             <Card className="mb-6 overflow-hidden">
-              <div className={`h-2 bg-gradient-to-r ${gradientFor(course.id)}`} />
-              <CardBody className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className={`h-2 bg-linear-to-r ${gradientFor(course.id)}`} />
+              <CardBody className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
                   <p className="text-sm text-foreground/80">{course.description}</p>
-                  <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                  <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Users size={13} /> {course.enrolled} участников
                     </span>
@@ -49,7 +47,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 </div>
                 {course.progress != null && (
                   <div className="md:border-l md:pl-5">
-                    <div className="text-xs text-muted-foreground mb-1.5">
+                    <div className="mb-1.5 text-xs text-muted-foreground">
                       {canSeeStats ? "Средний прогресс группы" : "Ваш прогресс"}
                     </div>
                     <div className="flex items-baseline gap-2">
@@ -66,7 +64,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             </Card>
 
             {/* Табы */}
-            <div className="flex gap-1 border-b mb-5">
+            <div className="mb-5 flex gap-1 border-b">
               <Tab active={tab === "content"} onClick={() => setTab("content")} icon={ListTree}>
                 Содержание
               </Tab>
@@ -108,10 +106,10 @@ function Tab({
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-4 py-2 text-sm border-b-2 -mb-px transition",
+        "-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm transition",
         active
-          ? "border-primary text-primary font-medium"
-          : "border-transparent text-muted-foreground hover:text-foreground"
+          ? "border-primary font-medium text-primary"
+          : "border-transparent text-muted-foreground hover:text-foreground",
       )}
     >
       <Icon size={15} />

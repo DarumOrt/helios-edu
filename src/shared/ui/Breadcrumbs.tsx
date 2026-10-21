@@ -14,11 +14,11 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
           <li key={i} className="flex items-center gap-1.5">
             {i > 0 && <ChevronRight size={12} className="opacity-40" />}
             {c.href ? (
-              <Link href={c.href} className="hover:text-foreground transition">
+              <Link href={c.href} className="transition hover:text-foreground">
                 {c.label}
               </Link>
             ) : (
-              <span className="text-foreground font-medium">{c.label}</span>
+              <span className="font-medium text-foreground">{c.label}</span>
             )}
           </li>
         ))}

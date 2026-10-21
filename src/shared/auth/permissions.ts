@@ -55,8 +55,18 @@ export interface NavItem {
 // Навигация собирается под конкретную роль — наборы и подписи отличаются.
 export function navForRole(role: Role): NavItem[] {
   const items: NavItem[] = [];
-  const M = (href: string, label: string, icon: LucideIcon): NavItem => ({ href, label, icon, group: "main" });
-  const A = (href: string, label: string, icon: LucideIcon): NavItem => ({ href, label, icon, group: "admin" });
+  const M = (href: string, label: string, icon: LucideIcon): NavItem => ({
+    href,
+    label,
+    icon,
+    group: "main",
+  });
+  const A = (href: string, label: string, icon: LucideIcon): NavItem => ({
+    href,
+    label,
+    icon,
+    group: "admin",
+  });
 
   // Дашборд — у всех
   items.push(M("/dashboard", "Дашборд", LayoutDashboard));

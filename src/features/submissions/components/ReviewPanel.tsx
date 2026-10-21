@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { Star, FileText, Send } from "lucide-react";
@@ -10,20 +10,16 @@ import { submissionsApi, type SubmissionFull } from "../api";
 
 export function ReviewPanel({ submission }: { submission: SubmissionFull | null }) {
   const { mutate } = useSWRConfig();
-  const [grade, setGrade] = useState<string>("");
-  const [feedback, setFeedback] = useState<string>("");
+  // форма сбрасывается через key у родителя, без синхронизирующего useEffect
+  const [grade, setGrade] = useState<string>(submission?.grade != null ? String(submission.grade) : "");
+  const [feedback, setFeedback] = useState<string>(submission?.feedback ?? "");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setGrade(submission?.grade != null ? String(submission.grade) : "");
-    setFeedback(submission?.feedback ?? "");
-  }, [submission?.id, submission?.grade, submission?.feedback]);
 
   if (!submission) {
     return (
       <Card className="h-full">
-        <CardBody className="h-full flex flex-col items-center justify-center text-center py-16">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-3">
+        <CardBody className="flex h-full flex-col items-center justify-center py-16 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <FileText size={22} />
           </div>
           <p className="text-sm text-muted-foreground">Выберите работу слева, чтобы проверить</p>
@@ -76,7 +72,7 @@ export function ReviewPanel({ submission }: { submission: SubmissionFull | null 
         </div>
 
         <div>
-          <div className="text-xs font-medium text-muted-foreground mb-1.5">Ответ студента</div>
+          <div className="mb-1.5 text-xs font-medium text-muted-foreground">Ответ студента</div>
           <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm whitespace-pre-wrap">
             {submission.text || "—"}
           </div>
@@ -87,9 +83,9 @@ export function ReviewPanel({ submission }: { submission: SubmissionFull | null 
           )}
         </div>
 
-        <div className="grid grid-cols-[120px_1fr] gap-3 items-start">
+        <div className="grid grid-cols-[120px_1fr] items-start gap-3">
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
               Оценка (0–{submission.maxGrade})
             </label>
             <Input
@@ -102,9 +98,7 @@ export function ReviewPanel({ submission }: { submission: SubmissionFull | null 
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-              Комментарий
-            </label>
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Комментарий</label>
             <Textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
@@ -117,7 +111,11 @@ export function ReviewPanel({ submission }: { submission: SubmissionFull | null 
         <div className="flex justify-end">
           <Button onClick={save} disabled={saving}>
             <Send size={15} />
-            {saving ? "Сохранение…" : submission.status === "reviewed" ? "Обновить оценку" : "Выставить оценку"}
+            {saving
+              ? "Сохранение…"
+              : submission.status === "reviewed"
+                ? "Обновить оценку"
+                : "Выставить оценку"}
           </Button>
         </div>
       </CardBody>
