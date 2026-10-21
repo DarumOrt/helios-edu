@@ -1,0 +1,1694 @@
+<title>Брендкод EDU</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap"
+/>
+<style>
+  /* Layout: брендбук одной колонкой ~1000px; каждый раздел — лист с номером, рядом живые образцы */
+  :root {
+    --paper: #f3f7fc;
+    --surface: #ffffff;
+    --sunken: #eaf0f8;
+    --line: #dfe7f1;
+    --grid: #e6edf6;
+    --ink: #14213d;
+    --ink-2: #56657e;
+    --primary: #1d66cc;
+    --on-primary: #ffffff;
+    --primary-soft: #e3eefc;
+    --sun: #ffc53d;
+    --sun-soft: #fff3d1;
+    --marker: #ffe27a;
+    --success: #1e7a50;
+    --success-soft: #dff3e8;
+    --warning: #9a5600;
+    --warning-soft: #fdefd6;
+    --danger: #b8302a;
+    --danger-soft: #fce5e3;
+    --shadow-card: 0 1px 2px rgb(20 33 61 / 0.04), 0 6px 20px -10px rgb(20 33 61 / 0.1);
+    --font-ui: "Golos Text", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --font-read: "Literata", Georgia, "Times New Roman", serif;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0f1522;
+      --surface: #161e2e;
+      --sunken: #0b101b;
+      --line: #243049;
+      --grid: #192235;
+      --ink: #e6ecf5;
+      --ink-2: #9aa8be;
+      --primary: #6fa8f5;
+      --on-primary: #0f1522;
+      --primary-soft: #16284a;
+      --sun: #ffc53d;
+      --sun-soft: #3a2e10;
+      --marker: #e9c64a;
+      --success: #5cc992;
+      --success-soft: #12291e;
+      --warning: #f0b055;
+      --warning-soft: #33260f;
+      --danger: #f2827b;
+      --danger-soft: #3a1c1a;
+      --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0f1522;
+    --surface: #161e2e;
+    --sunken: #0b101b;
+    --line: #243049;
+    --grid: #192235;
+    --ink: #e6ecf5;
+    --ink-2: #9aa8be;
+    --primary: #6fa8f5;
+    --on-primary: #0f1522;
+    --primary-soft: #16284a;
+    --sun: #ffc53d;
+    --sun-soft: #3a2e10;
+    --marker: #e9c64a;
+    --success: #5cc992;
+    --success-soft: #12291e;
+    --warning: #f0b055;
+    --warning-soft: #33260f;
+    --danger: #f2827b;
+    --danger-soft: #3a1c1a;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 16px/1.6 var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-block: 40px 96px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    gap: 32px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  p {
+    margin: 0;
+    max-width: 66ch;
+  }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--sunken);
+    padding: 1px 6px;
+    border-radius: 6px;
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+  .muted {
+    color: var(--ink-2);
+  }
+  .small {
+    font-size: 14px;
+  }
+
+  .sheet {
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    border-radius: 20px;
+    padding: 36px;
+    display: grid;
+    gap: 22px;
+    min-width: 0;
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .num b {
+    background: var(--marker);
+    color: #161b1f;
+    border-radius: 999px;
+    padding: 1px 9px;
+    font-weight: 600;
+  }
+  .lead {
+    font-size: 18px;
+    color: var(--ink-2);
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .grid3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .box {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    min-width: 0;
+  }
+  .box .cap {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .do,
+  .dont {
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: grid;
+    gap: 6px;
+    font-size: 15px;
+  }
+  .do {
+    background: var(--success-soft);
+  }
+  .dont {
+    background: var(--danger-soft);
+  }
+  .do b {
+    color: var(--success);
+  }
+  .dont b {
+    color: var(--danger);
+  }
+  ul.clean {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 4px;
+  }
+
+  /* ---- Обложка брендкода: живое приветствие ---- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    min-height: 300px;
+    transition: background 600ms ease;
+  }
+  .hero svg.scene {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .hero .content {
+    position: relative;
+    padding: 36px 36px 48px;
+    max-width: 560px;
+    display: grid;
+    gap: 12px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 800;
+    line-height: 1.02;
+  }
+  .hero .date {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    opacity: 0.75;
+  }
+  .hero p {
+    font-size: 18px;
+    opacity: 0.85;
+  }
+  .hero.night {
+    color: #fff;
+  }
+  .hero:not(.night) {
+    color: #161b1f;
+  }
+  .parts {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .parts button {
+    font: 500 14px var(--font-ui);
+    border: 1px solid rgba(22, 27, 31, 0.15);
+    background: rgba(255, 255, 255, 0.85);
+    color: #161b1f;
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition:
+      transform 150ms var(--ease-out),
+      background-color 150ms ease;
+  }
+  .parts button:active {
+    transform: scale(0.96);
+  }
+  .parts button[aria-pressed="true"] {
+    background: #161b1f;
+    color: #fff;
+  }
+  .parts button:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  .sun-g {
+    transition: transform 900ms var(--ease-out);
+  }
+  .glow {
+    animation: glow 6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes glow {
+    0%,
+    100% {
+      opacity: 0.18;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.32;
+      transform: scale(1.08);
+    }
+  }
+
+  /* ---- Цвет ---- */
+  .sw {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .sw .chip {
+    height: 72px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .sw .lbl {
+    padding: 10px 12px;
+    display: grid;
+    gap: 2px;
+    border-top: 1px solid var(--line);
+  }
+  .sw .lbl b {
+    font-size: 15px;
+  }
+  .sw .lbl span {
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .sw .lbl code {
+    font-size: 12px;
+    justify-self: start;
+  }
+  .skies {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .sky {
+    height: 96px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: flex-end;
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .ratio {
+    display: flex;
+    height: 18px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .ratio span {
+    display: block;
+  }
+
+  /* ---- Типографика ---- */
+  .spec {
+    display: grid;
+    gap: 0;
+  }
+  .spec .row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .spec .row .meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .spec .row > :last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---- Форма ---- */
+  .radii {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .radii div {
+    width: 84px;
+    height: 84px;
+    background: var(--primary-soft);
+    border: 1.5px solid var(--primary);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .space {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .space div {
+    background: var(--sun);
+    border-radius: 3px;
+  }
+  .space figure {
+    margin: 0;
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+
+  /* ---- Таблицы ---- */
+  .tbl {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+    min-width: 620px;
+  }
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink-2);
+    background: var(--sunken);
+  }
+  tr:last-child td {
+    border-bottom: 0;
+  }
+  td.m {
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Компоненты (живые, как в приложении) ---- */
+  .row-c {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font: 500 14px var(--font-ui);
+    cursor: pointer;
+    transition:
+      transform 150ms var(--ease-out),
+      background-color 150ms ease;
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .btn.secondary {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+  .btn.outline {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--ink);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 1px 9px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .b-n {
+    background: var(--sunken);
+    color: var(--ink-2);
+  }
+  .b-p {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+  .b-s {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+  .b-w {
+    background: var(--warning-soft);
+    color: var(--warning);
+  }
+  .b-d {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+  .b-m {
+    background: var(--marker);
+    color: #161b1f;
+  }
+  .hchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .hchip.sun {
+    background: var(--sun);
+    color: #161b1f;
+    border-color: transparent;
+  }
+  .bar {
+    height: 6px;
+    background: var(--sunken);
+    border-radius: 999px;
+    overflow: hidden;
+    flex: 1 1 140px;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    background: var(--primary);
+    border-radius: 999px;
+    transform-origin: left;
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .facts div {
+    padding: 14px 18px;
+    border-left: 1px solid var(--line);
+    margin-left: -1px;
+  }
+  .facts small {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .facts b {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .next {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    background: var(--surface);
+  }
+  .tpl {
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+  }
+  .tpl svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 500ms var(--ease-out);
+  }
+  .tpl .code {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgb(255 255 255 / 0.95);
+    color: #14213d;
+    font: 500 12px var(--font-mono);
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+  .next canvas,
+  .cover canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 120px;
+    background: var(--sunken);
+  }
+  .next .body {
+    padding: 16px 18px;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .covers {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+  }
+  .cover {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    transition:
+      transform 200ms var(--ease-out),
+      box-shadow 200ms ease;
+  }
+  .cover canvas {
+    height: 112px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cover .lbl {
+    padding: 10px 14px 14px;
+    display: grid;
+    gap: 2px;
+  }
+  .cover .lbl .mono {
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .cover .lbl b {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+  @media (hover: hover) {
+    .cover:hover .tpl svg {
+      transform: scale(1.05);
+    }
+    .cover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px -12px rgb(22 27 31 / 0.25);
+    }
+  }
+  .mark-row {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .mark-tile {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+  }
+  .reading {
+    font-family: var(--font-read);
+    font-size: 18px;
+    line-height: 1.7;
+    max-width: 60ch;
+  }
+  mark {
+    background: var(--marker);
+    color: #161b1f;
+    border-radius: 3px;
+    padding: 0 3px;
+  }
+  pre {
+    margin: 0;
+    background: var(--sunken);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font: 13px/1.6 var(--font-mono);
+  }
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+  .toc a:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  @media (max-width: 600px) {
+    .sheet {
+      padding: 22px 18px;
+      border-radius: 16px;
+    }
+    .hero .content {
+      padding: 24px 20px 40px;
+    }
+    .spec .row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .next {
+      grid-template-columns: 1fr;
+    }
+    .next canvas {
+      min-height: 90px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .glow {
+      animation: none;
+    }
+    .sun-g,
+    .btn,
+    .parts button,
+    .cover,
+    .hero {
+      transition: none;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <section class="hero" id="hero" aria-label="Пример приветствия">
+    <svg
+      class="scene"
+      id="scene"
+      viewBox="0 0 760 300"
+      preserveAspectRatio="xMaxYMax slice"
+      aria-hidden="true"
+    ></svg>
+    <div class="content">
+      <div class="date" id="heroDate">Брендкод · октябрь 2026</div>
+      <h1 id="heroTitle">Брендкод EDU</h1>
+      <p>
+        Как выглядит и звучит HeliosEDU. Сервис, в который студент заходит не потому, что надо, а потому что
+        здесь понятно, тепло и видно собственный прогресс.
+      </p>
+      <div class="parts" role="group" aria-label="Время суток в приветствии">
+        <button type="button" data-part="morning" id="p-morning">Утро</button>
+        <button type="button" data-part="day" id="p-day">День</button>
+        <button type="button" data-part="evening" id="p-evening">Вечер</button>
+        <button type="button" data-part="night" id="p-night">Ночь</button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="toc" aria-label="Разделы">
+    <a href="#character">Характер</a><a href="#voice">Голос</a><a href="#color">Цвет</a
+    ><a href="#type">Шрифты</a><a href="#form">Форма</a><a href="#motion">Движение</a
+    ><a href="#graphics">Графика</a><a href="#components">Компоненты</a><a href="#patterns">Паттерны</a
+    ><a href="#never">Нельзя</a><a href="#tokens">Токены</a>
+  </nav>
+
+  <section class="sheet" id="character">
+    <div class="num"><b>01</b> Характер</div>
+    <h2>Мы не журнал оценок. Мы попутчик в учёбе</h2>
+    <p class="lead">
+      Moodle и «Прометей» построены вокруг администрирования курса. HeliosEDU строится вокруг человека,
+      который учится. Каждое решение в интерфейсе проверяем четырьмя качествами.
+    </p>
+    <div class="grid2">
+      <div class="box">
+        <h3>Тёплый</h3>
+        <p class="small muted">
+          Здороваемся по имени, замечаем время суток, радуемся успехам. Форма мягкая, углы скруглены, цвета
+          спокойные, без больничной белизны.
+        </p>
+      </div>
+      <div class="box">
+        <h3>Живой</h3>
+        <p class="small muted">
+          Интерфейс откликается на действия: кнопка сжимается при нажатии, солнце встаёт при входе в кабинет,
+          прогресс растёт на глазах. Движение всегда что-то сообщает.
+        </p>
+      </div>
+      <div class="box">
+        <h3>Честный</h3>
+        <p class="small muted">
+          Показываем реальную картину: «просрочено», а не красный восклицательный знак; «41 из 100», а не
+          голое «41». Не стыдим за отставание и не прячем его.
+        </p>
+      </div>
+      <div class="box">
+        <h3>Ясный</h3>
+        <p class="small muted">
+          На любом экране сразу видно, что делать дальше. Одно главное действие, остальное ниже. Никаких
+          технических слов вроде «real-time» или «активные записи».
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="voice">
+    <div class="num"><b>02</b> Голос</div>
+    <h2>Говорим как старший однокурсник</h2>
+    <p>
+      На «вы», но без канцелярита. Коротко, по делу, с поддержкой. Сначала главное для человека, потом детали.
+      Цифры всегда со шкалой и единицей.
+    </p>
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th>Так не пишем</th>
+            <th>Так пишем</th>
+            <th>Почему</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Активные записи</td>
+            <td>Мои курсы</td>
+            <td>Название того, что видит человек, а не того, как устроена база</td>
+          </tr>
+          <tr>
+            <td>Нет дедлайнов</td>
+            <td>Сдавать пока нечего</td>
+            <td>Пустое состояние звучит как хорошая новость</td>
+          </tr>
+          <tr>
+            <td>Средний балл 41.0</td>
+            <td>Средний итог 41 / 100</td>
+            <td>Без шкалы число ничего не значит</td>
+          </tr>
+          <tr>
+            <td>Real-time, обновление каждые 30 сек</td>
+            <td><i>(ничего)</i></td>
+            <td>Как работает обновление, человеку знать не нужно</td>
+          </tr>
+          <tr>
+            <td>Продолжите обучение</td>
+            <td>«ИТ в образовании» пройден на 70% — ещё немного, и курс закрыт</td>
+            <td>Конкретный повод вернуться вместо общего призыва</td>
+          </tr>
+          <tr>
+            <td>Не удалось загрузить данные</td>
+            <td>Не удалось загрузить. Обновите страницу — обычно это помогает</td>
+            <td>Ошибка объясняет, что сделать</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid2">
+      <div class="do">
+        <b>Так</b>Хвалим за регулярность: «3 дня подряд». Поддерживаем: «До 6-го места 7 баллов».
+      </div>
+      <div class="dont">
+        <b>Не так</b>Стыдим и сравниваем: «Вы на 7 месте из 8». Восклицательные знаки в каждой фразе.
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="color">
+    <div class="num"><b>03</b> Цвет</div>
+    <h2>«Ясное небо»: синий, белый и солнце Гелиоса</h2>
+    <p>
+      Светлое небо вместо серого фона, белые карточки, ясный синий для действий и тёплое солнце — имя сервиса
+      — для достижений. Цвета работают по ролям: синий отвечает за действия, солнце за успехи, маркер за
+      «сейчас». Все пары текста и фона не ниже 4.5:1.
+    </p>
+    <div class="grid3">
+      <div class="sw">
+        <div class="chip" style="background: var(--paper); color: var(--ink)">14.8:1</div>
+        <div class="lbl"><b>Небо</b><span>Фон страниц</span><code>--background</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--surface); color: var(--ink)"></div>
+        <div class="lbl"><b>Облако</b><span>Карточки, панели</span><code>--card</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--ink); color: var(--paper)"></div>
+        <div class="lbl"><b>Глубина</b><span>Основной текст</span><code>--foreground</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--ink-2); color: var(--surface)">5.9:1</div>
+        <div class="lbl">
+          <b>Дымка</b><span>Вторичный текст, подписи</span><code>--muted-foreground</code>
+        </div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--primary); color: var(--on-primary)">5.5:1</div>
+        <div class="lbl">
+          <b>Ясный синий</b><span>Кнопки, ссылки, прогресс, активный пункт</span><code>--primary</code>
+        </div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--sun); color: #14213d">10.1:1</div>
+        <div class="lbl">
+          <b>Солнце</b><span>Серия дней, достижения, тепло. Только заливка</span><code>--sun</code>
+        </div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--marker); color: #14213d">12.5:1</div>
+        <div class="lbl">
+          <b>Маркер</b><span>«Следующий шаг», «сейчас», выделение текста</span><code>--highlight</code>
+        </div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--success-soft); color: var(--success)">4.6:1</div>
+        <div class="lbl"><b>Зачтено</b><span>Завершено, сдано, верно</span><code>--success</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--warning-soft); color: var(--warning)">5.0:1</div>
+        <div class="lbl"><b>Срок близко</b><span>До сдачи 7 дней и меньше</span><code>--warning</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--danger-soft); color: var(--danger)">5.0:1</div>
+        <div class="lbl"><b>Просрочено</b><span>Долг, ошибка, отставание</span><code>--danger</code></div>
+      </div>
+    </div>
+
+    <h3>Пропорция на экране</h3>
+    <div class="ratio" aria-label="Небо и облако 70%, текст 18%, синий 8%, солнце и маркер 3%, статусы 1%">
+      <span style="width: 70%; background: var(--paper)"></span>
+      <span style="width: 18%; background: var(--ink-2)"></span>
+      <span style="width: 8%; background: var(--primary)"></span>
+      <span style="width: 3%; background: var(--sun)"></span>
+      <span style="width: 1%; background: var(--danger)"></span>
+    </div>
+    <p class="small muted">
+      Небо и облака 70%, текст 18%, синий 8%, солнце и маркер 3%, статусы 1%. Если на экране больше одного
+      солнечного пятна, тепло превращается в шум.
+    </p>
+
+    <h3>Небо приветствия</h3>
+    <p class="small">
+      Единственное место, где разрешён градиент. Он показывает настоящее время суток, поэтому не украшение, а
+      информация. Нигде больше градиенты не используем.
+    </p>
+    <div class="skies">
+      <div
+        class="sky"
+        style="background: linear-gradient(160deg, #ffe7cc, #fdf1e0 45%, #ddebf6); color: #161b1f"
+      >
+        Утро · 5–12
+      </div>
+      <div
+        class="sky"
+        style="background: linear-gradient(170deg, #cfe3f6, #e4f0fa 55%, #f3f7f5); color: #161b1f"
+      >
+        День · 12–17
+      </div>
+      <div
+        class="sky"
+        style="background: linear-gradient(165deg, #f8c9a2, #f1d5d8 45%, #cfd7ee); color: #161b1f"
+      >
+        Вечер · 17–22
+      </div>
+      <div
+        class="sky"
+        style="background: linear-gradient(170deg, #14213d, #1d3360 60%, #27427a); color: #fff"
+      >
+        Ночь · 22–5
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="type">
+    <div class="num"><b>04</b> Шрифты</div>
+    <h2>Три гарнитуры, у каждой своя работа</h2>
+    <div class="grid3">
+      <div class="box">
+        <span class="cap">Интерфейс</span>
+        <div style="font-family: var(--font-ui); font-size: 34px; font-weight: 800; line-height: 1">
+          Golos Text
+        </div>
+        <p class="small muted">Всё UI. Сделан Paratype для русскоязычных сервисов, кириллица родная.</p>
+      </div>
+      <div class="box">
+        <span class="cap">Данные</span>
+        <div style="font-family: var(--font-mono); font-size: 26px; font-weight: 600; line-height: 1.2">
+          МАТ-101 · 87/100
+        </div>
+        <p class="small muted">Коды курсов, баллы, даты, время, проценты. Цифры выравниваются в столбик.</p>
+      </div>
+      <div class="box">
+        <span class="cap">Чтение</span>
+        <div style="font-family: var(--font-read); font-size: 30px; line-height: 1.1">Литерата</div>
+        <p class="small muted">Только конспекты и длинные тексты. Строка до 60 знаков.</p>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="row">
+        <span class="meta">40 · 800</span
+        ><span style="font-size: 40px; font-weight: 800; line-height: 1.05">Доброе утро, Иван</span>
+      </div>
+      <div class="row">
+        <span class="meta">28 · 700</span
+        ><span style="font-size: 28px; font-weight: 700">Заголовок страницы</span>
+      </div>
+      <div class="row">
+        <span class="meta">20 · 600</span
+        ><span style="font-size: 20px; font-weight: 600">Заголовок карточки, «Следующий шаг»</span>
+      </div>
+      <div class="row">
+        <span class="meta">16 · 400</span
+        ><span style="font-size: 16px">Основной текст и описания курсов</span>
+      </div>
+      <div class="row">
+        <span class="meta">14 · 400</span><span style="font-size: 14px">Списки, таблицы, кнопки</span>
+      </div>
+      <div class="row">
+        <span class="meta">12 · mono</span
+        ><span class="mono" style="font-size: 12px">МАТ-101 · Модуль 1 · 2 из 5</span>
+      </div>
+    </div>
+    <p class="small muted">
+      Мельче 12px не бывает. Заголовки с <code>text-wrap: balance</code>. Капслок не используем: он звучит как
+      приказ.
+    </p>
+  </section>
+
+  <section class="sheet" id="form">
+    <div class="num"><b>05</b> Форма и пространство</div>
+    <h2>Мягкие углы, лёгкие границы, много воздуха</h2>
+    <div class="radii">
+      <div style="border-radius: 6px">6</div>
+      <div style="border-radius: 10px">10</div>
+      <div style="border-radius: 12px">12</div>
+      <div style="border-radius: 16px">16</div>
+      <div style="border-radius: 20px">20</div>
+      <div style="border-radius: 999px">pill</div>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th>Радиус</th>
+            <th>Где</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="m">6px</td>
+            <td>Мелкие метки внутри текста, миниатюры обложек</td>
+          </tr>
+          <tr>
+            <td class="m">10px</td>
+            <td>Кнопки, поля ввода, пункты меню</td>
+          </tr>
+          <tr>
+            <td class="m">12px</td>
+            <td>Базовый радиус, пункты меню в сайдбаре, плитки расписания</td>
+          </tr>
+          <tr>
+            <td class="m">16px</td>
+            <td>Всплывающие окна, обложки в списках</td>
+          </tr>
+          <tr>
+            <td class="m">20px</td>
+            <td>Карточки, виджеты, полоса цифр, приветствие</td>
+          </tr>
+          <tr>
+            <td class="m">pill</td>
+            <td>Бейджи статусов и чипы в приветствии</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Отступы — шаг 4px</h3>
+    <div class="space">
+      <figure>
+        <div style="width: 4px; height: 4px"></div>
+        4
+      </figure>
+      <figure>
+        <div style="width: 8px; height: 8px"></div>
+        8
+      </figure>
+      <figure>
+        <div style="width: 12px; height: 12px"></div>
+        12
+      </figure>
+      <figure>
+        <div style="width: 16px; height: 16px"></div>
+        16
+      </figure>
+      <figure>
+        <div style="width: 20px; height: 20px"></div>
+        20
+      </figure>
+      <figure>
+        <div style="width: 24px; height: 24px"></div>
+        24
+      </figure>
+      <figure>
+        <div style="width: 32px; height: 32px"></div>
+        32
+      </figure>
+      <figure>
+        <div style="width: 48px; height: 48px"></div>
+        48
+      </figure>
+    </div>
+    <div class="grid2">
+      <div class="do">
+        <b>Так</b>Карточку отделяет белый фон на небе и едва заметная тень. Сильнее тень становится только у
+        того, на что можно нажать, и только при наведении.
+      </div>
+      <div class="dont">
+        <b>Не так</b>Рамка, тяжёлая тень и цветная полоса сверху на каждой карточке одновременно.
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="motion">
+    <div class="num"><b>06</b> Движение</div>
+    <h2>Анимация отвечает на действие или рассказывает о прогрессе</h2>
+    <p>
+      Если движение ничего не сообщает, его нет. Чем чаще человек видит экран, тем короче анимация. Всё, что
+      двигается, уважает настройку «уменьшить движение».
+    </p>
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th>Что</th>
+            <th>Как</th>
+            <th>Длительность</th>
+            <th>Зачем</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Нажатие кнопки</td>
+            <td><code>scale(0.97)</code></td>
+            <td class="m">150ms</td>
+            <td>Интерфейс услышал</td>
+          </tr>
+          <tr>
+            <td>Наведение на курс</td>
+            <td>подъём на 2px, тень, обложка ×1.05</td>
+            <td class="m">200 / 500ms</td>
+            <td>Это можно открыть</td>
+          </tr>
+          <tr>
+            <td>Солнце в приветствии</td>
+            <td>восход снизу, затем медленное свечение</td>
+            <td class="m">900ms, 6s</td>
+            <td>Кабинет ожил, день начался</td>
+          </tr>
+          <tr>
+            <td>Рост прогресса</td>
+            <td><code>scaleX</code> от левого края</td>
+            <td class="m">300ms</td>
+            <td>Видно, что материал засчитан</td>
+          </tr>
+          <tr>
+            <td>Всплывающее окно</td>
+            <td>из точки вызова, <code>scale(0.97) → 1</code></td>
+            <td class="m">160ms</td>
+            <td>Понятно, откуда оно взялось</td>
+          </tr>
+          <tr>
+            <td>Переход между страницами</td>
+            <td>без анимации</td>
+            <td class="m">0</td>
+            <td>Навигация происходит десятки раз за сессию</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">
+      Кривая для всего интерфейса: <code>cubic-bezier(0.23, 1, 0.32, 1)</code>. Только
+      <code>transform</code> и <code>opacity</code>, никогда <code>width</code> или <code>height</code>.
+    </p>
+    <div class="row-c">
+      <button class="btn primary" type="button" id="demo-press">Нажмите меня</button>
+      <span class="small muted">кнопка сжимается при нажатии</span>
+    </div>
+  </section>
+
+  <section class="sheet" id="graphics">
+    <div class="num"><b>07</b> Графика</div>
+    <h2>Солнце над линейкой и обложки-чертежи</h2>
+    <div class="mark-row">
+      <div class="mark-tile" style="background: var(--surface); color: var(--primary)">
+        <svg
+          viewBox="0 0 32 32"
+          width="64"
+          height="64"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-label="Знак HeliosEDU"
+        >
+          <path d="M8 22a8 8 0 0 1 16 0" />
+          <path d="M16 6v3M6.1 12.1l2.1 2.1M25.9 12.1l-2.1 2.1M3 22h26" />
+          <path d="M7 26h2M12 26h2M18 26h2M23 26h2" stroke-width="1.5" />
+        </svg>
+      </div>
+      <div class="mark-tile" style="background: var(--primary); color: #fff">
+        <svg
+          viewBox="0 0 32 32"
+          width="64"
+          height="64"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M8 22a8 8 0 0 1 16 0" />
+          <path d="M16 6v3M6.1 12.1l2.1 2.1M25.9 12.1l-2.1 2.1M3 22h26" />
+          <path d="M7 26h2M12 26h2M18 26h2M23 26h2" stroke-width="1.5" />
+        </svg>
+      </div>
+      <div style="display: grid; gap: 6px; flex: 1 1 260px; min-width: 0">
+        <h3>Знак</h3>
+        <p class="small muted">
+          Солнце (Гелиос) встаёт над линейкой (политех). Один знак для всех ролей, цвет синьки или белый на
+          синьке. Линейка-горизонт повторяется в приветствии, поэтому знак и кабинет говорят одно и то же.
+        </p>
+      </div>
+    </div>
+    <h3>Обложки курсов — один шаблон</h3>
+    <p class="small">
+      У всех курсов одна композиция: сплошной цвет, солнце в углу, горизонт-линейка и белый бейдж с кодом.
+      Цвет выбирается случайно из шести при создании курса и сохраняется в данных, поэтому не меняется сам по
+      себе. Преподаватель может выбрать другой цвет или загрузить свою картинку: она закрывает шаблон, а бейдж
+      с кодом остаётся поверх, и список курсов выглядит цельно.
+    </p>
+    <div class="covers">
+      <div class="cover">
+        <div class="tpl" data-c="#1E6FD9" data-s="#FFFFFF" data-code="МАТ-101"></div>
+        <div class="lbl"><span class="mono">Небо</span><b>Математический анализ</b></div>
+      </div>
+      <div class="cover">
+        <div class="tpl" data-c="#2AA7A1" data-s="#FFFFFF" data-code="ПЕД-101"></div>
+        <div class="lbl"><span class="mono">Бирюза</span><b>Введение в педагогику</b></div>
+      </div>
+      <div class="cover">
+        <div class="tpl" data-c="#7A6FF0" data-s="#FFFFFF" data-code="ИНФ-201"></div>
+        <div class="lbl"><span class="mono">Ирис</span><b>ИТ в образовании</b></div>
+      </div>
+      <div class="cover">
+        <div class="tpl" data-c="#FF8A4C" data-s="#14213D" data-code="ПСХ-110"></div>
+        <div class="lbl"><span class="mono">Абрикос</span><b>Возрастная психология</b></div>
+      </div>
+      <div class="cover">
+        <div class="tpl" data-c="#E25B7A" data-s="#FFFFFF" data-code="ЭКН-120"></div>
+        <div class="lbl"><span class="mono">Роза</span><b>Основы экономики</b></div>
+      </div>
+      <div class="cover">
+        <div class="tpl" data-photo="1" data-code="ИСТ-140"></div>
+        <div class="lbl"><span class="mono">Своя картинка</span><b>История Прикамья</b></div>
+      </div>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th>Где</th>
+            <th>Вариант</th>
+            <th>Правило</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Карточка курса</td>
+            <td class="m">card</td>
+            <td>Высота 128px, бейдж с кодом, при наведении солнце чуть приближается</td>
+          </tr>
+          <tr>
+            <td>Страница курса</td>
+            <td class="m">banner</td>
+            <td>Высота 144–176px, справа кнопка «Сменить обложку» для тех, кто может редактировать курс</td>
+          </tr>
+          <tr>
+            <td>Списки, «Следующий шаг»</td>
+            <td class="m">thumb</td>
+            <td>Без бейджа: код уже написан рядом текстом</td>
+          </tr>
+          <tr>
+            <td>Своя картинка</td>
+            <td class="m">PNG, JPG, WebP</td>
+            <td>До 2 МБ, лучше 1200×400. Кадрируется по центру. Выбор цвета убирает картинку</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">
+      Иконки — Lucide, 16px в списках и 20px в заголовках, линия 2px, цвет карандаша. Иконка стоит рядом с
+      текстом, а не в цветном квадрате. Эмодзи вместо иконок не используем.
+    </p>
+  </section>
+
+  <section class="sheet" id="components">
+    <div class="num"><b>08</b> Компоненты</div>
+    <h2>Базовые детали</h2>
+    <div class="box">
+      <span class="cap">Кнопки · одна главная на экран</span>
+      <div class="row-c">
+        <button class="btn primary" type="button">Продолжить →</button>
+        <button class="btn secondary" type="button">Сохранить черновик</button>
+        <button class="btn outline" type="button">Хаб группы</button>
+        <button class="btn ghost" type="button">Отмена</button>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="box">
+        <span class="cap">Статусы · всегда словом</span>
+        <div class="row-c">
+          <span class="badge b-s">зачтено</span><span class="badge b-w">через 3 дн</span
+          ><span class="badge b-d">просрочено</span><span class="badge b-p">вы</span
+          ><span class="badge b-n">не начато</span><span class="badge b-m">Следующий шаг</span>
+        </div>
+      </div>
+      <div class="box">
+        <span class="cap">Чипы приветствия · достижения</span>
+        <div class="row-c">
+          <span class="hchip sun"
+            ><svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"
+              />
+            </svg>
+            3 дня подряд</span
+          ><span class="hchip"
+            ><svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              />
+            </svg>
+            31 балл в группе</span
+          >
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <span class="cap">Прогресс · с числом рядом</span>
+      <div class="row-c">
+        <div class="bar"><i style="transform: scaleX(0.7)"></i></div>
+        <span class="mono small muted">70%</span>
+      </div>
+    </div>
+    <div class="box">
+      <span class="cap">Полоса цифр · вместо плиток с иконками</span>
+      <div class="facts">
+        <div><small>Курсов</small><b>4</b></div>
+        <div><small>Пройдено в среднем</small><b>43%</b></div>
+        <div><small>Заданий к сдаче</small><b style="color: var(--warning)">5</b></div>
+        <div><small>Новых уведомлений</small><b>2</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="patterns">
+    <div class="num"><b>09</b> Паттерны LMS</div>
+    <h2>Из чего собирается кабинет</h2>
+
+    <div class="grid2">
+      <div class="box">
+        <h3>Приветствие</h3>
+        <p class="small muted">
+          Первый блок любого кабинета. Имя, настоящее время суток, одна фраза с конкретным поводом продолжить
+          и чипы достижений. Для преподавателя повод другой: «3 работы ждут проверки».
+        </p>
+      </div>
+      <div class="box">
+        <h3>Следующий шаг</h3>
+        <p class="small muted">
+          Сразу под приветствием. Одна конкретная активность, место, где человек остановился, и кнопка
+          «Продолжить». Студенту не нужно искать, с чего начать.
+        </p>
+      </div>
+    </div>
+
+    <div class="next">
+      <div class="tpl" data-c="#7A6FF0" data-s="#FFFFFF" data-thumb="1"></div>
+      <div class="body">
+        <div class="row-c">
+          <span class="badge b-m">Следующий шаг</span
+          ><span class="mono small muted">ИНФ-201 · Модуль 1 · 3 из 3</span>
+        </div>
+        <div>
+          <div class="small muted">Задание</div>
+          <div style="font-size: 20px; font-weight: 600">Презентация урока</div>
+        </div>
+        <div><button class="btn primary" type="button">Начать →</button></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="box">
+        <h3>Серия и баллы</h3>
+        <p class="small muted">
+          Хвалим регулярность, а не только результат. Серия дней всегда в солнечном чипе. Рейтинг показываем
+          через личную динамику и соседей ±2, а не подиум с короной.
+        </p>
+      </div>
+      <div class="box">
+        <h3>Сдать</h3>
+        <p class="small muted">
+          Три ближайших задания, каждое со словом-статусом («через 3 дн», «просрочено») и датой в mono.
+          Остальные по ссылке «Ещё N».
+        </p>
+      </div>
+      <div class="box">
+        <h3>Режим чтения</h3>
+        <p class="reading" style="font-size: 16px">
+          Число <i>A</i> называется пределом функции, если <mark>для любого ε &gt; 0 найдётся δ &gt; 0</mark>…
+        </p>
+        <p class="small muted">Literata, строка до 60 знаков, выделение маркером уходит в заметки.</p>
+      </div>
+      <div class="box">
+        <h3>Неделя по парам</h3>
+        <p class="small muted">
+          Сетка Пн–Пт по номерам пар. Каждая пара отмечена цветом обложки курса, сегодняшний день залит синим,
+          идущая сейчас пара обведена солнцем и подписана «идёт сейчас».
+        </p>
+      </div>
+      <div class="box">
+        <h3>Одногруппники</h3>
+        <p class="small muted">
+          Учёба — это и люди рядом. Пять человек из группы с кнопкой «написать». В рейтинг их имена попадают
+          только с согласия.
+        </p>
+      </div>
+      <div class="box">
+        <h3>Пустые состояния и успех</h3>
+        <p class="small muted">
+          Пустота звучит как хорошая новость: «Сдавать пока нечего». Завершение модуля — повод для короткого
+          праздника: солнечный чип и одна фраза, без конфетти на весь экран.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="never">
+    <div class="num"><b>10</b> Нельзя</div>
+    <h2>Чего в HeliosEDU не бывает</h2>
+    <ul class="clean">
+      <li>Градиентов где-либо, кроме неба приветствия. Обложек вне шаблона и цветных аватаров.</li>
+      <li>Иконок в цветных квадратах, плиток-счётчиков, рядов одинаковых карточек.</li>
+      <li>Фиолетового «AI-акцента», стекла и размытых пятен на фоне.</li>
+      <li>Текста мельче 12px, капслока, серого текста с прозрачностью.</li>
+      <li>Анимации при переходе между страницами и анимации «для красоты».</li>
+      <li>Технических слов в интерфейсе: real-time, mockup, записи, сущности.</li>
+      <li>Публичного рейтинга с полными именами без согласия.</li>
+      <li>Проверки ролей в разметке: права только через <code>can()</code> и <code>RoleGate</code>.</li>
+    </ul>
+  </section>
+
+  <section class="sheet" id="tokens">
+    <div class="num"><b>11</b> Токены</div>
+    <h2>Источник правды — <code>src/app/globals.css</code></h2>
+    <p class="small">
+      Здесь копия для справки. Меняем значения в коде, затем обновляем этот брендкод. Тёмная тема задаётся
+      атрибутом <code>data-theme="dark"</code>.
+    </p>
+    <pre>
+:root {
+  --background: 150 7% 95%;        /* калька  #F2F4F3 */
+  --foreground: 206 17% 10%;       /* тушь    #161B1F */
+  --card: 0 0% 100%;               /* лист */
+  --muted-foreground: 206 10% 32%; /* карандаш #4A535A */
+  --primary: 214 67% 34%;          /* синька  #1D4F91 */
+  --primary-soft: 214 55% 93%;
+  --sun: 38 92% 56%;               /* солнце  #F5A524 */
+  --sun-soft: 42 100% 92%;
+  --highlight: 48 100% 72%;        /* маркер  #FFE36E */
+  --success: 147 47% 29%;
+  --warning: 35 100% 27%;
+  --danger: 5 61% 43%;
+  --border: 150 6% 86%;
+  --radius: 0.75rem;               /* 12px */
+}
+--font-sans: Golos Text;  --font-mono: JetBrains Mono;  --font-serif: Literata;
+--ease-out: cubic-bezier(0.23, 1, 0.32, 1);</pre>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var NS = "http://www.w3.org/2000/svg";
+    var skies = {
+      morning: "linear-gradient(160deg, #FFE7CC 0%, #FDF1E0 45%, #DDEBF6 100%)",
+      day: "linear-gradient(170deg, #CFE3F6 0%, #E4F0FA 55%, #F3F7F5 100%)",
+      evening: "linear-gradient(165deg, #F8C9A2 0%, #F1D5D8 45%, #CFD7EE 100%)",
+      night: "linear-gradient(170deg, #14213D 0%, #1D3360 60%, #27427A 100%)",
+    };
+    var titles = {
+      morning: "Доброе утро, Иван",
+      day: "Добрый день, Иван",
+      evening: "Добрый вечер, Иван",
+      night: "Доброй ночи, Иван",
+    };
+    var progress = { morning: 0.2, day: 0.5, evening: 0.85, night: 0.5 };
+    var hero = document.getElementById("hero");
+    var scene = document.getElementById("scene");
+    var title = document.getElementById("heroTitle");
+    var first = true;
+
+    function el(name, attrs) {
+      var n = document.createElementNS(NS, name);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      return n;
+    }
+
+    function draw(part) {
+      var night = part === "night";
+      hero.style.background = skies[part];
+      hero.classList.toggle("night", night);
+      while (scene.firstChild) scene.removeChild(scene.firstChild);
+      var line = night ? "rgba(255,255,255,.3)" : "rgba(22,27,31,.22)";
+      scene.appendChild(
+        el("path", {
+          d: "M420 270 Q580 -50 740 270",
+          fill: "none",
+          stroke: night ? "rgba(255,255,255,.18)" : "rgba(29,79,145,.2)",
+          "stroke-width": "1.5",
+          "stroke-dasharray": "4 6",
+        }),
+      );
+      if (night) {
+        [
+          [470, 50],
+          [540, 120],
+          [600, 40],
+          [700, 150],
+          [650, 200],
+          [720, 70],
+          [450, 170],
+          [620, 130],
+        ].forEach(function (s) {
+          scene.appendChild(el("circle", { cx: s[0], cy: s[1], r: "1.8", fill: "#FFF6DA", opacity: ".85" }));
+        });
+        scene.appendChild(el("circle", { cx: "640", cy: "90", r: "26", fill: "#FFF1C9" }));
+        scene.appendChild(el("circle", { cx: "653", cy: "80", r: "24", fill: "#1D3360" }));
+      } else {
+        var p = progress[part];
+        var x = 420 + p * 320;
+        var y = 270 - Math.sin(p * Math.PI) * 170;
+        var g = el("g", { class: "sun-g" });
+        g.appendChild(el("circle", { cx: x, cy: y, r: "70", fill: "#F5A524", class: "glow" }));
+        g.appendChild(el("circle", { cx: x, cy: y, r: "36", fill: "#F5A524" }));
+        scene.appendChild(g);
+        if (first && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          g.style.transform = "translateY(60px)";
+          g.style.opacity = "0";
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              g.style.transition = "transform 900ms cubic-bezier(.23,1,.32,1), opacity 600ms ease";
+              g.style.transform = "none";
+              g.style.opacity = "1";
+            });
+          });
+        }
+      }
+      scene.appendChild(el("line", { x1: "0", y1: "270", x2: "760", y2: "270", stroke: line }));
+      for (var i = 0; i < 38; i++) {
+        scene.appendChild(
+          el("line", {
+            x1: i * 20 + 10,
+            y1: "270",
+            x2: i * 20 + 10,
+            y2: i % 5 === 0 ? "282" : "276",
+            stroke: line,
+          }),
+        );
+      }
+      title.textContent = first ? "Брендкод EDU" : titles[part];
+      document.querySelectorAll(".parts button").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-part") === part));
+      });
+      first = false;
+    }
+
+    var h = new Date().getHours();
+    var now =
+      h >= 5 && h < 12 ? "morning" : h >= 12 && h < 17 ? "day" : h >= 17 && h < 22 ? "evening" : "night";
+    draw(now);
+    document.querySelectorAll(".parts button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        draw(b.getAttribute("data-part"));
+      });
+    });
+
+    // Обложки по шаблону: те же фигуры, что в src/shared/ui/CourseCover.tsx
+    function template(node) {
+      var thumb = node.getAttribute("data-thumb");
+      var code = node.getAttribute("data-code");
+      var svg = el("svg", {
+        viewBox: "0 0 320 120",
+        preserveAspectRatio: "xMaxYMid slice",
+        "aria-hidden": "true",
+      });
+      if (node.getAttribute("data-photo")) {
+        node.style.background = "#BFD9EF";
+        svg.appendChild(el("circle", { cx: "250", cy: "34", r: "16", fill: "#FFE6A6" }));
+        svg.appendChild(
+          el("path", { d: "M0 120 L70 52 L120 92 L180 40 L260 110 L320 70 L320 120 Z", fill: "#3E6B8C" }),
+        );
+        svg.appendChild(el("path", { d: "M0 120 L90 80 L160 110 L230 84 L320 120 Z", fill: "#2D4F69" }));
+      } else {
+        var c = node.getAttribute("data-c");
+        var sh = node.getAttribute("data-s");
+        node.style.background = c;
+        svg.appendChild(el("circle", { cx: "282", cy: "18", r: "78", fill: sh, opacity: ".14" }));
+        svg.appendChild(el("circle", { cx: "282", cy: "18", r: "40", fill: sh, opacity: ".18" }));
+        svg.appendChild(el("circle", { cx: "232", cy: "88", r: "7", fill: sh, opacity: ".35" }));
+        svg.appendChild(
+          el("line", { x1: "0", y1: "100", x2: "320", y2: "100", stroke: sh, "stroke-opacity": ".35" }),
+        );
+        for (var i = 0; i < 17; i++) {
+          svg.appendChild(
+            el("line", {
+              x1: i * 20 + 10,
+              y1: "100",
+              x2: i * 20 + 10,
+              y2: i % 5 === 0 ? "110" : "105",
+              stroke: sh,
+              "stroke-opacity": ".3",
+            }),
+          );
+        }
+      }
+      node.appendChild(svg);
+      if (!thumb && code) {
+        var b = document.createElement("span");
+        b.className = "code";
+        b.textContent = code;
+        node.appendChild(b);
+      }
+    }
+    document.querySelectorAll(".tpl").forEach(template);
+  })();
+</script>
