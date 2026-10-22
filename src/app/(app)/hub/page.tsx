@@ -8,13 +8,15 @@ import { PageHeader, Select } from "@/shared/ui";
 import { Leaderboard } from "@/features/hub/components/Leaderboard";
 import { GroupMonitor } from "@/features/hub/components/GroupMonitor";
 import { useSession } from "@/shared/auth/session";
+import { can } from "@/shared/auth/permissions";
 import type { Course } from "@/shared/types/domain";
 
 const TRACKED = ["c-matan"];
 
 export default function HubPage() {
   const role = useSession((s) => s.role);
-  const isTeacher = role !== "student";
+  // мониторинг группы — тем, кто видит аналитику; студенту — соревнование
+  const isTeacher = can(role, "analytics.view");
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
   const tracked = (courses ?? []).filter((c) => TRACKED.includes(c.id));
   const [courseId, setCourseId] = useState("c-matan");

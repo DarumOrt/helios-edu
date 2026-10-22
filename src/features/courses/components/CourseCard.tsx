@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
-import { Card, CourseCover, Progress } from "@/shared/ui";
+import { Badge, Card, CourseCover, Progress } from "@/shared/ui";
 import type { Course } from "@/shared/types/domain";
 
 export function CourseCard({ course }: { course: Course }) {
@@ -35,6 +35,13 @@ export function CourseCard({ course }: { course: Course }) {
             )}
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users size={13} aria-hidden /> {course.enrolled} участников
+              {/* черновики и архив видят только преподаватель и управление — подписываем словом */}
+              {course.status === "draft" && <Badge className="ml-auto">черновик</Badge>}
+              {course.status === "archived" && (
+                <Badge tone="outline" className="ml-auto">
+                  в архиве
+                </Badge>
+              )}
             </div>
           </div>
         </div>

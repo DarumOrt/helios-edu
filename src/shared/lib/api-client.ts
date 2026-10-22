@@ -35,3 +35,23 @@ export const api = {
 };
 
 export const fetcher = <T = unknown>(url: string): Promise<T> => api.get<T>(url);
+
+// Разбор ошибки API формата { error, fields } (C# API и моки Next отвечают одинаково)
+export function apiErrorInfo(failure: unknown): {
+  status: number;
+  error?: string;
+  fields?: Record<string, string>;
+} {
+  if (!(failure instanceof ApiError)) return { status: 0 };
+  try {
+    const data = JSON.parse(String(failure.details ?? "")) as { error?: unknown; fields?: unknown };
+    return {
+      status: failure.status,
+      error: typeof data.error === "string" ? data.error : undefined,
+      fields:
+        data.fields && typeof data.fields === "object" ? (data.fields as Record<string, string>) : undefined,
+    };
+  } catch {
+    return { status: failure.status };
+  }
+}

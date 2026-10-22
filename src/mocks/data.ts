@@ -311,7 +311,8 @@ export const gradebook: Record<string, GradeRow[]> = {
   ],
 };
 
-export const cohorts: Cohort[] = [
+// исходные группы; курсы групп задаёт mocks/cohorts-store
+export const cohorts: Omit<Cohort, "courseIds">[] = [
   {
     id: "co-1",
     name: "М1217",

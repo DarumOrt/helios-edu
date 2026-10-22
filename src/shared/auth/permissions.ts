@@ -25,7 +25,8 @@ export type Action =
   | "submission.review"
   | "quiz.take"
   | "assignment.submit"
-  | "analytics.view";
+  | "analytics.view"
+  | "admin.access";
 
 const matrix: Record<Action, Role[]> = {
   "course.create": ["admin", "organizer"],
@@ -39,6 +40,8 @@ const matrix: Record<Action, Role[]> = {
   "quiz.take": ["student"],
   "assignment.submit": ["student"],
   "analytics.view": ["admin", "organizer", "tutor"],
+  // раздел «Администрирование»: курсы, пользователи, группы
+  "admin.access": ["admin", "organizer"],
 };
 
 export function can(role: Role, action: Action): boolean {
@@ -51,7 +54,9 @@ export function actionForMockApi(path: string, method: string): Action | null {
   if (path === "/api/gradebook/grade") return "grade.edit";
   if (path === "/api/gradebook" || path.startsWith("/api/analytics/")) return "analytics.view";
   if (path.startsWith("/api/submissions")) return "submission.review";
-  if (path === "/api/cohorts") return "analytics.view";
+  // GET групп — для аналитики; изменения — управление группами (C# проверяет ещё раз)
+  if (path === "/api/cohorts" || path.startsWith("/api/cohorts/"))
+    return method === "GET" ? "analytics.view" : "cohort.manage";
   if (method === "POST" && /^\/api\/quiz\/[^/]+\/submit$/.test(path)) return "quiz.take";
   if (/^\/api\/assignment\/[^/]+\/submit$/.test(path)) return "assignment.submit";
   if (

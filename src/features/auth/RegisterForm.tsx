@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, Check, Circle } from "lucide-react";
-import { api, ApiError } from "@/shared/lib/api-client";
+import { api, apiErrorInfo } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
 import { useSessionStore } from "@/stores/session-store";
@@ -15,7 +15,7 @@ import {
 } from "@/shared/lib/registration";
 import type { DataSource } from "@/shared/lib/data-source";
 import type { User } from "@/shared/types/domain";
-import { AuthInput, Field, PasswordInput, describedBy, parseApiError } from "./Field";
+import { AuthInput, Field, PasswordInput, describedBy } from "./Field";
 
 const fieldOrder: (keyof RegistrationInput)[] = ["name", "email", "password", "consent"];
 
@@ -69,14 +69,13 @@ export function RegisterForm({ source }: { source: DataSource }) {
       window.location.assign("/dashboard");
     } catch (failure) {
       setPending(false);
-      const { error, fields } = failure instanceof ApiError ? parseApiError(failure.details) : {};
+      const { status, error, fields } = apiErrorInfo(failure);
       if (fields && Object.keys(fields).length) {
         setServerErrors(fields);
         const first = fieldOrder.find((key) => fields[key]);
         if (first) setFocusTarget({ key: first });
         return;
       }
-      const status = failure instanceof ApiError ? failure.status : 0;
       setFormError(
         status === 429
           ? "Слишком много попыток. Подождите минуту и попробуйте снова."

@@ -1,52 +1,10 @@
 "use client";
 
-import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useState, type InputHTMLAttributes } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/shared/ui";
+export { Field, describedBy } from "@/shared/ui/Field";
 import { cn } from "@/shared/lib/utils";
-
-// Поле формы входа/регистрации: подпись, подсказка и ошибка связаны с полем для экранных читалок.
-export function Field({
-  id,
-  label,
-  hint,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  hint?: ReactNode;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
-        {label}
-      </label>
-      {children}
-      {error ? (
-        <p id={`${id}-error`} className="mt-1.5 text-xs text-danger">
-          {error}
-        </p>
-      ) : (
-        hint && (
-          <div id={`${id}-hint`} className="mt-1.5 text-xs text-muted-foreground">
-            {hint}
-          </div>
-        )
-      )}
-    </div>
-  );
-}
-
-// aria-атрибуты поля по наличию ошибки и подсказки
-export function describedBy(id: string, error?: string, hasHint?: boolean) {
-  return {
-    "aria-invalid": error ? true : undefined,
-    "aria-describedby": error ? `${id}-error` : hasHint ? `${id}-hint` : undefined,
-  } as const;
-}
 
 export const AuthInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...rest }, ref) => (
@@ -89,18 +47,3 @@ export const PasswordInput = forwardRef<
   );
 });
 PasswordInput.displayName = "PasswordInput";
-
-// Разбор ответа API: общая ошибка и ошибки по полям (формат { error, fields })
-export function parseApiError(details: unknown): { error?: string; fields?: Record<string, string> } {
-  if (typeof details !== "string" || !details) return {};
-  try {
-    const data = JSON.parse(details) as { error?: unknown; fields?: unknown };
-    return {
-      error: typeof data.error === "string" ? data.error : undefined,
-      fields:
-        data.fields && typeof data.fields === "object" ? (data.fields as Record<string, string>) : undefined,
-    };
-  } catch {
-    return {};
-  }
-}

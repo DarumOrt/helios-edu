@@ -63,3 +63,29 @@ export function isSameOrigin(request: Request): boolean {
     return false;
   }
 }
+
+// Пересылка запроса управления в C# API в серверном режиме (null — демо, обрабатывают моки).
+// Пока эндпоинт на сервере не реализован (пустой 404 или 405), честно отвечаем 501, а не моками.
+export async function backendForward(request: Request, path: string): Promise<Response | null> {
+  // тело читаем только при включённом сервере: иначе моковому маршруту оно нужно целым
+  if (!process.env.BACKEND_API_URL || (await getDataSource()).source === "demo") return null;
+  const hasBody = !["GET", "HEAD", "DELETE"].includes(request.method);
+  const response = await backendRequest(path, {
+    method: request.method,
+    headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+    body: hasBody ? await request.text() : undefined,
+  });
+  if (!response) return null;
+  if (response.status === 405 || (response.status === 404 && !(await response.clone().text())))
+    return Response.json(
+      { error: "Эта функция ещё не подключена на сервере", notImplemented: true },
+      { status: 501 },
+    );
+  return response;
+}
+
+/** 501 от backendForward: эндпоинта в C# ещё нет */
+export async function isNotImplemented(response: Response): Promise<boolean> {
+  if (response.status !== 501) return false;
+  return Boolean(((await response.clone().json()) as { notImplemented?: boolean }).notImplemented);
+}

@@ -9,7 +9,7 @@ export interface RegistrationInput {
 export type RegistrationErrors = Partial<Record<keyof RegistrationInput, string>>;
 
 export const PASSWORD_MIN = 8;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function passwordChecks(password: string) {
   return [

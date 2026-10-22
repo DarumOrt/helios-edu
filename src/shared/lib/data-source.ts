@@ -19,3 +19,7 @@ export function resolveDataSource(cookieValue: string | undefined): DataSourceSt
   const source: DataSource = !serverAvailable || (cookieValue === "demo" && demoAllowed) ? "demo" : "server";
   return { source, serverAvailable, demoAllowed };
 }
+
+// Демо-режим: id выбранного демо-пользователя, чтобы моковые маршруты применяли те же правила, что C#.
+// Это не защита (cookie подделывается), а реалистичность демо; в серверном режиме не используется.
+export const DEMO_USER_COOKIE = "helios-demo-user";
