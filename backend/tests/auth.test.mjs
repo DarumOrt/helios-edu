@@ -100,10 +100,15 @@ for (const [name, baseUrl] of [
     assert.equal(user.role, "student");
   });
 
+  // Чужой сайт не может добавить X-Helios-Client без CORS preflight — поэтому без него.
   const register = (body, origin = new URL(baseUrl).origin) =>
     fetch(`${baseUrl}/api/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Helios-Client": "web", Origin: origin },
+      headers: {
+        "Content-Type": "application/json",
+        Origin: origin,
+        ...(origin === new URL(baseUrl).origin ? { "X-Helios-Client": "web" } : {}),
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10_000),
     });
