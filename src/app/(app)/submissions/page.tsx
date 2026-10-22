@@ -45,7 +45,7 @@ export default function SubmissionsPage() {
 
   return (
     <div>
-      <PageHeader title="Проверка работ" subtitle="Сданные задания группы М1217" />
+      <PageHeader title="Проверка работ" subtitle="Сданные задания по вашим курсам" />
 
       <div className="mb-5 flex gap-1 border-b">
         {tabs.map((t) => (

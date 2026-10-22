@@ -16,7 +16,9 @@ export default function ProfilePage() {
 
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
-    role === "student" ? `/api/hub/leaderboard?courseId=c-matan&userId=${user.id}` : null,
+    role === "student" && courses?.[0]
+      ? `/api/hub/leaderboard?courseId=${courses[0].id}&userId=${user.id}`
+      : null,
     fetcher,
   );
   const me = lb?.entries?.find((e) => e.isCurrentUser);
@@ -60,7 +62,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader
                   title="Моя вовлечённость"
-                  subtitle="Математический анализ"
+                  subtitle={courses?.[0]?.title}
                   icon={<Trophy size={18} />}
                 />
                 <CardBody>
@@ -107,7 +109,7 @@ export default function ProfilePage() {
                 <ul className="grid grid-cols-1 gap-2.5 text-sm sm:grid-cols-2">
                   {(role === "tutor"
                     ? [
-                        "Проверка работ группы М1217",
+                        "Проверка работ по своим курсам",
                         "Аналитика изучения материалов",
                         "Журнал оценок",
                         "Ведение курсов",

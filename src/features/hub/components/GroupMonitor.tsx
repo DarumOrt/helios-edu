@@ -50,7 +50,7 @@ export function GroupMonitor({ courseId }: { courseId: string }) {
       <Card className="overflow-hidden">
         <div className="flex items-center gap-2 border-b px-4 py-2.5 text-sm">
           <Users size={15} className="text-muted-foreground" />
-          <span className="font-medium">Группа М1217</span>
+          <span className="font-medium">Студенты курса</span>
           <span className="text-xs text-muted-foreground">— сначала те, кому нужна помощь</span>
         </div>
         <Table>

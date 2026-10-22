@@ -1,3 +1,4 @@
+import { audit, auditIfOk } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { withCover } from "@/mocks/course-cover-store";
 import { createDemoCourse, findDemoCourseByCode } from "@/mocks/course-store";
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
 // POST { code, title, category, description, tutorId } — создать курс (course.create). Новый курс — черновик.
 export async function POST(req: Request) {
   const forwarded = await backendForward(req, "/api/courses");
-  if (forwarded) return forwarded;
+  if (forwarded) return auditIfOk(forwarded, "Создан курс", "через сервер");
 
   const actor = await demoActorWith("course.create");
   if (actor instanceof NextResponse) return actor;
@@ -57,5 +58,6 @@ export async function POST(req: Request) {
   if (Object.keys(fields).length) return fail(400, "Проверьте поля формы", fields);
   if (findDemoCourseByCode(input.code))
     return fail(409, "Курс с таким кодом уже есть", { code: "Курс с таким кодом уже есть" });
+  await audit("Создан курс", `${input.code} · ${input.title}`);
   return NextResponse.json(createDemoCourse(input), { status: 201 });
 }

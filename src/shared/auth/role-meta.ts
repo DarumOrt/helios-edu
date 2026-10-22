@@ -22,7 +22,7 @@ export const roleMeta: Record<Role, RoleMeta> = {
     label: "Преподаватель",
     workspace: "Кабинет преподавателя",
     dashTitle: "Кабинет преподавателя",
-    dashSubtitle: "Группа М1217 · обучение, проверка, аналитика",
+    dashSubtitle: "Обучение, проверка, аналитика",
     badgeTone: "info",
   },
   organizer: {

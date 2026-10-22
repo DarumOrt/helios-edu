@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/shared/lib/api-client";
+import type { Course } from "@/shared/types/domain";
 import { ShieldAlert } from "lucide-react";
 import { PageHeader, Select, EmptyState } from "@/shared/ui";
 import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 
-// курсы с включёнными метриками
-const TRACKED = [{ id: "c-matan", title: "Математический анализ" }];
-
 export default function AnalyticsPage() {
   const role = useSession((s) => s.role);
-  const [courseId, setCourseId] = useState("c-matan");
+  // курсы, которые видит пользователь (преподавателю — свои); по умолчанию первый
+  const { data: courses } = useSWR<Course[]>(can(role, "analytics.view") ? "/api/courses" : null, fetcher);
+  const [picked, setPicked] = useState("");
+  const courseId = picked || courses?.[0]?.id || "";
 
   if (!can(role, "analytics.view")) {
     return (
@@ -28,10 +31,10 @@ export default function AnalyticsPage() {
     <div>
       <PageHeader
         title="Аналитика групп"
-        subtitle="Изучение материалов группой М1217 по курсам"
+        subtitle="Как группы изучают материалы курса"
         actions={
-          <Select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-            {TRACKED.map((c) => (
+          <Select aria-label="Курс" value={courseId} onChange={(e) => setPicked(e.target.value)}>
+            {(courses ?? []).map((c) => (
               <option key={c.id} value={c.id}>
                 {c.title}
               </option>
@@ -39,7 +42,7 @@ export default function AnalyticsPage() {
           </Select>
         }
       />
-      <CourseStatsPanel courseId={courseId} />
+      {courseId && <CourseStatsPanel courseId={courseId} />}
     </div>
   );
 }

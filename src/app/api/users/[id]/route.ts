@@ -1,3 +1,4 @@
+import { audit, auditIfOk } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward } from "@/shared/lib/backend";
 import { findDemoUser, findDemoUserByEmail, updateDemoUser } from "@/mocks/users-store";
@@ -11,7 +12,7 @@ import type { Role, UserStatus } from "@/shared/types/domain";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/users/${encodeURIComponent(id)}`);
-  if (forwarded) return forwarded;
+  if (forwarded) return auditIfOk(forwarded, "Изменён пользователь", id);
 
   const actor = await demoActorWith("user.manage");
   if (actor instanceof NextResponse) return actor;
@@ -57,5 +58,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     role,
     group: group ? findCohortByName(group)!.name : undefined,
   });
+  await audit(
+    patch.status === "blocked" ? "Заблокирован пользователь" : "Изменён пользователь",
+    `${user!.name} · ${user!.role}`,
+  );
   return NextResponse.json(user);
 }
