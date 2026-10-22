@@ -38,6 +38,23 @@ export interface Activity {
   src?: string;
   /** для pdf/presentation — число страниц/слайдов */
   pages?: number;
+  /** задание: условие для студента */
+  description?: string;
+  /** задание: максимальная оценка (по умолчанию 100) */
+  maxGrade?: number;
+}
+
+/** Типы материалов, которые можно создать в конструкторе курса */
+export const BUILDER_ACTIVITY_TYPES = ["video", "pdf", "presentation", "quiz", "assignment"] as const;
+export type BuilderActivityType = (typeof BUILDER_ACTIVITY_TYPES)[number];
+
+export interface Announcement {
+  id: string;
+  courseId: string;
+  title: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
 }
 
 export interface Section {
@@ -96,6 +113,8 @@ export interface QuizAttempt {
 export interface Submission {
   id: string;
   assignmentId: string;
+  /** курс задания: id материалов уникальны только внутри курса */
+  courseId?: string;
   userId: string;
   text: string;
   fileName?: string;

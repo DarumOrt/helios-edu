@@ -299,3 +299,62 @@ if (process.env.TEST_WEB_URL)
     assert.equal(tooHigh.status, 400);
     assert.ok((await tooHigh.json()).fields.grade);
   });
+
+if (process.env.TEST_WEB_URL)
+  test("Next.js: тесты, задания и объявления курса — по правам и без утечки ответов", async () => {
+    const baseUrl = process.env.TEST_WEB_URL;
+    const origin = new URL(baseUrl).origin;
+    const send = (cookie, method, path, body) =>
+      fetch(`${baseUrl}${path}`, {
+        method,
+        headers: { Cookie: cookie, "Content-Type": "application/json", Origin: origin },
+        body: JSON.stringify(body),
+      });
+    const student = await login(baseUrl);
+    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+
+    // вопросы для прохождения — без правильных ответов; редактор вопросов студенту закрыт
+    const quiz = await get(baseUrl, "/api/quiz/mq1/questions?courseId=c-matan", student.cookie);
+    assert.equal(quiz.status, 200);
+    const questions = await quiz.json();
+    assert.ok(questions.length > 0 && questions.every((q) => !("correct" in q)));
+    const editorPath = "/api/courses/c-matan/activities/mq1/questions";
+    assert.equal((await get(baseUrl, editorPath, student.cookie)).status, 403);
+    const full = await get(baseUrl, editorPath, tutor.cookie);
+    assert.equal(full.status, 200);
+    assert.ok((await full.json()).every((q) => "correct" in q));
+
+    // сданное задание появляется у преподавателя; чужой userId не принимается
+    const text = `Ответ ${Date.now()}`;
+    assert.equal(
+      (
+        await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
+          courseId: "c-matan",
+          userId: "u-stud-1",
+          text,
+        })
+      ).status,
+      403,
+    );
+    const submitted = await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
+      courseId: "c-matan",
+      userId: student.user.id,
+      text,
+    });
+    assert.equal(submitted.status, 201);
+    const { items } = await (await get(baseUrl, "/api/submissions", tutor.cookie)).json();
+    assert.ok(items.some((s) => s.text === text && s.courseId === "c-matan"));
+
+    // объявление пишет преподаватель, получает студент курса
+    const announcement = { title: `Объявление ${Date.now()}`, body: "Консультация в пятницу" };
+    assert.equal(
+      (await send(student.cookie, "POST", "/api/courses/c-matan/announcements", announcement)).status,
+      403,
+    );
+    assert.equal(
+      (await send(tutor.cookie, "POST", "/api/courses/c-matan/announcements", announcement)).status,
+      201,
+    );
+    const notifications = await (await get(baseUrl, "/api/notifications", student.cookie)).json();
+    assert.ok(notifications.some((n) => n.title.endsWith(announcement.title) && n.read === false));
+  });

@@ -8,12 +8,12 @@ import { getSubmission } from "@/mocks/submissions-store";
 
 // Курс, к которому относится запрос, если он задан в пути (а не в ?courseId=).
 // Без этого преподаватель открыл бы аналитику и работы чужих курсов по прямой ссылке.
-function courseFromPath(path: string): { courseId?: string; missing?: boolean } {
+function courseFromPath(path: string, query: URLSearchParams): { courseId?: string; missing?: boolean } {
   const course = /^\/api\/analytics\/course\/([^/]+)$/.exec(path)?.[1];
   if (course) return { courseId: decodeURIComponent(course) };
   const lesson = /^\/api\/analytics\/lesson\/([^/]+)$/.exec(path)?.[1];
   if (lesson) {
-    const courseId = activityCourse(decodeURIComponent(lesson));
+    const courseId = activityCourse(decodeURIComponent(lesson), query.get("courseId"));
     return courseId ? { courseId } : { missing: true };
   }
   const review = /^\/api\/submissions\/([^/]+)\/review$/.exec(path)?.[1];
@@ -21,8 +21,9 @@ function courseFromPath(path: string): { courseId?: string; missing?: boolean } 
     const courseId = getSubmission(decodeURIComponent(review))?.courseId;
     return courseId ? { courseId } : { missing: true };
   }
-  const cover = /^\/api\/courses\/([^/]+)\/cover$/.exec(path)?.[1];
-  return cover ? { courseId: decodeURIComponent(cover) } : {};
+  // всё внутри курса: обложка, модули, материалы, вопросы тестов, объявления
+  const nested = /^\/api\/courses\/([^/]+)\/.+$/.exec(path)?.[1];
+  return nested ? { courseId: decodeURIComponent(nested) } : {};
 }
 
 export async function proxy(request: NextRequest) {
@@ -52,7 +53,7 @@ export async function proxy(request: NextRequest) {
   const requestedGroup = request.nextUrl.searchParams.get("group");
   if (path === "/api/schedule" && !can(user.role, "analytics.view") && requestedGroup !== user.group)
     return forbidden();
-  const fromPath = courseFromPath(path);
+  const fromPath = courseFromPath(path, request.nextUrl.searchParams);
   if (fromPath.missing) return Response.json({ error: "not found" }, { status: 404 });
   let courseId = fromPath.courseId ?? request.nextUrl.searchParams.get("courseId");
   if (requestedUser && requestedUser !== user.id && !can(user.role, "analytics.view")) return forbidden();

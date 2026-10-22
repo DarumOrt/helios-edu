@@ -8,7 +8,9 @@ interface SubmitResult {
 }
 
 export const quizApi = {
-  questions: (quizId: string) => api.get<QuizQuestion[]>(`/api/quiz/${quizId}/questions`),
-  submit: (quizId: string, answers: Record<string, unknown>, userId: string) =>
-    api.post<SubmitResult>(`/api/quiz/${quizId}/submit`, { answers, userId }),
+  // id материалов уникальны только внутри курса — курс передаём всегда
+  questions: (courseId: string, quizId: string) =>
+    api.get<QuizQuestion[]>(`/api/quiz/${quizId}/questions?courseId=${encodeURIComponent(courseId)}`),
+  submit: (courseId: string, quizId: string, answers: Record<string, unknown>, userId: string) =>
+    api.post<SubmitResult>(`/api/quiz/${quizId}/submit`, { courseId, answers, userId }),
 };

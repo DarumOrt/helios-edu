@@ -17,9 +17,17 @@ const statusMeta = {
   not_started: { label: "Не начал", tone: "neutral" as const, icon: CircleDashed },
 };
 
-export function LessonStatsPanel({ activityId, title }: { activityId: string; title: string }) {
+export function LessonStatsPanel({
+  courseId,
+  activityId,
+  title,
+}: {
+  courseId: string;
+  activityId: string;
+  title: string;
+}) {
   const { data, error, isLoading } = useSWR<LessonStatsResponse>(
-    `/api/analytics/lesson/${activityId}`,
+    `/api/analytics/lesson/${activityId}?courseId=${encodeURIComponent(courseId)}`,
     fetcher,
     { refreshInterval: 5000 },
   );
@@ -60,6 +68,7 @@ export function LessonStatsPanel({ activityId, title }: { activityId: string; ti
                   row={r}
                   open={open}
                   meta={meta}
+                  courseId={courseId}
                   activityId={activityId}
                   onToggle={() => setOpenUser(open ? null : r.userId)}
                 />
@@ -76,12 +85,14 @@ function RowWithDetail({
   row,
   open,
   meta,
+  courseId,
   activityId,
   onToggle,
 }: {
   row: LessonStatRow;
   open: boolean;
   meta: (typeof statusMeta)[keyof typeof statusMeta];
+  courseId: string;
   activityId: string;
   onToggle: () => void;
 }) {
@@ -133,7 +144,7 @@ function RowWithDetail({
       {open && (
         <tr className="bg-muted/20">
           <td colSpan={7} className="px-4">
-            <StudentTimeline activityId={activityId} userId={row.userId} />
+            <StudentTimeline courseId={courseId} activityId={activityId} userId={row.userId} />
           </td>
         </tr>
       )}

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { quizQuestions } from "@/mocks/data";
+import { getQuestions, publicQuestions } from "@/mocks/quiz-store";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+// GET ?courseId= — вопросы для прохождения, без правильных ответов. Доступ к курсу проверяет proxy.ts.
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const list = quizQuestions[id] ?? quizQuestions["a3"];
-  return NextResponse.json(list.map(({ correct, ...q }) => q));
+  const courseId = new URL(req.url).searchParams.get("courseId");
+  if (!courseId) return NextResponse.json({ error: "courseId required" }, { status: 400 });
+  return NextResponse.json(publicQuestions(getQuestions(courseId, id)));
 }

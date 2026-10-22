@@ -53,7 +53,11 @@ export function CourseStatsPanel({ courseId }: { courseId: string }) {
 
       {selectedAct && (
         <div>
-          <LessonStatsPanel activityId={selectedAct.activityId} title={`Детально: ${selectedAct.title}`} />
+          <LessonStatsPanel
+            courseId={courseId}
+            activityId={selectedAct.activityId}
+            title={`Детально: ${selectedAct.title}`}
+          />
         </div>
       )}
       {!selectedAct && activities.length > 0 && (

@@ -7,7 +7,7 @@ import { Button, Dialog, Field, Input, describedBy } from "@/shared/ui";
 import { validateCohort } from "@/shared/lib/management-validation";
 import type { Cohort } from "@/shared/types/domain";
 import { adminApi, refreshManagement } from "../api";
-import { FormError, useFormSubmit } from "../use-form-submit";
+import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 
 // Создание и переименование группы. Студенты при переименовании остаются в группе.
 export function CohortDialog({

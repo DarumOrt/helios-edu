@@ -8,7 +8,7 @@ import { COURSE_STATUSES, validateCourse } from "@/shared/lib/management-validat
 import type { Course, CourseStatus, User } from "@/shared/types/domain";
 import { adminApi, refreshManagement, type CoursePayload } from "../api";
 import { courseStatusMeta } from "../labels";
-import { FormError, useFormSubmit } from "../use-form-submit";
+import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 
 const statusHint: Record<CourseStatus, string> = {
   draft: "Студенты курс не видят — можно спокойно наполнять",

@@ -2,13 +2,25 @@
 
 import { use, useState } from "react";
 import useSWR from "swr";
-import { Users, BookOpen, ListTree, BarChart3 } from "lucide-react";
+import { Users, BookOpen, ListTree, BarChart3, Megaphone, Pencil, Check } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, DataState, Card, CardBody, CourseCover, Progress, Breadcrumbs } from "@/shared/ui";
+import {
+  PageHeader,
+  DataState,
+  Card,
+  CardBody,
+  CourseCover,
+  Progress,
+  Breadcrumbs,
+  Button,
+} from "@/shared/ui";
 import { CourseSection } from "@/features/courses/components/CourseSection";
 import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
 import { CoverEditor } from "@/features/courses/components/CoverEditor";
 import { can } from "@/shared/auth/permissions";
+import { canEditCourse } from "@/shared/auth/management";
+import { CourseBuilder } from "@/features/course-builder/components/CourseBuilder";
+import { AnnouncementDialog, AnnouncementsCard } from "@/features/course-builder/components/Announcements";
 import { cn } from "@/shared/lib/utils";
 import { useSession } from "@/shared/auth/session";
 import type { Course } from "@/shared/types/domain";
@@ -17,9 +29,13 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const { courseId } = use(params);
   const { data: course, error, isLoading } = useSWR<Course>(`/api/courses/${courseId}`, fetcher);
   const role = useSession((s) => s.role);
+  const user = useSession((s) => s.user);
   const canSeeStats = can(role, "analytics.view");
-  const canEdit = can(role, "course.edit");
+  // преподаватель правит только свой курс; администратор и организатор — любой
+  const canEdit = course ? canEditCourse(user, course) : false;
   const [tab, setTab] = useState<"content" | "stats">("content");
+  const [building, setBuilding] = useState(false);
+  const [announcing, setAnnouncing] = useState(false);
 
   return (
     <div>
@@ -81,15 +97,41 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                   Статистика
                 </Tab>
               )}
+              {canEdit && tab === "content" && (
+                <div className="ml-auto flex items-center gap-2 pb-1.5">
+                  <Button variant="ghost" size="sm" onClick={() => setAnnouncing(true)}>
+                    <Megaphone size={15} aria-hidden /> Объявление
+                  </Button>
+                  <Button
+                    variant={building ? "primary" : "outline"}
+                    size="sm"
+                    onClick={() => setBuilding((b) => !b)}
+                    aria-pressed={building}
+                  >
+                    {building ? <Check size={15} aria-hidden /> : <Pencil size={15} aria-hidden />}
+                    {building ? "Готово" : "Редактировать содержание"}
+                  </Button>
+                </div>
+              )}
             </div>
 
-            {tab === "content" && (
-              <div className="space-y-3">
-                {course.sections?.map((s) => (
-                  <CourseSection key={s.id} section={s} courseId={course.id} />
-                ))}
-              </div>
-            )}
+            {tab === "content" && !building && <AnnouncementsCard courseId={course.id} />}
+            {tab === "content" &&
+              (building ? (
+                <CourseBuilder course={course} />
+              ) : (
+                <div className="space-y-3">
+                  {course.sections?.map((s) => (
+                    <CourseSection key={s.id} section={s} courseId={course.id} />
+                  ))}
+                  {!course.sections?.length && (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                      Материалы скоро появятся{canEdit ? " — нажмите «Редактировать содержание»" : ""}
+                    </p>
+                  )}
+                </div>
+              ))}
+            {announcing && <AnnouncementDialog courseId={course.id} onClose={() => setAnnouncing(false)} />}
 
             {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
           </>

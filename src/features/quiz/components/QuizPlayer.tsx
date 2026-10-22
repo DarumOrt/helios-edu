@@ -11,8 +11,11 @@ import { quizApi } from "../api";
 import { useSession } from "@/shared/auth/session";
 import type { QuizQuestion } from "@/shared/types/domain";
 
-export function QuizPlayer({ quizId }: { quizId: string }) {
-  const { data, error, isLoading } = useSWR<QuizQuestion[]>(`/api/quiz/${quizId}/questions`, fetcher);
+export function QuizPlayer({ courseId, quizId }: { courseId: string; quizId: string }) {
+  const { data, error, isLoading } = useSWR<QuizQuestion[]>(
+    `/api/quiz/${quizId}/questions?courseId=${encodeURIComponent(courseId)}`,
+    fetcher,
+  );
   const user = useSession((s) => s.user);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [result, setResult] = useState<{ score: number; max: number } | null>(null);
@@ -25,7 +28,7 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
   async function onSubmit() {
     setSubmitting(true);
     try {
-      const r = await quizApi.submit(quizId, answers, user.id);
+      const r = await quizApi.submit(courseId, quizId, answers, user.id);
       setResult({ score: r.score, max: r.max });
       toast.success("Тест отправлен", { description: `Результат: ${r.score} из ${r.max}` });
     } catch {
@@ -36,7 +39,12 @@ export function QuizPlayer({ quizId }: { quizId: string }) {
   }
 
   return (
-    <DataState loading={isLoading} error={error} empty={!data?.length}>
+    <DataState
+      loading={isLoading}
+      error={error}
+      empty={!data?.length}
+      emptyTitle="В тесте пока нет вопросов — преподаватель скоро их добавит"
+    >
       {result ? (
         <Card className="overflow-hidden">
           <CardBody className="py-12 text-center">

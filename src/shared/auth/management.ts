@@ -1,5 +1,5 @@
 import { can } from "./permissions";
-import type { Role, User } from "@/shared/types/domain";
+import type { Course, Role, User } from "@/shared/types/domain";
 
 // Правила управления пользователями. Одни для интерфейса, моков Next и C# API
 // (см. docs/backend/p1-management.md) — меняются вместе.
@@ -22,4 +22,10 @@ export function canManageUser(actor: Pick<User, "role">, target: Pick<User, "rol
 /** Себе нельзя менять роль и блокировать себя — иначе легко потерять доступ к управлению. */
 export function isSelf(actor: Pick<User, "id">, target: Pick<User, "id">): boolean {
   return actor.id === target.id;
+}
+
+/** Содержимое курса: администратор и организатор — любой курс, преподаватель — только свой. */
+export function canEditCourse(actor: Pick<User, "id" | "role">, course: Pick<Course, "tutorId">): boolean {
+  if (!can(actor.role, "course.edit")) return false;
+  return actor.role !== "tutor" || course.tutorId === actor.id;
 }

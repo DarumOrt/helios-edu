@@ -2,45 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  ChevronDown,
-  CheckCircle2,
-  FileText,
-  FileDown,
-  MessagesSquare,
-  ClipboardCheck,
-  Video,
-  Presentation,
-  Activity as ActivityIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronDown, CheckCircle2, Activity as ActivityIcon } from "lucide-react";
 import { Badge } from "@/shared/ui";
 import { formatDate } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { activityHref } from "@/shared/lib/activity-href";
+import { activityIcon as iconByType, activityLabel as labelByType } from "@/shared/lib/activity-meta";
 import type { Section, ActivityType } from "@/shared/types/domain";
-
-const iconByType: Record<ActivityType, LucideIcon> = {
-  quiz: ClipboardCheck,
-  assignment: FileText,
-  file: FileDown,
-  forum: MessagesSquare,
-  page: FileText,
-  video: Video,
-  pdf: FileText,
-  presentation: Presentation,
-};
-
-const labelByType: Record<ActivityType, string> = {
-  quiz: "Тест",
-  assignment: "Задание",
-  file: "Файл",
-  forum: "Форум",
-  page: "Страница",
-  video: "Видеолекция",
-  pdf: "Конспект (PDF)",
-  presentation: "Презентация",
-};
 
 // активности с трекингом просмотра
 const TRACKED: ActivityType[] = ["video", "pdf", "presentation"];

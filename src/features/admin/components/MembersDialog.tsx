@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { Avatar, Badge, Button, Dialog, Input } from "@/shared/ui";
 import type { Cohort, User } from "@/shared/types/domain";
 import { adminApi, refreshManagement } from "../api";
-import { FormError, useFormSubmit } from "../use-form-submit";
+import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 
 // Состав группы целиком. Студент состоит в одной группе: отмеченный из другой группы перейдёт сюда.
 export function MembersDialog({
