@@ -1,13 +1,25 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { LogIn } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowRight } from "lucide-react";
 import { api, ApiError } from "@/shared/lib/api-client";
-import { BrandMark, Button, Card, Input } from "@/shared/ui";
+import { Button } from "@/shared/ui";
+import { AuthInput, Field, PasswordInput, describedBy } from "./Field";
 
+// Вход по почте и паролю — серверный режим (C# API, сессия в httpOnly-cookie).
 export function LoginForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const passwordRef = useRef<HTMLInputElement>(null);
+  // Номер неудачной попытки: после неё фокус возвращается в пароль, когда поля снова доступны.
+  const [failedAttempt, setFailedAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!failedAttempt) return;
+    passwordRef.current?.focus();
+    passwordRef.current?.select();
+  }, [failedAttempt]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,72 +35,67 @@ export function LoginForm() {
       const status = failure instanceof ApiError ? failure.status : 0;
       setError(
         status === 401
-          ? "Неверная почта или пароль."
+          ? "Неверная почта или пароль. Проверьте раскладку и Caps Lock."
           : status === 429
-            ? "Слишком много попыток. Попробуйте через минуту."
+            ? "Слишком много попыток. Подождите минуту и попробуйте снова."
             : "Не удалось войти. Проверьте соединение и попробуйте ещё раз.",
       );
       setPending(false);
+      setFailedAttempt((n) => n + 1);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-5 py-12">
-      <Card className="w-full max-w-md p-8 sm:p-10" role="region" aria-labelledby="login-title">
-        <div className="mb-7 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
-            <BrandMark size={30} />
-          </div>
-          <div>
-            <p className="text-lg font-bold tracking-tight">HeliosEDU</p>
-            <p className="font-mono text-xs text-muted-foreground">ПНИПУ · ИНЭК</p>
-          </div>
-        </div>
-        <h1 id="login-title" className="text-2xl leading-tight font-semibold">
-          Вход в личный кабинет
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">Введите почту и пароль вашей учётной записи.</p>
-        <form onSubmit={submit} className="mt-7 space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium" htmlFor="email">
-              Электронная почта
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              placeholder="name@example.ru"
-              required
-              maxLength={254}
-              disabled={pending}
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium" htmlFor="password">
-              Пароль
-            </label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              maxLength={256}
-              disabled={pending}
-            />
-          </div>
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
-          <Button type="submit" size="lg" className="w-full" disabled={pending}>
-            <LogIn size={17} />
-            {pending ? "Входим…" : "Войти"}
-          </Button>
-        </form>
-      </Card>
-    </main>
+    <section aria-labelledby="login-title">
+      <h1 id="login-title" className="text-2xl leading-tight font-semibold text-balance">
+        Вход в личный кабинет
+      </h1>
+      <p className="mt-2 text-sm text-muted-foreground">Введите почту и пароль вашей учётной записи.</p>
+
+      <form onSubmit={submit} className="mt-7 space-y-5">
+        <Field id="email" label="Электронная почта">
+          <AuthInput
+            id="email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            placeholder="name@pstu.ru"
+            required
+            maxLength={254}
+            disabled={pending}
+            {...describedBy("email", error)}
+          />
+        </Field>
+        <Field id="password" label="Пароль">
+          <PasswordInput
+            ref={passwordRef}
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            required
+            maxLength={256}
+            disabled={pending}
+            {...describedBy("password", error)}
+          />
+        </Field>
+        {error && (
+          <p role="alert" className="rounded-md bg-danger-soft px-3 py-2.5 text-sm text-danger">
+            {error}
+          </p>
+        )}
+        <Button type="submit" size="lg" className="h-11 w-full text-base" disabled={pending}>
+          {pending ? "Входим…" : "Войти"}
+          {!pending && <ArrowRight size={17} aria-hidden />}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Впервые здесь?{" "}
+        <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+          Создайте учётную запись
+        </Link>
+      </p>
+    </section>
   );
 }

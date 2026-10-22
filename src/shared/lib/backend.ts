@@ -1,10 +1,17 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { DATA_SOURCE_COOKIE, resolveDataSource, type DataSourceState } from "./data-source";
+
+// Текущий источник данных для запроса: учитывает переключатель «Демо / Сервер».
+export async function getDataSource(): Promise<DataSourceState> {
+  return resolveDataSource((await cookies()).get(DATA_SOURCE_COOKIE)?.value);
+}
 
 // URL доступен только серверу Next.js; браузер продолжает обращаться к /api/*.
+// null — работаем на моках: API не подключён или выбран демо-режим.
 export async function backendRequest(path: string, init?: RequestInit): Promise<Response | null> {
   const baseUrl = process.env.BACKEND_API_URL;
-  if (!baseUrl) return null;
+  if (!baseUrl || (await getDataSource()).source === "demo") return null;
 
   try {
     const token = (await cookies()).get("helios-auth")?.value;

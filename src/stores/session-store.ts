@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Role, User } from "@/shared/types/domain";
 
-const usersByRole: Record<Role, User> = {
+export const usersByRole: Record<Role, User> = {
   admin: {
     id: "u-admin",
     name: "Иван Морозов",
@@ -44,6 +44,8 @@ interface SessionState {
   role: Role;
   user: User;
   setRole: (role: Role) => void;
+  /** демо-регистрация: войти под только что созданным пользователем */
+  setUser: (user: User) => void;
 }
 
 export const useSessionStore = create<SessionState>()(
@@ -52,6 +54,7 @@ export const useSessionStore = create<SessionState>()(
       role: "student",
       user: usersByRole.student,
       setRole: (role) => set({ role, user: usersByRole[role] }),
+      setUser: (user) => set({ role: user.role, user }),
     }),
     { name: "helios-session" },
   ),
