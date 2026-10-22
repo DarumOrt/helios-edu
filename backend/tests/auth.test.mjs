@@ -99,6 +99,68 @@ for (const [name, baseUrl] of [
     assert.equal(user.id, "u-stud-2");
     assert.equal(user.role, "student");
   });
+
+  const register = (body, origin = new URL(baseUrl).origin) =>
+    fetch(`${baseUrl}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Helios-Client": "web", Origin: origin },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
+
+  test(`${name}: регистрация создаёт студента без группы и сразу открывает сессию`, async () => {
+    const email = `new-${name === "C#" ? "api" : "web"}-${Date.now()}@example.ru`;
+    const password = "Учёба2026";
+    // role и group в теле игнорируются: сам регистрируется только студент без группы
+    const response = await register({
+      name: "  Новый Студент ",
+      email,
+      password,
+      consent: true,
+      role: "admin",
+      group: "М1217",
+    });
+    assert.equal(response.status, 201);
+    const cookie = response.headers.getSetCookie().find((c) => c.startsWith("helios-auth="));
+    assert.ok(cookie);
+    assert.match(cookie, /httponly/i);
+    const user = await response.json();
+    assert.equal(user.name, "Новый Студент");
+    assert.equal(user.email, email);
+    assert.equal(user.role, "student");
+    assert.ok(!("group" in user) && !("passwordHash" in user));
+
+    const session = cookie.split(";")[0];
+    assert.deepEqual(await (await get(baseUrl, "/api/auth/me", session)).json(), user);
+    // курсов нет, пока организатор не зачислит в группу
+    assert.deepEqual(await (await get(baseUrl, "/api/courses", session)).json(), []);
+    assert.equal((await login(baseUrl, email.toUpperCase(), password)).user.id, user.id);
+
+    const duplicate = await register({ name: "Другой", email, password, consent: true });
+    assert.equal(duplicate.status, 409);
+    assert.ok((await duplicate.json()).fields.email);
+  });
+
+  test(`${name}: регистрация проверяет поля и источник запроса`, async () => {
+    const valid = {
+      name: "Проверка Полей",
+      email: `fields-${Date.now()}@example.ru`,
+      password: "Пароль2026",
+      consent: true,
+    };
+    for (const [patch, field] of [
+      [{ name: " " }, "name"],
+      [{ email: "not-an-email" }, "email"],
+      [{ password: "кот12" }, "password"],
+      [{ password: "безцифрвообще" }, "password"],
+      [{ consent: false }, "consent"],
+    ]) {
+      const response = await register({ ...valid, ...patch });
+      assert.equal(response.status, 400, field);
+      assert.ok((await response.json()).fields[field], field);
+    }
+    assert.equal((await register(valid, "https://other.example")).status, 403);
+  });
 }
 
 if (process.env.TEST_WEB_URL)
@@ -164,3 +226,45 @@ if (process.env.TEST_WEB_URL) {
     assert.equal((await put(tutor.cookie)).status, 200);
   });
 }
+
+if (process.env.TEST_WEB_URL)
+  test("Next.js: переключатель «Демо / Сервер» меняет источник данных только для своего браузера", async () => {
+    const baseUrl = process.env.TEST_WEB_URL;
+    const origin = new URL(baseUrl).origin;
+    const toggle = (source, from = origin, cookie = "") =>
+      fetch(`${baseUrl}/api/data-source`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: from, ...(cookie ? { Cookie: cookie } : {}) },
+        body: JSON.stringify({ source }),
+      });
+
+    assert.deepEqual(await (await get(baseUrl, "/api/data-source")).json(), {
+      source: "server",
+      serverAvailable: true,
+      demoAllowed: true,
+    });
+    assert.equal((await toggle("demo", "https://other.example")).status, 403);
+    assert.equal((await toggle("cloud")).status, 400);
+
+    const demo = await toggle("demo");
+    assert.equal(demo.status, 200);
+    const cookie = demo.headers.getSetCookie().find((c) => c.startsWith("helios-data-source="));
+    assert.match(cookie, /httponly/i);
+    const demoCookie = cookie.split(";")[0];
+    // демо: моки без входа, кабинет открывается без редиректа на /login
+    const courses = await get(baseUrl, "/api/courses", demoCookie);
+    assert.equal(courses.status, 200);
+    assert.ok((await courses.json()).length > 0);
+    assert.equal(
+      (await fetch(`${baseUrl}/dashboard`, { headers: { Cookie: demoCookie }, redirect: "manual" })).status,
+      200,
+    );
+
+    const back = await toggle("server", origin, demoCookie);
+    assert.equal(back.status, 200);
+    const serverCookie = back.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("helios-data-source="))
+      .split(";")[0];
+    assert.equal((await get(baseUrl, "/api/courses", serverCookie)).status, 401);
+  });

@@ -1,7 +1,7 @@
 import { Sidebar } from "@/shared/layout/Sidebar";
 import { Header } from "@/shared/layout/Header";
 import { redirect } from "next/navigation";
-import { backendGet } from "@/shared/lib/backend";
+import { backendGet, getDataSource } from "@/shared/lib/backend";
 import { SessionProvider } from "@/shared/auth/session";
 import { type User } from "@/shared/types/domain";
 
@@ -9,8 +9,9 @@ import { type User } from "@/shared/types/domain";
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const dataSource = await getDataSource();
   let user: User | null = null;
-  if (process.env.BACKEND_API_URL) {
+  if (dataSource.source === "server") {
     const response = await backendGet("/api/auth/me");
     if (response?.status === 401) redirect("/login");
     if (!response?.ok)
@@ -26,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     user = (await response.json()) as User;
   }
   return (
-    <SessionProvider initialUser={user}>
+    <SessionProvider initialUser={user} dataSource={dataSource}>
       <div className="flex min-h-screen">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">

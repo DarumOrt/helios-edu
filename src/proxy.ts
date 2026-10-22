@@ -2,13 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { backendGet, isSameOrigin } from "@/shared/lib/backend";
 import { actionForMockApi, can } from "@/shared/auth/permissions";
 import { type User } from "@/shared/types/domain";
+import { DATA_SOURCE_COOKIE, resolveDataSource } from "@/shared/lib/data-source";
 
 export async function proxy(request: NextRequest) {
-  if (!process.env.BACKEND_API_URL) return NextResponse.next();
+  // В демо-режиме данные — моки, серверной сессии нет; права показывает только интерфейс.
+  if (resolveDataSource(request.cookies.get(DATA_SOURCE_COOKIE)?.value).source === "demo")
+    return NextResponse.next();
   const path = request.nextUrl.pathname;
-  // Эти маршруты проверяются самим C# API; health остаётся публичной пробой.
+  // Эти маршруты проверяются самим C# API; health и выбор источника данных — публичные.
   if (
     path === "/api/health" ||
+    path === "/api/data-source" ||
     path.startsWith("/api/auth/") ||
     path === "/api/users" ||
     path === "/api/courses" ||

@@ -8,15 +8,23 @@ import { useState } from "react";
 import { api } from "@/shared/lib/api-client";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { RoleSwitcher } from "./RoleSwitcher";
+import { DataSourceToggle } from "./DataSourceToggle";
 import { NotificationsBell } from "@/features/notifications/components/NotificationsBell";
 
 export function Header() {
   const user = useSession((s) => s.user);
   const role = useSession((s) => s.role);
   const backendEnabled = useSession((s) => s.backendEnabled);
+  const dataSource = useSession((s) => s.dataSource);
   const [pending, setPending] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   async function logout() {
+    // В демо сессии на сервере нет — «выход» возвращает к выбору, кем войти.
+    if (!backendEnabled) {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Как и при серверном выходе: новый документ сбрасывает SWR-кэш прошлой роли.
+      window.location.assign("/login");
+      return;
+    }
     setPending(true);
     setLogoutError("");
     try {
@@ -31,6 +39,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center justify-end gap-2 bg-background px-4 py-2 sm:px-8">
+      <DataSourceToggle state={dataSource} className="mr-auto sm:mr-2" />
       <RoleSwitcher />
       <NotificationsBell />
       <Link
@@ -46,12 +55,10 @@ export function Header() {
           </div>
         </div>
       </Link>
-      {backendEnabled && (
-        <Button variant="ghost" size="sm" onClick={logout} disabled={pending}>
-          <LogOut size={16} />
-          {pending ? "Выходим…" : "Выйти"}
-        </Button>
-      )}
+      <Button variant="ghost" size="sm" onClick={logout} disabled={pending}>
+        <LogOut size={16} aria-hidden />
+        {pending ? "Выходим…" : "Выйти"}
+      </Button>
       {logoutError && (
         <span role="alert" className="text-xs text-danger">
           {logoutError}

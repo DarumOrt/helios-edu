@@ -51,8 +51,14 @@ backend/tests/          проверки API на настоящем PostgreSQL
 - Права интерфейса — через `shared/auth/permissions.ts` (`can`, `navForRole`) и `RoleGate`. Не проверять `role === "..."` в разметке там, где есть право.
 - Серверные права — через `backend/HeliosEdu.Api/Auth/AccessRules.cs` и `RequireAuthorization`.
   Проверки интерфейса не заменяют серверные. Пользователь и роль берутся из серверной сессии,
-  а не из `userId`, `role` в теле запроса или localStorage. Моковый режим без `BACKEND_API_URL`
-  сохраняет демонстрационный переключатель ролей.
+  а не из `userId`, `role` в теле запроса или localStorage.
+- Два источника данных — «Демо» (моки, вход выбором роли) и «Сервер» (C# API, вход по паролю).
+  Текущий берётся только через `getDataSource()` из `shared/lib/backend.ts` (в `proxy.ts` — `resolveDataSource`),
+  не через прямую проверку `process.env.BACKEND_API_URL`. Переключатель — cookie `helios-data-source`
+  (`/api/data-source`). Без `BACKEND_API_URL` доступно только демо; `DEMO_MODE=off` запрещает демо.
+  Любая новая фича должна работать в обоих режимах; `backendRequest` возвращает `null` в демо.
+- Правила регистрации — в `shared/lib/registration.ts` и зеркально в `AuthEndpoints.ValidateRegistration` (C#):
+  меняются вместе. Самостоятельно регистрируется только студент без группы; роль и группу клиент не задаёт.
 
 ## Соглашения по коду
 

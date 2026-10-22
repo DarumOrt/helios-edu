@@ -6,14 +6,22 @@ import { useRouter } from "next/navigation";
 import { useSessionStore } from "@/stores/session-store";
 import { ApiError, fetcher } from "@/shared/lib/api-client";
 import { type User, type Role } from "@/shared/types/domain";
+import { type DataSourceState } from "@/shared/lib/data-source";
 
 const SessionContext = createContext<User | null>(null);
+const DataSourceContext = createContext<DataSourceState>({
+  source: "demo",
+  serverAvailable: false,
+  demoAllowed: true,
+});
 
 export function SessionProvider({
   initialUser,
+  dataSource,
   children,
 }: {
   initialUser: User | null;
+  dataSource: DataSourceState;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -28,9 +36,11 @@ export function SessionProvider({
   }, [expired, router]);
   if (expired) return <p className="p-8 text-muted-foreground">Сессия завершена. Переходим ко входу…</p>;
   return (
-    <SessionContext.Provider value={initialUser ? (data ?? initialUser) : null}>
-      {children}
-    </SessionContext.Provider>
+    <DataSourceContext.Provider value={dataSource}>
+      <SessionContext.Provider value={initialUser ? (data ?? initialUser) : null}>
+        {children}
+      </SessionContext.Provider>
+    </DataSourceContext.Provider>
   );
 }
 
@@ -38,16 +48,18 @@ interface SessionState {
   user: User;
   role: Role;
   backendEnabled: boolean;
+  dataSource: DataSourceState;
   setRole: (role: Role) => void;
 }
 
 export function useSession<T>(selector: (session: SessionState) => T): T {
   const user = useContext(SessionContext);
-  // Zustand используется только в прежнем демонстрационном режиме, серверная сессия — SWR.
+  const dataSource = useContext(DataSourceContext);
+  // Zustand используется только в демо-режиме, серверная сессия — SWR.
   const demo = useSessionStore();
   return selector(
     user
-      ? { user, role: user.role, backendEnabled: true, setRole: () => {} }
-      : { ...demo, backendEnabled: false },
+      ? { user, role: user.role, backendEnabled: true, dataSource, setRole: () => {} }
+      : { ...demo, backendEnabled: false, dataSource },
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { users } from "@/mocks/data";
+import { allDemoUsers } from "@/mocks/users-store";
 import { backendGet } from "@/shared/lib/backend";
 
 // GET ?group=М1217 — только участники группы
@@ -9,5 +9,6 @@ export async function GET(req: Request) {
     group ? `/api/users/classmates?group=${encodeURIComponent(group)}` : "/api/users",
   );
   if (response) return response;
+  const users = allDemoUsers();
   return NextResponse.json(group ? users.filter((u) => u.group === group) : users);
 }
