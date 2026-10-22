@@ -15,18 +15,19 @@ import type { SubmissionFull } from "@/features/submissions/api";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
 import type { CourseActivityStat } from "@/features/analytics/api";
 
-const COURSE = "c-matan";
-
 export function TeacherDashboard() {
   const user = useSession((s) => s.user);
   const { data: subs } = useSWR<{ items: SubmissionFull[] }>("/api/submissions?status=submitted", fetcher);
+  // первый из курсов преподавателя — по нему прогресс группы на дашборде
+  const { data: myCourses } = useSWR<{ id: string }[]>("/api/courses", fetcher);
+  const COURSE = myCourses?.[0]?.id;
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
-    `/api/hub/leaderboard?courseId=${COURSE}`,
+    COURSE ? `/api/hub/leaderboard?courseId=${COURSE}` : null,
     fetcher,
     { refreshInterval: 5000 },
   );
   const { data: cs } = useSWR<{ activities: CourseActivityStat[] }>(
-    `/api/analytics/course/${COURSE}`,
+    COURSE ? `/api/analytics/course/${COURSE}` : null,
     fetcher,
     { refreshInterval: 5000 },
   );

@@ -1,3 +1,4 @@
+import { audit, auditIfOk } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { withCover } from "@/mocks/course-cover-store";
 import { findDemoCourse, updateDemoCourse } from "@/mocks/course-store";
@@ -26,7 +27,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}`);
-  if (forwarded) return forwarded;
+  if (forwarded) return auditIfOk(forwarded, "Изменён курс", id);
 
   const actor = await demoActorWith("course.create");
   if (actor instanceof NextResponse) return actor;
@@ -45,5 +46,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (patch.tutorId && !fields.tutorId && findDemoUser(patch.tutorId)?.role !== "tutor")
     fields.tutorId = "Выберите преподавателя";
   if (Object.keys(fields).length) return fail(400, "Проверьте поля формы", fields);
-  return NextResponse.json(withCover(updateDemoCourse(id, patch)!));
+  const course = updateDemoCourse(id, patch)!;
+  await audit(
+    patch.status ? `Курс: статус «${patch.status}»` : "Изменён курс",
+    `${course.code} · ${course.title}`,
+  );
+  return NextResponse.json(withCover(course));
 }

@@ -11,6 +11,8 @@ import {
   Settings2,
   Users,
   UsersRound,
+  SlidersHorizontal,
+  History,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,7 +28,8 @@ export type Action =
   | "quiz.take"
   | "assignment.submit"
   | "analytics.view"
-  | "admin.access";
+  | "admin.access"
+  | "system.manage";
 
 const matrix: Record<Action, Role[]> = {
   "course.create": ["admin", "organizer"],
@@ -42,6 +45,8 @@ const matrix: Record<Action, Role[]> = {
   "analytics.view": ["admin", "organizer", "tutor"],
   // раздел «Администрирование»: курсы, пользователи, группы
   "admin.access": ["admin", "organizer"],
+  // настройки системы и журнал действий
+  "system.manage": ["admin"],
 };
 
 export function can(role: Role, action: Action): boolean {
@@ -56,6 +61,13 @@ export function actionForMockApi(path: string, method: string): Action | null {
     return method === "GET" ? "course.view" : "course.edit";
   if (/^\/api\/courses\/[^/]+\/(sections|activities)(\/|$)/.test(path)) return "course.edit";
   if (path === "/api/gradebook/grade") return "grade.edit";
+  // программы видят все, меняют организатор и администратор
+  if (path === "/api/programs" || /^\/api\/programs\/[^/]+$/.test(path))
+    return method === "GET" ? "course.view" : "program.manage";
+  // настройки системы и журнал действий — только администратор
+  // настройки читают все (форма регистрации, объявления), меняет и смотрит журнал — администратор
+  if (path === "/api/settings") return method === "GET" ? "course.view" : "system.manage";
+  if (path === "/api/audit") return "system.manage";
   if (path === "/api/gradebook" || path.startsWith("/api/analytics/")) return "analytics.view";
   if (path.startsWith("/api/submissions")) return "submission.review";
   // GET групп — для аналитики; изменения — управление группами (C# проверяет ещё раз)
@@ -65,7 +77,6 @@ export function actionForMockApi(path: string, method: string): Action | null {
   if (/^\/api\/assignment\/[^/]+\/submit$/.test(path)) return "assignment.submit";
   if (
     [
-      "/api/programs",
       "/api/schedule",
       "/api/gradebook/me",
       "/api/hub/leaderboard",
@@ -132,6 +143,8 @@ export function navForRole(role: Role): NavItem[] {
   }
 
   if (role === "admin") {
+    items.push(A("/admin/settings", "Настройки системы", SlidersHorizontal));
+    items.push(A("/admin/audit", "Журнал действий", History));
     items.push(M("/courses", "Курсы", BookOpen));
     items.push(M("/submissions", "Проверка работ", ClipboardCheck));
     items.push(M("/analytics", "Аналитика групп", BarChart3));

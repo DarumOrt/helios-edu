@@ -1,3 +1,4 @@
+import { getSettings } from "@/mocks/settings-store";
 import { NextResponse } from "next/server";
 import { addAnnouncement, listAnnouncements } from "@/mocks/announcements-store";
 import { currentUser, visibleCourses } from "@/mocks/current-user";
@@ -23,6 +24,7 @@ export async function POST(req: Request, { params }: Ctx) {
     const editor = await demoCourseEditor(id);
     if (editor instanceof NextResponse) return editor;
   }
+  if (!getSettings().announcementsEnabled) return fail(403, "Объявления отключены администратором");
   const author = await currentUser();
   if (author instanceof Response) return author;
 

@@ -31,7 +31,7 @@ export function StudentDashboard() {
       .filter((a) => a.due && !a.completed).length ?? 0;
   const unread = notifs?.filter((n) => !n.read).length ?? 0;
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
-    `/api/hub/leaderboard?courseId=c-matan&userId=${user.id}`,
+    courses?.[0] ? `/api/hub/leaderboard?courseId=${courses[0].id}&userId=${user.id}` : null,
     fetcher,
   );
   const me = lb?.entries.find((e) => e.isCurrentUser);

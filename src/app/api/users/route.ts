@@ -1,3 +1,4 @@
+import { audit, auditIfOk } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward, backendGet } from "@/shared/lib/backend";
 import { allDemoUsers, createDemoUser, findDemoUserByEmail } from "@/mocks/users-store";
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
 // Сервер отвечает { user, temporaryPassword }, демо — { user } (пароли в демо не нужны).
 export async function POST(req: Request) {
   const forwarded = await backendForward(req, "/api/users");
-  if (forwarded) return forwarded;
+  if (forwarded) return auditIfOk(forwarded, "Добавлен пользователь", "через сервер");
 
   const actor = await demoActorWith("user.manage");
   if (actor instanceof NextResponse) return actor;
@@ -49,5 +50,6 @@ export async function POST(req: Request) {
     group: input.group ? findCohortByName(input.group)!.name : undefined,
     status: "active",
   });
+  await audit("Добавлен пользователь", `${user.name} · ${user.role}`);
   return NextResponse.json({ user }, { status: 201 });
 }

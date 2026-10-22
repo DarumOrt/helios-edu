@@ -1,15 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { Plus } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Button } from "@/shared/ui";
 import { ProgramCard } from "@/features/programs/components/ProgramCard";
-import { RoleGate } from "@/shared/auth/RoleGate";
-import type { Program } from "@/shared/types/domain";
+import { ProgramDialog } from "@/features/programs/components/ProgramDialog";
+import { useSession } from "@/shared/auth/session";
+import { can } from "@/shared/auth/permissions";
+import type { Course, Program } from "@/shared/types/domain";
 
 export default function ProgramsPage() {
   const { data, error, isLoading } = useSWR<Program[]>("/api/programs", fetcher);
+  const role = useSession((s) => s.role);
+  const canManage = can(role, "program.manage");
+  const { data: courses } = useSWR<Course[]>(canManage ? "/api/courses" : null, fetcher);
+  const [creating, setCreating] = useState(false);
 
   return (
     <div>
@@ -17,12 +24,12 @@ export default function ProgramsPage() {
         title="Программы обучения"
         subtitle="Наборы курсов с правилами прохождения"
         actions={
-          <RoleGate roles={["admin", "organizer"]}>
-            <Button>
-              <Plus size={16} />
+          canManage && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus size={16} aria-hidden />
               Создать программу
             </Button>
-          </RoleGate>
+          )
         }
       />
       <DataState loading={isLoading} error={error} empty={!data?.length}>
@@ -32,6 +39,7 @@ export default function ProgramsPage() {
           ))}
         </div>
       </DataState>
+      {creating && <ProgramDialog courses={courses ?? []} onClose={() => setCreating(false)} />}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { Download } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Select, Button, Badge } from "@/shared/ui";
 import { GradeTable } from "@/features/gradebook/components/GradeTable";
+import { exportGradebookCsv } from "@/features/gradebook/export-csv";
+import { toast } from "sonner";
 import { StudentGrades } from "@/features/gradebook/components/StudentGrades";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
@@ -36,12 +38,20 @@ function TeacherGradebook({ editable }: { editable: boolean }) {
     <div>
       <PageHeader
         title="Журнал оценок"
-        subtitle="Оценки группы М1217 по курсу"
+        subtitle="Оценки студентов по курсу"
         actions={
           <>
             {editable && <Badge tone="info">редактирование доступно</Badge>}
-            <Button variant="outline">
-              <Download size={16} />
+            <Button
+              variant="outline"
+              disabled={!selected}
+              onClick={() =>
+                exportGradebookCsv(selected, courses?.find((c) => c.id === selected)?.code ?? selected).catch(
+                  () => toast.error("Не удалось выгрузить журнал. Обновите страницу — обычно это помогает"),
+                )
+              }
+            >
+              <Download size={16} aria-hidden />
               Экспорт CSV
             </Button>
           </>

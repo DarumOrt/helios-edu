@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthShell } from "@/features/auth/AuthShell";
 import { RegisterForm } from "@/features/auth/RegisterForm";
 import { backendGet, getDataSource } from "@/shared/lib/backend";
+import { getSettings } from "@/mocks/settings-store";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Регистрация · HeliosEDU" };
@@ -12,7 +13,18 @@ export default async function RegisterPage() {
   if (dataSource.source === "server" && (await backendGet("/api/auth/me"))?.ok) redirect("/dashboard");
   return (
     <AuthShell dataSource={dataSource} active="register">
-      <RegisterForm source={dataSource.source} />
+      {getSettings().allowRegistration ? (
+        <RegisterForm source={dataSource.source} />
+      ) : (
+        <section aria-labelledby="register-title">
+          <h1 id="register-title" className="text-2xl leading-tight font-semibold">
+            Регистрация закрыта
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Учётную запись создаёт организатор вашего факультета. Если вы её уже получили — войдите по почте.
+          </p>
+        </section>
+      )}
     </AuthShell>
   );
 }

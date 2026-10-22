@@ -11,28 +11,28 @@ import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import type { Course } from "@/shared/types/domain";
 
-const TRACKED = ["c-matan"];
-
 export default function HubPage() {
   const role = useSession((s) => s.role);
   // мониторинг группы — тем, кто видит аналитику; студенту — соревнование
   const isTeacher = can(role, "analytics.view");
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
-  const tracked = (courses ?? []).filter((c) => TRACKED.includes(c.id));
-  const [courseId, setCourseId] = useState("c-matan");
+  const user = useSession((s) => s.user);
+  const [picked, setPicked] = useState("");
+  const courseId = picked || courses?.[0]?.id || "";
+  const group = user.group ? ` ${user.group}` : "";
 
   return (
     <div>
       <PageHeader
-        title={isTeacher ? "Мониторинг группы М1217" : "Хаб группы М1217"}
+        title={isTeacher ? "Мониторинг группы" : `Хаб группы${group}`}
         subtitle={
           isTeacher
             ? "Кто как изучает материалы — фокус на отстающих"
             : "Рейтинг вовлечённости по изучению материалов и тестам"
         }
         actions={
-          <Select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-            {tracked.map((c) => (
+          <Select aria-label="Курс" value={courseId} onChange={(e) => setPicked(e.target.value)}>
+            {(courses ?? []).map((c) => (
               <option key={c.id} value={c.id}>
                 {c.title}
               </option>

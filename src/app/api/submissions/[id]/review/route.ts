@@ -1,3 +1,4 @@
+import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { getSubmission, reviewSubmission } from "@/mocks/submissions-store";
 
@@ -23,5 +24,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (Object.keys(fields).length)
     return NextResponse.json({ error: "Проверьте поля формы", fields }, { status: 400 });
 
+  await audit(
+    "Проверена работа",
+    `${submission.userName} · ${submission.assignmentTitle} · ${grade}/${submission.maxGrade}`,
+  );
   return NextResponse.json(reviewSubmission(id, grade as number, feedback as string));
 }
