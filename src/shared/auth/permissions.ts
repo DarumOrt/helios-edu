@@ -51,6 +51,10 @@ export function can(role: Role, action: Action): boolean {
 // Временные API на моках тоже проверяют сессию и права при подключённом бэкенде.
 export function actionForMockApi(path: string, method: string): Action | null {
   if (/^\/api\/courses\/[^/]+\/cover$/.test(path)) return "course.edit";
+  // объявления курса читают все участники, пишет преподаватель; конструктор и вопросы тестов — course.edit
+  if (/^\/api\/courses\/[^/]+\/announcements$/.test(path))
+    return method === "GET" ? "course.view" : "course.edit";
+  if (/^\/api\/courses\/[^/]+\/(sections|activities)(\/|$)/.test(path)) return "course.edit";
   if (path === "/api/gradebook/grade") return "grade.edit";
   if (path === "/api/gradebook" || path.startsWith("/api/analytics/")) return "analytics.view";
   if (path.startsWith("/api/submissions")) return "submission.review";

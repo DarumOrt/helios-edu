@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import useSWR from "swr";
+import { useRouter } from "next/navigation";
 import { Bell, AlertTriangle, Award, Megaphone, MessageSquare, type LucideIcon } from "lucide-react";
-import { fetcher } from "@/shared/lib/api-client";
+import { api, fetcher } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
@@ -26,7 +27,19 @@ const toneByType: Record<Notification["type"], string> = {
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { data } = useSWR<Notification[]>("/api/notifications", fetcher, { refreshInterval: 30000 });
+  const router = useRouter();
+  const { data, mutate } = useSWR<Notification[]>("/api/notifications", fetcher, { refreshInterval: 30000 });
+
+  // нажатие отмечает прочитанным и ведёт по ссылке уведомления (объявление — в курс)
+  async function openNotification(n: Notification) {
+    setOpen(false);
+    if (n.link) router.push(n.link);
+    if (n.read) return;
+    await mutate((list) => list?.map((x) => (x.id === n.id ? { ...x, read: true } : x)), {
+      revalidate: false,
+    });
+    await api.post(`/api/notifications/${n.id}/read`, {}).catch(() => mutate());
+  }
   const unread = (data ?? []).filter((n) => !n.read).length;
 
   useEffect(() => {
@@ -63,14 +76,15 @@ export function NotificationsBell() {
             {(data ?? []).map((n) => {
               const Icon = iconByType[n.type];
               return (
-                <li
-                  key={n.id}
-                  className={cn(
-                    "border-b px-4 py-3 transition last:border-b-0 hover:bg-muted/50",
-                    !n.read && "bg-primary-soft/40",
-                  )}
-                >
-                  <div className="flex gap-3">
+                <li key={n.id} className="border-b last:border-b-0">
+                  <button
+                    type="button"
+                    onClick={() => openNotification(n)}
+                    className={cn(
+                      "flex w-full gap-3 px-4 py-3 text-left transition hover:bg-muted/50 focus-visible:bg-muted focus-visible:outline-hidden",
+                      !n.read && "bg-primary-soft/40",
+                    )}
+                  >
                     <div
                       className={cn(
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
@@ -84,7 +98,7 @@ export function NotificationsBell() {
                       <div className="line-clamp-2 text-xs text-muted-foreground">{n.body}</div>
                       <div className="mt-1 text-xs text-muted-foreground">{formatDateTime(n.createdAt)}</div>
                     </div>
-                  </div>
+                  </button>
                 </li>
               );
             })}

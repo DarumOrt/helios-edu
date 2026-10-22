@@ -1,5 +1,7 @@
 import type { Submission } from "@/shared/types/domain";
 import { users } from "./data";
+import { allDemoUsers } from "./users-store";
+import { findActivity, findDemoCourse } from "./course-store";
 
 // In-memory хранилище сдач заданий (мок). В проде — модуль assignment.
 
@@ -115,17 +117,55 @@ function seed() {
 }
 
 function enrich(s: Submission): SubmissionFull {
-  const u = users.find((x) => x.id === s.userId);
-  const a = ASSIGNMENTS[s.assignmentId];
+  const u = allDemoUsers().find((x) => x.id === s.userId) ?? users.find((x) => x.id === s.userId);
+  // старые записи без courseId — по таблице исходных заданий
+  const courseId = s.courseId ?? ASSIGNMENTS[s.assignmentId]?.courseId ?? "";
+  const found = courseId ? findActivity(courseId, s.assignmentId) : undefined;
+  const legacy = ASSIGNMENTS[s.assignmentId];
   return {
     ...s,
     userName: u?.name ?? "Студент",
     group: u?.group,
-    assignmentTitle: a?.title ?? s.assignmentId,
-    courseId: a?.courseId ?? "",
-    courseTitle: a?.courseTitle ?? "",
-    maxGrade: a?.maxGrade ?? 100,
+    assignmentTitle: found?.activity.title ?? legacy?.title ?? s.assignmentId,
+    courseId,
+    courseTitle: found?.course.title ?? findDemoCourse(courseId)?.title ?? legacy?.courseTitle ?? "",
+    maxGrade: found?.activity.maxGrade ?? legacy?.maxGrade ?? 100,
   };
+}
+
+/** Сдача задания студентом. Повторная сдача до проверки заменяет прежнюю. */
+export function submitAssignment(input: {
+  courseId: string;
+  assignmentId: string;
+  userId: string;
+  text: string;
+  fileName?: string;
+}): SubmissionFull {
+  seed();
+  const previous = Array.from(store.items.values()).find(
+    (x) =>
+      x.userId === input.userId &&
+      x.assignmentId === input.assignmentId &&
+      (x.courseId ?? ASSIGNMENTS[x.assignmentId]?.courseId) === input.courseId,
+  );
+  if (previous?.status === "reviewed") throw new Error("reviewed");
+  const item: Submission = {
+    id: previous?.id ?? `sub-${crypto.randomUUID().slice(0, 8)}`,
+    ...input,
+    status: "submitted",
+    submittedAt: new Date().toISOString(),
+  };
+  store.items.set(item.id, item);
+  return enrich(item);
+}
+
+/** Есть ли сданные работы по заданию — такое задание не удаляем, чтобы не потерять оценки */
+export function hasSubmissions(courseId: string, assignmentId: string): boolean {
+  seed();
+  return Array.from(store.items.values()).some(
+    (x) =>
+      x.assignmentId === assignmentId && (x.courseId ?? ASSIGNMENTS[x.assignmentId]?.courseId) === courseId,
+  );
 }
 
 export function listSubmissions(filter?: { status?: Submission["status"] }): SubmissionFull[] {

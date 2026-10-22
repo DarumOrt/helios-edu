@@ -21,7 +21,7 @@ export default function QuizPage({ params }: { params: Promise<{ courseId: strin
           />
         }
       />
-      <QuizPlayer quizId={activityId} />
+      <QuizPlayer courseId={courseId} quizId={activityId} />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { validateUser } from "@/shared/lib/management-validation";
 import type { Cohort, Role, User } from "@/shared/types/domain";
 import { adminApi, refreshManagement, type UserPayload } from "../api";
 import { roleLabel } from "../labels";
-import { FormError, useFormSubmit } from "../use-form-submit";
+import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 
 // Создание и правка пользователя. Правила ролей — shared/auth/management (их же применяет сервер).
 export function UserDialog({

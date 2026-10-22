@@ -5,8 +5,11 @@ import { toast } from "sonner";
 import { Upload, CheckCircle2 } from "lucide-react";
 import { Button, Card, CardBody, Textarea } from "@/shared/ui";
 import { assignmentApi } from "../api";
+import { useSession } from "@/shared/auth/session";
+import { apiErrorInfo } from "@/shared/lib/api-client";
 
-export function SubmissionForm({ assignmentId }: { assignmentId: string }) {
+export function SubmissionForm({ courseId, assignmentId }: { courseId: string; assignmentId: string }) {
+  const user = useSession((s) => s.user);
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -15,11 +18,11 @@ export function SubmissionForm({ assignmentId }: { assignmentId: string }) {
   async function onSubmit() {
     setSubmitting(true);
     try {
-      await assignmentApi.submit(assignmentId, { text, fileName });
+      await assignmentApi.submit(courseId, assignmentId, { text, fileName, userId: user.id });
       setSubmitted(true);
       toast.success("Работа отправлена", { description: "Преподаватель получит уведомление" });
-    } catch {
-      toast.error("Не удалось отправить работу");
+    } catch (failure) {
+      toast.error("Не удалось отправить работу", { description: apiErrorInfo(failure).error });
     } finally {
       setSubmitting(false);
     }

@@ -7,6 +7,7 @@ import type {
   TrackedActivityType,
 } from "@/shared/lib/tracking/types";
 import { users, cohorts } from "./data";
+import { findDemoCourse, listDemoCourses } from "./course-store";
 
 // In-memory "БД" мокапа. Привязана к globalThis, чтобы переживать HMR в dev.
 // В проде: ingest → event store (ClickHouse) → агрегация → этот же интерфейс.
@@ -21,24 +22,26 @@ const g = globalThis as unknown as { __helios_tracking?: Store };
 const store: Store =
   g.__helios_tracking ?? (g.__helios_tracking = { events: [], progress: new Map(), seeded: false });
 
-// активности курса, участвующие в метриках
-export const COURSE_ACTIVITIES: Record<
-  string,
-  { id: string; type: TrackedActivityType; title: string; totalPages?: number }[]
-> = {
-  "c-matan": [
-    { id: "mv1", type: "video", title: "Видеолекция: Предел функции" },
-    { id: "mp1", type: "presentation", title: "Презентация: Теоремы о пределах", totalPages: 14 },
-    { id: "md1", type: "pdf", title: "Конспект: Непрерывность функции", totalPages: 8 },
-    { id: "mq1", type: "quiz", title: "Тест: Пределы и непрерывность" },
-  ],
-};
+// Материалы курса, участвующие в метриках: видео, PDF, презентации и тесты — из содержания курса,
+// поэтому новый материал из конструктора сразу попадает в статистику.
+const TRACKED: TrackedActivityType[] = ["video", "pdf", "presentation", "quiz"];
 
-export function activityCourse(activityId: string): string | null {
-  for (const [courseId, list] of Object.entries(COURSE_ACTIVITIES)) {
-    if (list.some((a) => a.id === activityId)) return courseId;
-  }
-  return null;
+export function courseActivities(
+  courseId: string,
+): { id: string; type: TrackedActivityType; title: string; totalPages?: number }[] {
+  return (findDemoCourse(courseId)?.sections ?? []).flatMap((s) =>
+    s.activities
+      .filter((a): a is typeof a & { type: TrackedActivityType } =>
+        TRACKED.includes(a.type as TrackedActivityType),
+      )
+      .map((a) => ({ id: a.id, type: a.type, title: a.title, totalPages: a.pages })),
+  );
+}
+
+/** Курс материала. id уникальны только внутри курса — если курс известен, передайте его как hint */
+export function activityCourse(activityId: string, hint?: string | null): string | null {
+  if (hint) return courseActivities(hint).some((a) => a.id === activityId) ? hint : null;
+  return listDemoCourses().find((c) => courseActivities(c.id).some((a) => a.id === activityId))?.id ?? null;
 }
 
 function userInfo(userId: string) {
@@ -208,7 +211,7 @@ function rosterForCourse(_courseId: string | null): string[] {
 // агрегированная статистика курса: по каждой активности
 export function courseStats(courseId: string) {
   seed();
-  const acts = COURSE_ACTIVITIES[courseId] ?? [];
+  const acts = courseActivities(courseId);
   const roster = rosterForCourse(courseId);
   return acts.map((a) => {
     const rows = roster.map((u) => store.progress.get(key(u, a.id)));
@@ -236,7 +239,7 @@ export function courseStats(courseId: string) {
 // таблица лидеров по группе/курсу
 export function leaderboard(courseId: string, currentUserId?: string): LeaderboardEntry[] {
   seed();
-  const acts = COURSE_ACTIVITIES[courseId] ?? [];
+  const acts = courseActivities(courseId);
   const content = acts.filter((a) => a.type !== "quiz");
   const quizzes = acts.filter((a) => a.type === "quiz");
   const roster = rosterForCourse(courseId);

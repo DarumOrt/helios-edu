@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { apiErrorInfo } from "@/shared/lib/api-client";
 
-// Отправка формы управления: ошибки полей — у полей, остальное — одной строкой над кнопками.
+// Отправка формы (управление, конструктор курса): ошибки полей — у полей, остальное — одной строкой над кнопками.
 export function useFormSubmit() {
   const [pending, setPending] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});

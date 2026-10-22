@@ -31,9 +31,17 @@ const verbColor: Record<string, string> = {
   closed: "bg-muted-foreground",
 };
 
-export function StudentTimeline({ activityId, userId }: { activityId: string; userId: string }) {
+export function StudentTimeline({
+  courseId,
+  activityId,
+  userId,
+}: {
+  courseId: string;
+  activityId: string;
+  userId: string;
+}) {
   const { data, isLoading } = useSWR<LessonStatsResponse>(
-    `/api/analytics/lesson/${activityId}?userId=${userId}`,
+    `/api/analytics/lesson/${activityId}?courseId=${encodeURIComponent(courseId)}&userId=${userId}`,
     fetcher,
   );
 

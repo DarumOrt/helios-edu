@@ -25,7 +25,7 @@ import { CohortDialog } from "@/features/admin/components/CohortDialog";
 import { MembersDialog } from "@/features/admin/components/MembersDialog";
 import { adminApi, refreshManagement } from "@/features/admin/api";
 import { courseStatusMeta } from "@/features/admin/labels";
-import { FormError, useFormSubmit } from "@/features/admin/use-form-submit";
+import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import type { Cohort, Course, User } from "@/shared/types/domain";
 
 export default function CohortPage({ params }: { params: Promise<{ id: string }> }) {

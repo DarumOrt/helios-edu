@@ -49,7 +49,7 @@ export default function DocumentLessonPage({
             />
             <RoleGate roles={["tutor", "admin", "organizer"]}>
               <div className="mt-8">
-                <LessonStatsPanel activityId={activity.id} title="Статистика по уроку" />
+                <LessonStatsPanel courseId={courseId} activityId={activity.id} title="Статистика по уроку" />
               </div>
             </RoleGate>
           </>
