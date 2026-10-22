@@ -3,14 +3,14 @@
 import useSWR from "swr";
 import { Mail, UsersRound } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { Avatar, DataState } from "@/shared/ui";
 import type { User } from "@/shared/types/domain";
 import { Widget } from "./Widget";
 
 /** Одногруппники: учёба — не только материалы, но и люди рядом. */
 export function Classmates() {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data, error, isLoading } = useSWR<User[]>(
     user.group ? `/api/users?group=${encodeURIComponent(user.group)}` : null,
     fetcher,

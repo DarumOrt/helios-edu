@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { activityHref } from "@/shared/lib/activity-href";
 import { Button, Card, CourseCover, Progress, Skeleton } from "@/shared/ui";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { Activity, Course } from "@/shared/types/domain";
 import type { ActivityProgress } from "@/shared/lib/tracking/types";
 
@@ -51,7 +51,7 @@ function pickNext(courses: Course[]): Pick | null {
 }
 
 export function NextStep() {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data: courses, isLoading } = useSWR<Course[]>("/api/courses?sections=1", fetcher);
   const next = courses ? pickNext(courses) : null;
   const tracked = next && TRACKED.includes(next.activity.type);

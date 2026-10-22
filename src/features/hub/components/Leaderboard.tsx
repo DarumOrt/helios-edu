@@ -5,7 +5,7 @@ import { Flame, Trophy, Medal, Crown, BookOpen, Target } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { Card, CardBody, DataState, Avatar, Badge, Progress } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
 
 interface Resp {
@@ -14,7 +14,7 @@ interface Resp {
 }
 
 export function Leaderboard({ courseId }: { courseId: string }) {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data, error, isLoading } = useSWR<Resp>(
     `/api/hub/leaderboard?courseId=${courseId}&userId=${user.id}`,
     fetcher,

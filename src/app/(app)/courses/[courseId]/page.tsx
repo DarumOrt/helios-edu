@@ -10,13 +10,13 @@ import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPan
 import { CoverEditor } from "@/features/courses/components/CoverEditor";
 import { can } from "@/shared/auth/permissions";
 import { cn } from "@/shared/lib/utils";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { Course } from "@/shared/types/domain";
 
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const { data: course, error, isLoading } = useSWR<Course>(`/api/courses/${courseId}`, fetcher);
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const canSeeStats = can(role, "analytics.view");
   const canEdit = can(role, "course.edit");
   const [tab, setTab] = useState<"content" | "stats">("content");

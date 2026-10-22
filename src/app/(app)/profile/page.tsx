@@ -4,14 +4,14 @@ import useSWR from "swr";
 import { Mail, Building2, UsersRound, Shield, BookOpen, Trophy } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, Card, CardBody, CardHeader, Avatar, Badge, Progress } from "@/shared/ui";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { roleMeta } from "@/shared/auth/role-meta";
 import type { Course } from "@/shared/types/domain";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
 
 export default function ProfilePage() {
-  const user = useSessionStore((s) => s.user);
-  const role = useSessionStore((s) => s.role);
+  const user = useSession((s) => s.user);
+  const role = useSession((s) => s.role);
   const meta = roleMeta[role];
 
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);

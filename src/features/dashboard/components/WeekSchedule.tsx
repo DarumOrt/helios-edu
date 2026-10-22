@@ -7,7 +7,7 @@ import { fetcher } from "@/shared/lib/api-client";
 import { cn } from "@/shared/lib/utils";
 import { useDayPart } from "@/shared/lib/use-day-part";
 import { COVER_COLORS, fallbackCoverColor, type CoverColor } from "@/shared/lib/cover-colors";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { DataState } from "@/shared/ui";
 import type { PairTime, ScheduleSlot } from "@/shared/types/domain";
 import { Widget } from "./Widget";
@@ -30,7 +30,7 @@ const toMin = (t: string) => {
 
 /** Неделя по парам: студент живёт расписанием, а не списком задач. Цвет пары — цвет обложки курса. */
 export function WeekSchedule() {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const day = useDayPart();
   const { data, error, isLoading } = useSWR<{ pairs: PairTime[]; slots: Slot[] }>(
     user.group ? `/api/schedule?group=${encodeURIComponent(user.group)}` : null,

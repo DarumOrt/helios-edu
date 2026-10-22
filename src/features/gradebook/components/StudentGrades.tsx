@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { GraduationCap } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { Card, CardBody, DataState, Badge, Progress } from "@/shared/ui";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { StudentCourseGrades } from "../api";
 
 function tone(grade: number | null, max: number): "success" | "info" | "warning" | "danger" | "neutral" {
@@ -17,7 +17,7 @@ function tone(grade: number | null, max: number): "success" | "info" | "warning"
 }
 
 export function StudentGrades() {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data, error, isLoading } = useSWR<{ courses: StudentCourseGrades[] }>(
     `/api/gradebook/me?userId=${user.id}`,
     fetcher,

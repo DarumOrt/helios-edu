@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { Users as UsersIcon, Settings2, BarChart3 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { Button, Avatar, Badge, DataState, Table, THead, TR, TH, TD } from "@/shared/ui";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { RoleHero } from "./RoleHero";
 import { FactStrip } from "./FactStrip";
@@ -28,9 +28,9 @@ const roleTone: Record<Role, "warning" | "info" | "primary" | "success"> = {
 };
 
 export function AdminDashboard() {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const meta = roleMeta[role];
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
   const { data: users } = useSWR<User[]>("/api/users", fetcher);
   const { data: cohorts } = useSWR<Cohort[]>("/api/cohorts", fetcher);

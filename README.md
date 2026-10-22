@@ -17,9 +17,10 @@ npm run dev
 Перед PR: `npm run check` (typecheck + lint + prettier) и `npm run build` — то же самое гоняет GitHub Actions.
 Правила для людей и ИИ-агентов (Codex / Claude Code) — в [AGENTS.md](AGENTS.md).
 
-Первый этап C#-бэкенда: ASP.NET Core + PostgreSQL, чтение курсов с сохранением
-контрактов интерфейса. Запуск и подключение — в [backend/README.md](backend/README.md).
-Без `BACKEND_API_URL` приложение продолжает работать на моках.
+C#-бэкенд: ASP.NET Core + PostgreSQL, вход, серверные сессии, права и чтение
+доступных пользователю курсов. Запуск и демонстрационные аккаунты —
+в [backend/README.md](backend/README.md). Без `BACKEND_API_URL` приложение
+продолжает работать на моках с переключателем ролей.
 
 http://localhost:3000 · Роль переключается в правом верхнем углу (RoleSwitcher).
 

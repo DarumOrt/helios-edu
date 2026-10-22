@@ -7,13 +7,13 @@ import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, Select } from "@/shared/ui";
 import { Leaderboard } from "@/features/hub/components/Leaderboard";
 import { GroupMonitor } from "@/features/hub/components/GroupMonitor";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { Course } from "@/shared/types/domain";
 
 const TRACKED = ["c-matan"];
 
 export default function HubPage() {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const isTeacher = role !== "student";
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
   const tracked = (courses ?? []).filter((c) => TRACKED.includes(c.id));

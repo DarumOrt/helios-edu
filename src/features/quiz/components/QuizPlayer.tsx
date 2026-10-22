@@ -8,12 +8,12 @@ import { fetcher } from "@/shared/lib/api-client";
 import { Button, Card, CardBody, DataState, Progress, Badge } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
 import { quizApi } from "../api";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { QuizQuestion } from "@/shared/types/domain";
 
 export function QuizPlayer({ quizId }: { quizId: string }) {
   const { data, error, isLoading } = useSWR<QuizQuestion[]>(`/api/quiz/${quizId}/questions`, fetcher);
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [result, setResult] = useState<{ score: number; max: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);

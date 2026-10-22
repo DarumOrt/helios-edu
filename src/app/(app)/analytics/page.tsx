@@ -4,14 +4,14 @@ import { useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { PageHeader, Select, EmptyState } from "@/shared/ui";
 import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 
 // курсы с включёнными метриками
 const TRACKED = [{ id: "c-matan", title: "Математический анализ" }];
 
 export default function AnalyticsPage() {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const [courseId, setCourseId] = useState("c-matan");
 
   if (!can(role, "analytics.view")) {

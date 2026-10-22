@@ -29,6 +29,8 @@ services:
       ConnectionStrings__Database: Host=db;Database=helios_edu;Username=helios;Password=${POSTGRES_PASSWORD:-helios_local_only}
       Database__ApplyMigrations: "true"
       Database__SeedDemoData: "true"
+      Auth__DemoPassword: ${DEMO_PASSWORD:-HeliosDemo2026!}
+      Auth__AllowInsecureCookies: "true"
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

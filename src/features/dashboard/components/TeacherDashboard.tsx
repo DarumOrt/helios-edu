@@ -4,7 +4,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { ClipboardCheck, AlertTriangle, BarChart3, ChevronRight } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { Button, Avatar, Badge, Progress, DataState } from "@/shared/ui";
 import { RoleHero } from "./RoleHero";
 import { FactStrip } from "./FactStrip";
@@ -18,7 +18,7 @@ import type { CourseActivityStat } from "@/features/analytics/api";
 const COURSE = "c-matan";
 
 export function TeacherDashboard() {
-  const user = useSessionStore((s) => s.user);
+  const user = useSession((s) => s.user);
   const { data: subs } = useSWR<{ items: SubmissionFull[] }>("/api/submissions?status=submitted", fetcher);
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
     `/api/hub/leaderboard?courseId=${COURSE}`,

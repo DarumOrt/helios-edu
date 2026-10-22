@@ -22,11 +22,17 @@ jobs:
     name: C# API · PostgreSQL · Contracts
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      TEST_WEB_URL: http://127.0.0.1:3000
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
+      # Сборка без BACKEND_API_URL: подключение API должно работать во время запуска.
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
       - run: docker compose --profile backend up -d --build db api
       - name: Wait for database and API
         run: |
@@ -35,13 +41,27 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:8080/api/health/ready
+      - name: Start Next.js with backend enabled at runtime
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          BACKEND_API_URL=http://127.0.0.1:8080 HOSTNAME=127.0.0.1 PORT=3000 node .next/standalone/server.js > next.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:3000/api/health && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/api/health
       - run: node --test backend/tests/api.test.mjs
+      - run: node --test backend/tests/auth.test.mjs
       - name: Check persistence and seed on restart
         run: node --test backend/tests/lifecycle.test.mjs
       - run: node --test backend/tests/api.test.mjs
       - name: Backend logs
         if: failure()
         run: docker compose --profile backend logs db api
+      - name: Next.js logs
+        if: failure()
+        run: cat next.log
       - name: Stop backend
         if: always()
         run: docker compose --profile backend down

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import type { Role } from "@/shared/types/domain";
 
 export function RoleGate({
@@ -13,7 +13,7 @@ export function RoleGate({
   fallback?: ReactNode;
   children: ReactNode;
 }) {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   if (!roles.includes(role)) return <>{fallback}</>;
   return <>{children}</>;
 }

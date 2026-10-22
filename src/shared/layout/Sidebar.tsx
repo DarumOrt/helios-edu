@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { BrandMark } from "@/shared/ui";
-import { useSessionStore } from "@/stores/session-store";
+import { useSession } from "@/shared/auth/session";
 import { navForRole } from "@/shared/auth/permissions";
 import { roleMeta } from "@/shared/auth/role-meta";
 
 export function Sidebar() {
-  const role = useSessionStore((s) => s.role);
+  const role = useSession((s) => s.role);
   const meta = roleMeta[role];
   const pathname = usePathname();
   const items = navForRole(role);
