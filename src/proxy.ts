@@ -3,6 +3,27 @@ import { backendGet, isSameOrigin } from "@/shared/lib/backend";
 import { actionForMockApi, can } from "@/shared/auth/permissions";
 import { type User } from "@/shared/types/domain";
 import { DATA_SOURCE_COOKIE, resolveDataSource } from "@/shared/lib/data-source";
+import { activityCourse } from "@/mocks/tracking-store";
+import { getSubmission } from "@/mocks/submissions-store";
+
+// Курс, к которому относится запрос, если он задан в пути (а не в ?courseId=).
+// Без этого преподаватель открыл бы аналитику и работы чужих курсов по прямой ссылке.
+function courseFromPath(path: string): { courseId?: string; missing?: boolean } {
+  const course = /^\/api\/analytics\/course\/([^/]+)$/.exec(path)?.[1];
+  if (course) return { courseId: decodeURIComponent(course) };
+  const lesson = /^\/api\/analytics\/lesson\/([^/]+)$/.exec(path)?.[1];
+  if (lesson) {
+    const courseId = activityCourse(decodeURIComponent(lesson));
+    return courseId ? { courseId } : { missing: true };
+  }
+  const review = /^\/api\/submissions\/([^/]+)\/review$/.exec(path)?.[1];
+  if (review) {
+    const courseId = getSubmission(decodeURIComponent(review))?.courseId;
+    return courseId ? { courseId } : { missing: true };
+  }
+  const cover = /^\/api\/courses\/([^/]+)\/cover$/.exec(path)?.[1];
+  return cover ? { courseId: decodeURIComponent(cover) } : {};
+}
 
 export async function proxy(request: NextRequest) {
   // В демо-режиме данные — моки, серверной сессии нет; права показывает только интерфейс.
@@ -15,6 +36,7 @@ export async function proxy(request: NextRequest) {
     path === "/api/data-source" ||
     path.startsWith("/api/auth/") ||
     path === "/api/users" ||
+    /^\/api\/users\/[^/]+$/.test(path) ||
     path === "/api/courses" ||
     /^\/api\/courses\/[^/]+$/.test(path)
   )
@@ -30,11 +52,12 @@ export async function proxy(request: NextRequest) {
   const requestedGroup = request.nextUrl.searchParams.get("group");
   if (path === "/api/schedule" && !can(user.role, "analytics.view") && requestedGroup !== user.group)
     return forbidden();
-  const coverCourseId = /^\/api\/courses\/([^/]+)\/cover$/.exec(path)?.[1];
-  let courseId = request.nextUrl.searchParams.get("courseId");
+  const fromPath = courseFromPath(path);
+  if (fromPath.missing) return Response.json({ error: "not found" }, { status: 404 });
+  let courseId = fromPath.courseId ?? request.nextUrl.searchParams.get("courseId");
   if (requestedUser && requestedUser !== user.id && !can(user.role, "analytics.view")) return forbidden();
-  if (!["GET", "HEAD"].includes(request.method)) {
-    if (!isSameOrigin(request)) return forbidden();
+  if (!["GET", "HEAD"].includes(request.method) && !isSameOrigin(request)) return forbidden();
+  if (!["GET", "HEAD", "DELETE"].includes(request.method)) {
     let body: Record<string, unknown>;
     try {
       body = (await request.clone().json()) as Record<string, unknown>;
@@ -44,7 +67,7 @@ export async function proxy(request: NextRequest) {
     }
     if (/^\/api\/(tracking|quiz|assignment)\//.test(path) && body.userId && body.userId !== user.id)
       return forbidden();
-    if (typeof body.courseId === "string") courseId = body.courseId;
+    if (!fromPath.courseId && typeof body.courseId === "string") courseId = body.courseId;
     if (
       path === "/api/tracking/events" &&
       (!Array.isArray(body.events) ||
@@ -56,8 +79,9 @@ export async function proxy(request: NextRequest) {
       return forbidden();
     if (path === "/api/tracking/progress" && body.userId !== user.id) return forbidden();
   }
-  if (coverCourseId || courseId) {
-    const course = await backendGet(`/api/courses/${coverCourseId ?? encodeURIComponent(courseId!)}`);
+  if (courseId) {
+    // C# отдаёт курс, только если он виден пользователю (свой для преподавателя)
+    const course = await backendGet(`/api/courses/${encodeURIComponent(courseId)}`);
     if (!course?.ok) return course ?? forbidden();
   }
   return NextResponse.next();

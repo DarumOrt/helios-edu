@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { EmptyState } from "@/shared/ui";
+import { can } from "@/shared/auth/permissions";
 
 const tabs = [
   { href: "/admin/courses", label: "Курсы" },
@@ -17,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const role = useSession((s) => s.role);
   const pathname = usePathname();
 
-  if (role !== "admin" && role !== "organizer") {
+  if (!can(role, "admin.access")) {
     return (
       <EmptyState
         icon={ShieldAlert}
@@ -31,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div>
       <div className="mb-6 flex gap-1 border-b">
         {tabs.map((t) => {
-          const active = pathname === t.href;
+          const active = pathname === t.href || pathname.startsWith(`${t.href}/`);
           return (
             <Link
               key={t.href}

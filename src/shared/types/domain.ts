@@ -2,6 +2,8 @@ import type { CoverColor } from "@/shared/lib/cover-colors";
 
 export type Role = "admin" | "organizer" | "tutor" | "student";
 
+export type UserStatus = "active" | "blocked";
+
 export interface User {
   id: string;
   name: string;
@@ -10,7 +12,10 @@ export interface User {
   tenantId: string;
   avatarUrl?: string;
   faculty?: string;
+  /** название группы (когорты); у не-студентов не задаётся */
   group?: string;
+  /** нет поля — активен (старые ответы C# API его не содержат) */
+  status?: UserStatus;
 }
 
 export interface Tenant {
@@ -42,6 +47,8 @@ export interface Section {
   activities: Activity[];
 }
 
+export type CourseStatus = "draft" | "published" | "archived";
+
 export interface Course {
   id: string;
   code: string;
@@ -53,6 +60,8 @@ export interface Course {
   coverColor?: CoverColor;
   category: string;
   tutorId: string;
+  /** нет поля — опубликован. Студенты видят только опубликованные курсы */
+  status?: CourseStatus;
   enrolled: number;
   progress?: number;
   sections?: Section[];
@@ -124,7 +133,11 @@ export interface PairTime {
 export interface Cohort {
   id: string;
   name: string;
+  faculty?: string;
+  /** студенты группы — производное от User.group */
   memberIds: string[];
+  /** курсы группы: каждый её студент зачислен на них */
+  courseIds: string[];
 }
 
 export interface Notification {

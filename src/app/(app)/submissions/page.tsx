@@ -7,6 +7,7 @@ import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Card, Avatar, Badge, EmptyState } from "@/shared/ui";
 import { ReviewPanel } from "@/features/submissions/components/ReviewPanel";
 import { useSession } from "@/shared/auth/session";
+import { can } from "@/shared/auth/permissions";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { SubmissionFull } from "@/features/submissions/api";
@@ -23,7 +24,7 @@ export default function SubmissionsPage() {
     fetcher,
   );
 
-  if (role !== "tutor" && role !== "admin") {
+  if (!can(role, "submission.review")) {
     return (
       <EmptyState
         icon={ShieldAlert}

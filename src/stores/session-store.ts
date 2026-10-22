@@ -3,6 +3,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Role, User } from "@/shared/types/domain";
+import { DEMO_USER_COOKIE } from "@/shared/lib/data-source";
+
+// Сообщаем моковым маршрутам, кто сейчас действует в демо (см. mocks/demo-actor.ts)
+function syncDemoCookie(user: User) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${DEMO_USER_COOKIE}=${encodeURIComponent(user.id)}; path=/; samesite=lax; max-age=2592000`;
+}
 
 export const usersByRole: Record<Role, User> = {
   admin: {
@@ -53,9 +60,21 @@ export const useSessionStore = create<SessionState>()(
     (set) => ({
       role: "student",
       user: usersByRole.student,
-      setRole: (role) => set({ role, user: usersByRole[role] }),
-      setUser: (user) => set({ role: user.role, user }),
+      setRole: (role) => {
+        syncDemoCookie(usersByRole[role]);
+        set({ role, user: usersByRole[role] });
+      },
+      setUser: (user) => {
+        syncDemoCookie(user);
+        set({ role: user.role, user });
+      },
     }),
-    { name: "helios-session" },
+    {
+      name: "helios-session",
+      // после чтения из localStorage cookie должна совпадать с восстановленным пользователем
+      onRehydrateStorage: () => (state) => {
+        if (state) syncDemoCookie(state.user);
+      },
+    },
   ),
 );

@@ -6,12 +6,19 @@ import { Plus, Search } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Button, Input } from "@/shared/ui";
 import { CourseCard } from "@/features/courses/components/CourseCard";
-import { RoleGate } from "@/shared/auth/RoleGate";
-import type { Course } from "@/shared/types/domain";
+import { CourseDialog } from "@/features/admin/components/CourseDialog";
+import { useSession } from "@/shared/auth/session";
+import { can } from "@/shared/auth/permissions";
+import type { Course, User } from "@/shared/types/domain";
 
 export default function CoursesPage() {
   const { data, error, isLoading } = useSWR<Course[]>("/api/courses", fetcher);
   const [q, setQ] = useState("");
+  const role = useSession((s) => s.role);
+  const canCreate = can(role, "course.create");
+  const [creating, setCreating] = useState(false);
+  // список преподавателей нужен только тем, кто создаёт курсы
+  const { data: users } = useSWR<User[]>(canCreate ? "/api/users" : null, fetcher);
 
   const filtered = (data ?? []).filter(
     (c) =>
@@ -26,12 +33,12 @@ export default function CoursesPage() {
         title="Мои курсы"
         subtitle="Все доступные вам курсы"
         actions={
-          <RoleGate roles={["admin", "organizer", "tutor"]}>
-            <Button>
-              <Plus size={16} />
+          canCreate && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus size={16} aria-hidden />
               Создать курс
             </Button>
-          </RoleGate>
+          )
         }
       />
 
@@ -60,6 +67,14 @@ export default function CoursesPage() {
           ))}
         </div>
       </DataState>
+      {creating && (
+        <CourseDialog
+          open
+          onClose={() => setCreating(false)}
+          tutors={(users ?? []).filter((u) => u.role === "tutor" && u.status !== "blocked")}
+          categories={[...new Set((data ?? []).map((c) => c.category))]}
+        />
+      )}
     </div>
   );
 }

@@ -57,6 +57,10 @@ backend/tests/          проверки API на настоящем PostgreSQL
   не через прямую проверку `process.env.BACKEND_API_URL`. Переключатель — cookie `helios-data-source`
   (`/api/data-source`). Без `BACKEND_API_URL` доступно только демо; `DEMO_MODE=off` запрещает демо.
   Любая новая фича должна работать в обоих режимах; `backendRequest` возвращает `null` в демо.
+- Управление (пользователи, группы, курсы): один контракт для моков и C# — `features/admin/api.ts`,
+  правила ролей — `shared/auth/management.ts`, поля — `shared/lib/management-validation.ts`.
+  В серверном режиме маршруты Next пересылают запрос в C# (`backendForward`); пока эндпоинта нет — `501`.
+  Задания для бэкенда с контрактом и тестами — `docs/backend/*.md`.
 - Правила регистрации — в `shared/lib/registration.ts` и зеркально в `AuthEndpoints.ValidateRegistration` (C#):
   меняются вместе. Самостоятельно регистрируется только студент без группы; роль и группу клиент не задаёт.
 

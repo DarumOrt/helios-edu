@@ -15,7 +15,7 @@ export default function GradebookPage() {
   const role = useSession((s) => s.role);
 
   // Студент видит только свои оценки
-  if (role === "student") {
+  if (!can(role, "analytics.view")) {
     return (
       <div>
         <PageHeader title="Мои оценки" subtitle="Ваши результаты по курсам" />

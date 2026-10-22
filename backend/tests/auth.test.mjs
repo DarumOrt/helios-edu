@@ -273,3 +273,29 @@ if (process.env.TEST_WEB_URL)
       .split(";")[0];
     assert.equal((await get(baseUrl, "/api/courses", serverCookie)).status, 401);
   });
+
+if (process.env.TEST_WEB_URL)
+  test("Next.js: курс из пути проверяется — аналитика и проверка работ только по видимым курсам", async () => {
+    const baseUrl = process.env.TEST_WEB_URL;
+    const { cookie } = await login(baseUrl, "kazarinova@pspu.ru");
+    // свой курс — доступен; несуществующий (или чужой) — как в C#, не найден
+    assert.equal((await get(baseUrl, "/api/analytics/course/c-matan", cookie)).status, 200);
+    assert.equal((await get(baseUrl, "/api/analytics/course/no-such-course", cookie)).status, 404);
+    assert.equal((await get(baseUrl, "/api/analytics/lesson/no-such-activity", cookie)).status, 404);
+
+    const list = await get(baseUrl, "/api/submissions", cookie);
+    assert.equal(list.status, 200);
+    const { items } = await list.json();
+    assert.ok(items.length > 0);
+    const review = (id, body) =>
+      fetch(`${baseUrl}/api/submissions/${id}/review`, {
+        method: "POST",
+        headers: { Cookie: cookie, "Content-Type": "application/json", Origin: new URL(baseUrl).origin },
+        body: JSON.stringify(body),
+      });
+    assert.equal((await review("no-such-submission", { grade: 50 })).status, 404);
+    // оценка вне шкалы работы не сохраняется
+    const tooHigh = await review(items[0].id, { grade: items[0].maxGrade + 1, feedback: "" });
+    assert.equal(tooHigh.status, 400);
+    assert.ok((await tooHigh.json()).fields.grade);
+  });
