@@ -24,6 +24,7 @@ builder.Services.AddAuthorization(options =>
     foreach (var permission in new[] { AccessRules.ManageUsers, AccessRules.ManageCohorts, AccessRules.ManageCourses })
         options.AddPolicy(permission, policy => policy.RequireRole("admin", "organizer"));
     options.AddPolicy(AccessRules.ReadCohorts, policy => policy.RequireRole("admin", "organizer", "tutor"));
+    options.AddPolicy(AccessRules.EditCourse, policy => policy.RequireRole("admin", "organizer", "tutor"));
 });
 builder.Services.AddRateLimiter(options =>
 {
@@ -46,6 +47,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapManagementEndpoints();
+app.MapCourseBuilderEndpoints();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))

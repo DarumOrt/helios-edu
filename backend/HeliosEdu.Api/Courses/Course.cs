@@ -34,6 +34,8 @@ public sealed class Activity
     public int? DurationMin { get; set; }
     public bool? Completed { get; set; }
     public string? Due { get; set; }
+    public string? Description { get; set; }
+    public int? MaxGrade { get; set; }
     public string? Src { get; set; }
     public int? Pages { get; set; }
 }

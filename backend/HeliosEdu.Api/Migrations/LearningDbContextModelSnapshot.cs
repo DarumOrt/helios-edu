@@ -273,10 +273,16 @@ namespace HeliosEdu.Api.Migrations
                                     b2.Property<bool?>("Completed")
                                         .HasColumnType("boolean");
 
+                                    b2.Property<string>("Description")
+                                        .HasColumnType("text");
+
                                     b2.Property<string>("Due")
                                         .HasColumnType("text");
 
                                     b2.Property<int?>("DurationMin")
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int?>("MaxGrade")
                                         .HasColumnType("integer");
 
                                     b2.Property<int?>("Pages")
