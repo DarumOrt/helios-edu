@@ -10,6 +10,10 @@ public static class AccessRules
     public const string ManageCohorts = "cohort.manage";
     public const string ReadCohorts = "cohort.read";
     public const string ManageCourses = "course.manage";
+    public const string EditCourse = "course.edit";
+
+    public static bool CanEditCourse(Account actor, Course course) =>
+        actor.Role is "admin" or "organizer" || actor.Role == "tutor" && course.TutorId == actor.Id;
 
     public static bool CanManageUser(Account actor, Account target) =>
         target.Role != "admin" || actor.Role == "admin";
