@@ -6,6 +6,7 @@ using HeliosEdu.Api.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.RateLimiting;
+using HeliosEdu.Api.Management;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -18,8 +19,12 @@ builder.Services.AddProblemDetails();
 builder.Services.AddScoped<IPasswordHasher<Account>, PasswordHasher<Account>>();
 builder.Services.AddAuthentication(SessionAuthentication.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, SessionAuthentication>(SessionAuthentication.SchemeName, _ => { });
-builder.Services.AddAuthorization(options => options.AddPolicy(AccessRules.ManageUsers,
-    policy => policy.RequireRole("admin", "organizer")));
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in new[] { AccessRules.ManageUsers, AccessRules.ManageCohorts, AccessRules.ManageCourses })
+        options.AddPolicy(permission, policy => policy.RequireRole("admin", "organizer"));
+    options.AddPolicy(AccessRules.ReadCohorts, policy => policy.RequireRole("admin", "organizer", "tutor"));
+});
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
@@ -40,6 +45,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapAuthEndpoints();
+app.MapManagementEndpoints();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
@@ -61,6 +67,8 @@ app.MapGet("/api/health/ready", async (LearningDbContext db, CancellationToken c
         await db.Accounts.AnyAsync(cancellationToken);
         await db.LoginSessions.AnyAsync(cancellationToken);
         await db.Enrollments.AnyAsync(cancellationToken);
+        await db.Cohorts.AnyAsync(cancellationToken);
+        await db.CohortCourses.AnyAsync(cancellationToken);
         return Results.Ok(new { status = "ok" });
     }
     catch (Exception exception) when (exception is not OperationCanceledException)
@@ -74,7 +82,7 @@ app.MapGet("/api/courses", async (LearningDbContext db, HttpContext context, Can
 {
     var courses = await AccessRules.VisibleCourses(db, context.User).AsNoTracking().OrderBy(course => EF.Property<int>(course, "Position"))
         .Select(course => new CourseSummary(course.Id, course.Code, course.Title, course.Description,
-            course.Cover, course.Category, course.TutorId, course.Enrolled, course.Progress))
+            course.Cover, course.Category, course.TutorId, course.Enrolled, course.Progress, course.Status, course.CoverColor))
         .ToListAsync(cancellationToken);
     return Results.Ok(courses);
 }).RequireAuthorization();

@@ -48,7 +48,8 @@
           }
         ]
       }
-    ]
+    ],
+    "status": "published"
   },
   {
     "id": "c-ped-101",
@@ -112,7 +113,8 @@
           }
         ]
       }
-    ]
+    ],
+    "status": "published"
   },
   {
     "id": "c-info-201",
@@ -150,7 +152,8 @@
           }
         ]
       }
-    ]
+    ],
+    "status": "published"
   },
   {
     "id": "c-psych-110",
@@ -181,6 +184,7 @@
           }
         ]
       }
-    ]
+    ],
+    "status": "published"
   }
 ]

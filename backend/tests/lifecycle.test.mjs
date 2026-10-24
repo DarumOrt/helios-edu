@@ -78,10 +78,10 @@ test("PostgreSQL сохраняет изменения; перезапуск н�
   assert.deepEqual(await getCourse(), original);
 });
 
-test("Отсутствие записи на курс скрывает его и не позволяет открыть по ID", async () => {
+test("Курс вне группы скрыт даже при наличии старого Enrollment", async () => {
   const courseId = "c-psych-110";
   try {
-    await sql(`DELETE FROM "Enrollments" WHERE "AccountId" = 'u-stud-2' AND "CourseId" = '${courseId}'`);
+    await sql(`DELETE FROM "CohortCourses" WHERE "CohortId" = 'co-1' AND "CourseId" = '${courseId}'`);
     for (const baseUrl of [apiUrl, ...(process.env.TEST_WEB_URL ? [process.env.TEST_WEB_URL] : [])]) {
       const headers = { Cookie: cookie };
       const response = await fetch(`${baseUrl}/api/courses/${courseId}`, { headers });
@@ -92,7 +92,7 @@ test("Отсутствие записи на курс скрывает его и
     }
   } finally {
     await sql(
-      `INSERT INTO "Enrollments" ("AccountId", "CourseId") VALUES ('u-stud-2', '${courseId}') ON CONFLICT DO NOTHING`,
+      `INSERT INTO "CohortCourses" ("CohortId", "CourseId", "Position") VALUES ('co-1', '${courseId}', 3) ON CONFLICT DO NOTHING`,
     );
   }
 });

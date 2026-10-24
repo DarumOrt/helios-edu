@@ -8,6 +8,8 @@ public sealed class Course
     public required string Title { get; set; }
     public required string Description { get; set; }
     public string? Cover { get; set; }
+    public string? CoverColor { get; set; }
+    public string Status { get; set; } = "draft";
     public required string Category { get; set; }
     public required string TutorId { get; set; }
     public int Enrolled { get; set; }
