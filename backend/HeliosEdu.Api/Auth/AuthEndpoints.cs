@@ -40,6 +40,8 @@ public static class AuthEndpoints
                 account?.PasswordHash ?? DummyHash, input.Password);
             if (account is null || verification == PasswordVerificationResult.Failed)
                 return Results.Json(new { error = "Неверная почта или пароль." }, statusCode: 401);
+            if (account.Status == "blocked")
+                return Results.Json(new { error = "Учётная запись заблокирована. Обратитесь к организатору." }, statusCode: 403);
             if (verification == PasswordVerificationResult.SuccessRehashNeeded)
                 account.PasswordHash = hasher.HashPassword(account, input.Password);
 

@@ -1,5 +1,6 @@
 using HeliosEdu.Api.Courses;
 using HeliosEdu.Api.Auth;
+using HeliosEdu.Api.Management;
 using Microsoft.EntityFrameworkCore;
 
 namespace HeliosEdu.Api.Data;
@@ -10,11 +11,20 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<Cohort> Cohorts => Set<Cohort>();
+    public DbSet<CohortCourse> CohortCourses => Set<CohortCourse>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Account>().HasIndex(account => account.NormalizedEmail).IsUnique();
         modelBuilder.Entity<Account>().Property(account => account.Id).HasMaxLength(100);
+        modelBuilder.Entity<Account>().Property(account => account.Status).HasDefaultValue("active");
+        modelBuilder.Entity<Cohort>().HasIndex(cohort => new { cohort.TenantId, cohort.NormalizedName }).IsUnique();
+        modelBuilder.Entity<CohortCourse>().HasKey(link => new { link.CohortId, link.CourseId });
+        modelBuilder.Entity<CohortCourse>().HasOne<Cohort>().WithMany().HasForeignKey(link => link.CohortId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<CohortCourse>().HasOne<Course>().WithMany().HasForeignKey(link => link.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<LoginSession>().HasKey(session => session.TokenHash);
         modelBuilder.Entity<LoginSession>().HasIndex(session => session.ExpiresAt);
         modelBuilder.Entity<LoginSession>().HasOne(session => session.Account).WithMany()
@@ -24,6 +34,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<Enrollment>().HasOne<Course>().WithMany().HasForeignKey(enrollment => enrollment.CourseId);
         var courses = modelBuilder.Entity<Course>();
         courses.Property(course => course.Id).HasMaxLength(100);
+        courses.Property(course => course.Status).HasDefaultValue("published");
         courses.HasIndex(course => course.Code).IsUnique();
         courses.Property<int>("Position");
         // Вложенные коллекции принадлежат курсу; EF хранит их в отдельных таблицах.
