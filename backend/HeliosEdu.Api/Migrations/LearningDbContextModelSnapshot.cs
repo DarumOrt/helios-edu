@@ -54,6 +54,12 @@ namespace HeliosEdu.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("active");
+
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -119,6 +125,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("Cover")
                         .HasColumnType("text");
 
+                    b.Property<string>("CoverColor")
+                        .HasColumnType("text");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -131,6 +140,12 @@ namespace HeliosEdu.Api.Migrations
 
                     b.Property<int?>("Progress")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("published");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -146,6 +161,52 @@ namespace HeliosEdu.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Management.Cohort", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Faculty")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Cohorts");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Management.CohortCourse", b =>
+                {
+                    b.Property<string>("CohortId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourseId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CohortId", "CourseId");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("CohortCourses");
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Auth.Enrollment", b =>
@@ -247,6 +308,21 @@ namespace HeliosEdu.Api.Migrations
                         });
 
                     b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Management.CohortCourse", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Management.Cohort", null)
+                        .WithMany()
+                        .HasForeignKey("CohortId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

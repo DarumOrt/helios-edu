@@ -8,6 +8,7 @@ public sealed class Account
     public string NormalizedEmail { get; set; } = "";
     public string PasswordHash { get; set; } = "";
     public string Role { get; set; } = "student";
+    public string Status { get; set; } = "active";
     public string TenantId { get; set; } = "pspu";
     public string? Faculty { get; set; }
     public string? Group { get; set; }
@@ -28,8 +29,8 @@ public sealed class Enrollment
 }
 
 public sealed record UserInfo(string Id, string Name, string Email, string Role,
-    string TenantId, string? Faculty, string? Group)
+    string TenantId, string? Faculty, string? Group, string Status)
 {
     public static UserInfo From(Account account) => new(account.Id, account.Name, account.Email,
-        account.Role, account.TenantId, account.Faculty, account.Group);
+        account.Role, account.TenantId, account.Faculty, account.Group, account.Status);
 }

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using HeliosEdu.Api.Courses;
 using HeliosEdu.Api.Auth;
+using HeliosEdu.Api.Management;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +28,18 @@ public static class DemoData
                 for (var position = 0; position < section.Activities.Count; position++)
                     db.Entry(section.Activities[position]).Property("Position").CurrentValue = position;
             }
+        }
+        await db.SaveChangesAsync(cancellationToken);
+
+        // Связи заполняются только у новых групп: изменения организатора сохраняются при перезапуске.
+        var seedGroups = new[] { ("co-1", "М1217"), ("co-2", "ЭК-1237"), ("co-3", "ПСХ-23-1") };
+        foreach (var (id, name) in seedGroups)
+        {
+            if (await db.Cohorts.AnyAsync(group => group.Id == id, cancellationToken)) continue;
+            db.Cohorts.Add(new Cohort { Id = id, Name = name, NormalizedName = name.ToUpperInvariant(), Faculty = "ИНЭК" });
+            if (id == "co-1")
+                db.CohortCourses.AddRange(courses.Select((course, position) => new CohortCourse
+                    { CohortId = id, CourseId = course.Id, Position = position }));
         }
         await db.SaveChangesAsync(cancellationToken);
 
