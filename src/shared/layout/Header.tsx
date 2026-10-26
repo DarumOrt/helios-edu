@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useSession } from "@/shared/auth/session";
 import { Avatar, Button } from "@/shared/ui";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
+import { useUiStore } from "@/stores/ui-store";
 import { useState } from "react";
 import { api } from "@/shared/lib/api-client";
 import { roleMeta } from "@/shared/auth/role-meta";
@@ -16,6 +17,8 @@ export function Header() {
   const role = useSession((s) => s.role);
   const backendEnabled = useSession((s) => s.backendEnabled);
   const dataSource = useSession((s) => s.dataSource);
+  const drawerOpen = useUiStore((s) => s.drawerOpen);
+  const setDrawerOpen = useUiStore((s) => s.setDrawerOpen);
   const [pending, setPending] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   async function logout() {
@@ -39,7 +42,17 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center justify-end gap-2 bg-background px-4 py-2 sm:px-8">
-      <DataSourceToggle state={dataSource} className="mr-auto sm:mr-2" />
+      <button
+        type="button"
+        onClick={() => setDrawerOpen(true)}
+        aria-label="Открыть меню"
+        aria-controls="app-sidebar"
+        aria-expanded={drawerOpen}
+        className="mr-auto rounded-md p-2 text-foreground hover:bg-muted lg:hidden"
+      >
+        <Menu size={20} aria-hidden />
+      </button>
+      <DataSourceToggle state={dataSource} className="sm:mr-2 lg:mr-auto" />
       <RoleSwitcher />
       <NotificationsBell />
       <Link
@@ -57,7 +70,7 @@ export function Header() {
       </Link>
       <Button variant="ghost" size="sm" onClick={logout} disabled={pending}>
         <LogOut size={16} aria-hidden />
-        {pending ? "Выходим…" : "Выйти"}
+        <span className="max-sm:sr-only">{pending ? "Выходим…" : "Выйти"}</span>
       </Button>
       {logoutError && (
         <span role="alert" className="text-xs text-danger">

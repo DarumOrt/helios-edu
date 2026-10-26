@@ -7,6 +7,7 @@ import { Card, CardBody, DataState, Avatar, Badge, Progress } from "@/shared/ui"
 import { cn } from "@/shared/lib/utils";
 import { useSession } from "@/shared/auth/session";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
+import { POLL_LIVE } from "@/shared/lib/polling";
 
 interface Resp {
   courseId: string;
@@ -18,7 +19,7 @@ export function Leaderboard({ courseId }: { courseId: string }) {
   const { data, error, isLoading } = useSWR<Resp>(
     `/api/hub/leaderboard?courseId=${courseId}&userId=${user.id}`,
     fetcher,
-    { refreshInterval: 5000 },
+    { refreshInterval: POLL_LIVE },
   );
 
   const entries = data?.entries ?? [];

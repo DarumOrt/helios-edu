@@ -2,6 +2,7 @@ import type { Submission } from "@/shared/types/domain";
 import { users } from "./data";
 import { allDemoUsers } from "./users-store";
 import { findActivity, findDemoCourse } from "./course-store";
+import { daysAgo } from "./dates";
 
 // In-memory хранилище сдач заданий (мок). В проде — модуль assignment.
 
@@ -58,7 +59,7 @@ function seed() {
       userId: "u-stud-1",
       text: "Решение через первый замечательный предел…",
       status: "submitted",
-      submittedAt: "2026-06-01T10:20:00Z",
+      submittedAt: daysAgo(1, 6),
     },
     {
       id: "sub-2",
@@ -66,7 +67,7 @@ function seed() {
       userId: "u-stud-3",
       text: "lim (1+1/n)^n = e, далее по теореме…",
       status: "submitted",
-      submittedAt: "2026-06-01T12:05:00Z",
+      submittedAt: daysAgo(1, 4),
     },
     {
       id: "sub-3",
@@ -74,7 +75,7 @@ function seed() {
       userId: "u-stud-5",
       text: "Пределы вычислены по правилу Лопиталя.",
       status: "submitted",
-      submittedAt: "2026-06-02T09:00:00Z",
+      submittedAt: daysAgo(0, 5),
     },
     {
       id: "sub-4",
@@ -84,7 +85,7 @@ function seed() {
       status: "reviewed",
       grade: 88,
       feedback: "Хорошо, но в №4 потеряна область определения.",
-      submittedAt: "2026-05-31T18:40:00Z",
+      submittedAt: daysAgo(2, 1),
     },
     {
       id: "sub-5",
@@ -92,7 +93,7 @@ function seed() {
       userId: "u-stud-7",
       text: "Эссе о вкладе Я. А. Коменского…",
       status: "submitted",
-      submittedAt: "2026-06-01T15:30:00Z",
+      submittedAt: daysAgo(1, 1),
     },
     {
       id: "sub-6",
@@ -102,7 +103,7 @@ function seed() {
       status: "reviewed",
       grade: 90,
       feedback: "Отличная работа, глубокий анализ.",
-      submittedAt: "2026-05-30T11:00:00Z",
+      submittedAt: daysAgo(3, 2),
     },
     {
       id: "sub-7",
@@ -110,7 +111,7 @@ function seed() {
       userId: "u-stud-8",
       text: "Краткое эссе.",
       status: "submitted",
-      submittedAt: "2026-06-02T08:15:00Z",
+      submittedAt: daysAgo(0, 6),
     },
   ];
   seedData.forEach((s) => store.items.set(s.id, s));

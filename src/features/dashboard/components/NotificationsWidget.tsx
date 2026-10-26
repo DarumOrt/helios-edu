@@ -7,6 +7,7 @@ import { DataState } from "@/shared/ui";
 import { Widget } from "./Widget";
 import { formatDateTime } from "@/shared/lib/format";
 import type { Notification } from "@/shared/types/domain";
+import { POLL_FEED } from "@/shared/lib/polling";
 
 const iconByType: Record<Notification["type"], LucideIcon> = {
   deadline: AlertTriangle,
@@ -24,7 +25,7 @@ const toneByType: Record<Notification["type"], string> = {
 
 export function NotificationsWidget() {
   const { data, error, isLoading } = useSWR<Notification[]>("/api/notifications", fetcher, {
-    refreshInterval: 30000,
+    refreshInterval: POLL_FEED,
   });
 
   return (

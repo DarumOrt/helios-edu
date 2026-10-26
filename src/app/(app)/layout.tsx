@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header />
-          <main className="mx-auto w-full max-w-[1400px] flex-1 px-8 py-8">{children}</main>
+          <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
         </div>
       </div>
     </SessionProvider>

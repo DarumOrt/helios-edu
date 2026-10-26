@@ -10,6 +10,7 @@ import { cn } from "@/shared/lib/utils";
 import { StudentTimeline } from "./StudentTimeline";
 import type { LessonStatsResponse } from "../api";
 import type { LessonStatRow } from "@/shared/lib/tracking/types";
+import { POLL_LIVE } from "@/shared/lib/polling";
 
 const statusMeta = {
   completed: { label: "Изучил", tone: "success" as const, icon: CheckCircle2 },
@@ -29,7 +30,7 @@ export function LessonStatsPanel({
   const { data, error, isLoading } = useSWR<LessonStatsResponse>(
     `/api/analytics/lesson/${activityId}?courseId=${encodeURIComponent(courseId)}`,
     fetcher,
-    { refreshInterval: 5000 },
+    { refreshInterval: POLL_LIVE },
   );
   const [openUser, setOpenUser] = useState<string | null>(null);
 
