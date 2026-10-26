@@ -19,8 +19,8 @@ export function RoleSwitcher() {
   if (backendEnabled) return null;
 
   return (
-    <label className="mr-2 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-      демо-роль
+    <label className="flex items-center gap-2 font-mono text-xs text-muted-foreground sm:mr-2">
+      <span className="max-sm:sr-only">демо-роль</span>
       <Select
         value={role}
         onChange={(e) => setRole(e.target.value as Role)}

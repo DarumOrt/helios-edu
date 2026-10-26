@@ -10,6 +10,7 @@ import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import { roleLabel } from "@/features/admin/labels";
 import type { Role } from "@/shared/types/domain";
+import { POLL_FEED } from "@/shared/lib/polling";
 
 interface Entry {
   id: string;
@@ -24,7 +25,7 @@ export default function AuditPage() {
   const role = useSession((s) => s.role);
   const allowed = can(role, "system.manage");
   const { data, error, isLoading } = useSWR<Entry[]>(allowed ? "/api/audit" : null, fetcher, {
-    refreshInterval: 10_000,
+    refreshInterval: POLL_FEED,
   });
   const [query, setQuery] = useState("");
 

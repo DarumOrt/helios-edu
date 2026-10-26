@@ -5,6 +5,7 @@ import { Users, Gauge, AlertTriangle, CircleDashed, CheckCircle2 } from "lucide-
 import { fetcher } from "@/shared/lib/api-client";
 import { Card, DataState, Table, THead, TR, TH, TD, Avatar, Badge, Progress } from "@/shared/ui";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
+import { POLL_LIVE } from "@/shared/lib/polling";
 
 interface Resp {
   entries: LeaderboardEntry[];
@@ -12,7 +13,7 @@ interface Resp {
 
 export function GroupMonitor({ courseId }: { courseId: string }) {
   const { data, error, isLoading } = useSWR<Resp>(`/api/hub/leaderboard?courseId=${courseId}`, fetcher, {
-    refreshInterval: 5000,
+    refreshInterval: POLL_LIVE,
   });
 
   const entries = data?.entries ?? [];

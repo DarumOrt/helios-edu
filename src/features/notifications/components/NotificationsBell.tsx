@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { Notification } from "@/shared/types/domain";
+import { POLL_FEED } from "@/shared/lib/polling";
 
 const iconByType: Record<Notification["type"], LucideIcon> = {
   deadline: AlertTriangle,
@@ -28,7 +29,9 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { data, mutate } = useSWR<Notification[]>("/api/notifications", fetcher, { refreshInterval: 30000 });
+  const { data, mutate } = useSWR<Notification[]>("/api/notifications", fetcher, {
+    refreshInterval: POLL_FEED,
+  });
 
   // нажатие отмечает прочитанным и ведёт по ссылке уведомления (объявление — в курс)
   async function openNotification(n: Notification) {

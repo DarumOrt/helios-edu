@@ -17,6 +17,7 @@ import { fmtDuration } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { LessonStatsPanel } from "./LessonStatsPanel";
 import type { CourseStatsResponse, CourseActivityStat } from "../api";
+import { POLL_LIVE } from "@/shared/lib/polling";
 
 const typeIcon: Record<string, LucideIcon> = {
   video: Video,
@@ -29,7 +30,7 @@ export function CourseStatsPanel({ courseId }: { courseId: string }) {
   const { data, error, isLoading } = useSWR<CourseStatsResponse>(
     `/api/analytics/course/${courseId}`,
     fetcher,
-    { refreshInterval: 5000 },
+    { refreshInterval: POLL_LIVE },
   );
   const [selected, setSelected] = useState<string | null>(null);
 

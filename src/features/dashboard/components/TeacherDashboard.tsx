@@ -14,6 +14,7 @@ import { formatDateTime } from "@/shared/lib/format";
 import type { SubmissionFull } from "@/features/submissions/api";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
 import type { CourseActivityStat } from "@/features/analytics/api";
+import { POLL_LIVE } from "@/shared/lib/polling";
 
 export function TeacherDashboard() {
   const user = useSession((s) => s.user);
@@ -24,12 +25,12 @@ export function TeacherDashboard() {
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
     COURSE ? `/api/hub/leaderboard?courseId=${COURSE}` : null,
     fetcher,
-    { refreshInterval: 5000 },
+    { refreshInterval: POLL_LIVE },
   );
   const { data: cs } = useSWR<{ activities: CourseActivityStat[] }>(
     COURSE ? `/api/analytics/course/${COURSE}` : null,
     fetcher,
-    { refreshInterval: 5000 },
+    { refreshInterval: POLL_LIVE },
   );
 
   const pending = subs?.items ?? [];

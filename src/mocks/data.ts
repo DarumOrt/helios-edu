@@ -9,6 +9,7 @@ import type {
   ScheduleSlot,
   PairTime,
 } from "@/shared/types/domain";
+import { dayMonth, daysAgo, dueInDays } from "./dates";
 
 export const courses: Course[] = [
   {
@@ -51,13 +52,13 @@ export const courses: Course[] = [
             type: "quiz",
             title: "Тест: Пределы и непрерывность",
             durationMin: 15,
-            due: "2026-06-10",
+            due: dueInDays(5),
           },
           {
             id: "ma1",
             type: "assignment",
             title: "Домашнее задание: вычисление пределов",
-            due: "2026-06-12",
+            due: dueInDays(9),
           },
         ],
       },
@@ -87,7 +88,7 @@ export const courses: Course[] = [
             title: "Тест: основы",
             durationMin: 20,
             completed: false,
-            due: "2026-05-12",
+            due: dueInDays(-2),
           },
         ],
       },
@@ -97,7 +98,7 @@ export const courses: Course[] = [
         title: "Модуль 2. История педагогики",
         activities: [
           { id: "a4", type: "page", title: "Лекция 2", durationMin: 30 },
-          { id: "a5", type: "assignment", title: "Эссе: Каменский", due: "2026-05-20" },
+          { id: "a5", type: "assignment", title: "Эссе: Каменский", due: dueInDays(3) },
           { id: "a6", type: "forum", title: "Обсуждение: реформа образования" },
         ],
       },
@@ -121,7 +122,7 @@ export const courses: Course[] = [
         activities: [
           { id: "a1", type: "page", title: "Обзор LMS", durationMin: 15, completed: true },
           { id: "a2", type: "quiz", title: "Тест по цифровым инструментам", completed: true },
-          { id: "a3", type: "assignment", title: "Презентация урока", due: "2026-05-18" },
+          { id: "a3", type: "assignment", title: "Презентация урока", due: dueInDays(1) },
         ],
       },
     ],
@@ -217,8 +218,8 @@ export const notifications: Notification[] = [
     id: "n1",
     type: "deadline",
     title: "Скоро дедлайн",
-    body: "Эссе по курсу М1217 — до 20 мая",
-    createdAt: "2026-05-04T09:30:00Z",
+    body: `Эссе по курсу М1217 — до ${dayMonth(dueInDays(3))}`,
+    createdAt: daysAgo(0, 3),
     read: false,
     link: "/courses/c-ped-101",
   },
@@ -227,7 +228,7 @@ export const notifications: Notification[] = [
     type: "grade",
     title: "Оценка выставлена",
     body: "Тест по ИНФ-201: 87 из 100",
-    createdAt: "2026-05-03T14:10:00Z",
+    createdAt: daysAgo(1, 2),
     read: false,
     link: "/gradebook",
   },
@@ -236,7 +237,7 @@ export const notifications: Notification[] = [
     type: "announcement",
     title: "Расписание сессии",
     body: "Опубликовано расписание летней сессии 2026",
-    createdAt: "2026-05-02T08:00:00Z",
+    createdAt: daysAgo(2, 5),
     read: true,
   },
 ];

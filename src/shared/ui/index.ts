@@ -1,4 +1,4 @@
-export { Button } from "./Button";
+export { Button, buttonVariants } from "./Button";
 export { Card, CardHeader, CardBody, CardFooter } from "./Card";
 export { Badge } from "./Badge";
 export { Table, THead, TR, TH, TD } from "./Table";
