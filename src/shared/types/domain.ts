@@ -88,14 +88,6 @@ export interface Course {
   sections?: Section[];
 }
 
-export interface Program {
-  id: string;
-  title: string;
-  description: string;
-  courseIds: string[];
-  rule: "sequential" | "any-order" | "by-deadline";
-}
-
 export interface QuizQuestion {
   id: string;
   type: "mcq" | "short" | "boolean";
@@ -179,4 +171,31 @@ export interface Notification {
   createdAt: string;
   read: boolean;
   link?: string;
+}
+
+/** Поиск курсов (GET /api/catalog): карточка без материалов. accessible — курс открывается пользователю */
+export interface CatalogCohort {
+  id: string;
+  name: string;
+  year?: number;
+  level?: "bachelor" | "master";
+  directionCode?: string;
+  direction?: string;
+  profile?: string;
+}
+
+export interface CatalogCourse {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  cover?: string;
+  coverColor?: CoverColor;
+  category: string;
+  faculty?: string;
+  academicYear?: string;
+  tutor: { id: string; name: string };
+  cohorts: CatalogCohort[];
+  sections: { title: string; activities: number }[];
+  accessible: boolean;
 }

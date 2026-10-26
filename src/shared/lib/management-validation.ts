@@ -1,5 +1,6 @@
 import { EMAIL } from "./registration";
 import type { CourseStatus, Role, UserStatus } from "@/shared/types/domain";
+import { FACULTY_CODES, isAcademicYear } from "./faculties";
 
 // Проверка полей форм управления. Те же правила и тексты — в C# API (docs/backend/p1-management.md).
 export type FieldErrors = Record<string, string>;
@@ -31,6 +32,9 @@ export interface CourseInput {
   description: string;
   tutorId: string;
   status?: CourseStatus;
+  /** факультет (код из FACULTIES) и учебный год «2026/2027» — необязательны, нужны для поиска */
+  faculty?: string;
+  academicYear?: string;
 }
 
 const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -77,6 +81,10 @@ export function validateCourse(input: Partial<CourseInput>, partial = false): Fi
   if (has("description") && text(input.description).length > 1000)
     e.description = "Описание — до 1000 символов";
   if (has("tutorId") && !text(input.tutorId)) e.tutorId = "Назначьте преподавателя";
+  const faculty = text(input.faculty);
+  if (faculty && !FACULTY_CODES.includes(faculty)) e.faculty = "Выберите факультет из списка";
+  const academicYear = text(input.academicYear);
+  if (academicYear && !isAcademicYear(academicYear)) e.academicYear = "Учебный год в формате 2026/2027";
   if (input.status !== undefined && !COURSE_STATUSES.includes(input.status)) e.status = "Неизвестный статус";
   return e;
 }

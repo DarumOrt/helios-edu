@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button, Dialog, Field, Input, Select, Textarea, describedBy } from "@/shared/ui";
 import { COURSE_STATUSES, validateCourse } from "@/shared/lib/management-validation";
+import { FACULTIES, currentAcademicYear } from "@/shared/lib/faculties";
 import type { Course, CourseStatus, User } from "@/shared/types/domain";
 import { adminApi, refreshManagement, type CoursePayload } from "../api";
 import { courseStatusMeta } from "../labels";
@@ -38,6 +39,8 @@ export function CourseDialog({
     category: course?.category ?? "",
     description: course?.description ?? "",
     tutorId: course?.tutorId ?? tutors[0]?.id ?? "",
+    faculty: course?.faculty ?? "ИНЭК",
+    academicYear: course?.academicYear ?? currentAcademicYear(),
     status: (course?.status ?? "draft") as CourseStatus,
   });
   const { pending, fields, error, run, setFields } = useFormSubmit();
@@ -144,6 +147,35 @@ export function CourseDialog({
                 </option>
               ))}
             </Select>
+          </Field>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="course-faculty" label="Факультет" error={fields.faculty}>
+            <Select
+              id="course-faculty"
+              className="w-full"
+              value={values.faculty}
+              onChange={(e) => set("faculty", e.target.value)}
+              disabled={pending}
+              {...describedBy("course-faculty", fields.faculty)}
+            >
+              {FACULTIES.map((f) => (
+                <option key={f.code} value={f.code}>
+                  {f.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field id="course-year" label="Учебный год" error={fields.academicYear} hint="Например, 2026/2027">
+            <Input
+              id="course-year"
+              value={values.academicYear}
+              onChange={(e) => set("academicYear", e.target.value)}
+              disabled={pending}
+              maxLength={9}
+              inputMode="numeric"
+              {...describedBy("course-year", fields.academicYear, true)}
+            />
           </Field>
         </div>
         <Field

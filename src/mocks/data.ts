@@ -1,6 +1,5 @@
 import type {
   Course,
-  Program,
   QuizQuestion,
   Notification,
   GradeRow,
@@ -208,17 +207,6 @@ export const courses: Course[] = [
     ],
     faculty: "ИНЭК",
     academicYear: "2026/2027",
-  },
-];
-
-export const programs: Program[] = [
-  // Программа магистратуры ИНЭК ПГГПУ (по сайту pspu.ru)
-  {
-    id: "p-ai-education",
-    title: "Искусственный интеллект в образовании",
-    description: "Магистратура, 44.04.01 Педагогическое образование, очная форма, 2 года",
-    courseIds: ["c-dor-ai", "c-ai-teaching", "c-edu-data", "c-project-mgmt"],
-    rule: "any-order",
   },
 ];
 

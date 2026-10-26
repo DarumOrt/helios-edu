@@ -85,6 +85,11 @@ public static class ManagementValidation
             fields["description"] = "Описание — до 1000 символов";
         if ((!partial || input.Has("tutorId")) && input.Text("tutorId").Length == 0)
             fields["tutorId"] = "Назначьте преподавателя";
+        // Факультет и учебный год необязательны: по ним курс находят в поиске.
+        if (input.OptionalText("faculty") is { } faculty && !Faculties.Codes.Contains(faculty))
+            fields["faculty"] = "Выберите факультет из списка";
+        if (input.OptionalText("academicYear") is { } year && !Faculties.IsAcademicYear(year))
+            fields["academicYear"] = "Учебный год в формате 2026/2027";
         if (partial && input.Has("status") && !CourseStatuses.Contains(input.Choice("status")))
             fields["status"] = "Неизвестный статус";
         return fields;

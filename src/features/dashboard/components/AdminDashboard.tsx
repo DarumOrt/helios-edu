@@ -11,7 +11,7 @@ import { RoleHero } from "./RoleHero";
 import { FactStrip } from "./FactStrip";
 import { Widget } from "./Widget";
 import { NotificationsWidget } from "./NotificationsWidget";
-import type { Course, User, Cohort, Program, Role } from "@/shared/types/domain";
+import type { Course, User, Cohort, Role } from "@/shared/types/domain";
 
 const roleLabel: Record<Role, string> = {
   admin: "Администратор",
@@ -34,7 +34,6 @@ export function AdminDashboard() {
   const { data: courses } = useSWR<Course[]>("/api/courses", fetcher);
   const { data: users } = useSWR<User[]>("/api/users", fetcher);
   const { data: cohorts } = useSWR<Cohort[]>("/api/cohorts", fetcher);
-  const { data: programs } = useSWR<Program[]>("/api/programs", fetcher);
 
   return (
     <div className="space-y-6">
@@ -62,7 +61,6 @@ export function AdminDashboard() {
           { label: "Курсов", value: courses?.length ?? 0, href: "/admin/courses" },
           { label: "Пользователей", value: users?.length ?? 0, href: "/admin/users" },
           { label: "Групп", value: cohorts?.length ?? 0, href: "/admin/cohorts" },
-          { label: "Программ", value: programs?.length ?? 0, href: "/programs" },
         ]}
       />
 

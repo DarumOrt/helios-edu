@@ -2,7 +2,7 @@ import type { Role } from "@/shared/types/domain";
 import {
   LayoutDashboard,
   BookOpen,
-  GraduationCap,
+  Search,
   ClipboardList,
   ClipboardCheck,
   BarChart3,
@@ -22,7 +22,6 @@ export type Action =
   | "course.view"
   | "user.manage"
   | "cohort.manage"
-  | "program.manage"
   | "grade.edit"
   | "submission.review"
   | "quiz.take"
@@ -37,7 +36,6 @@ const matrix: Record<Action, Role[]> = {
   "course.view": ["admin", "organizer", "tutor", "student"],
   "user.manage": ["admin", "organizer"],
   "cohort.manage": ["admin", "organizer"],
-  "program.manage": ["admin", "organizer"],
   "grade.edit": ["admin", "tutor"],
   "submission.review": ["admin", "tutor"],
   "quiz.take": ["student"],
@@ -61,9 +59,6 @@ export function actionForMockApi(path: string, method: string): Action | null {
     return method === "GET" ? "course.view" : "course.edit";
   if (/^\/api\/courses\/[^/]+\/(sections|activities)(\/|$)/.test(path)) return "course.edit";
   if (path === "/api/gradebook/grade") return "grade.edit";
-  // программы видят все, меняют организатор и администратор
-  if (path === "/api/programs" || /^\/api\/programs\/[^/]+$/.test(path))
-    return method === "GET" ? "course.view" : "program.manage";
   // настройки системы и журнал действий — только администратор
   // настройки читают все (форма регистрации, объявления), меняет и смотрит журнал — администратор
   if (path === "/api/settings") return method === "GET" ? "course.view" : "system.manage";
@@ -114,12 +109,12 @@ export function navForRole(role: Role): NavItem[] {
     group: "admin",
   });
 
-  // Дашборд — у всех
+  // Поиск курсов и дашборд — у всех
+  items.push(M("/search", "Поиск", Search));
   items.push(M("/dashboard", "Дашборд", LayoutDashboard));
 
   if (role === "student") {
     items.push(M("/courses", "Мои курсы", BookOpen));
-    items.push(M("/programs", "Программы обучения", GraduationCap));
     items.push(M("/hub", "Хаб группы", Trophy));
     items.push(M("/gradebook", "Мои оценки", ClipboardList));
   }
@@ -134,7 +129,6 @@ export function navForRole(role: Role): NavItem[] {
 
   if (role === "organizer") {
     items.push(M("/courses", "Курсы", BookOpen));
-    items.push(M("/programs", "Программы обучения", GraduationCap));
     items.push(M("/analytics", "Аналитика групп", BarChart3));
     items.push(M("/gradebook", "Журнал оценок", ClipboardList));
     items.push(A("/admin/courses", "Управление курсами", Settings2));
