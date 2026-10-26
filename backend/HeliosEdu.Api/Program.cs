@@ -84,7 +84,8 @@ app.MapGet("/api/courses", async (LearningDbContext db, HttpContext context, Can
 {
     var courses = await AccessRules.VisibleCourses(db, context.User).AsNoTracking().OrderBy(course => EF.Property<int>(course, "Position"))
         .Select(course => new CourseSummary(course.Id, course.Code, course.Title, course.Description,
-            course.Cover, course.Category, course.TutorId, course.Enrolled, course.Progress, course.Status, course.CoverColor))
+            course.Cover, course.Category, course.TutorId, course.Enrolled, course.Progress, course.Status, course.CoverColor,
+            course.Faculty, course.AcademicYear))
         .ToListAsync(cancellationToken);
     return Results.Ok(courses);
 }).RequireAuthorization();

@@ -59,7 +59,7 @@ export function validateCohort(input: Partial<CohortInput>, partial = false): Fi
   const e: FieldErrors = {};
   const name = text(input.name);
   if ((!partial || input.name !== undefined) && !/^[\p{L}\d][\p{L}\d -]{1,29}$/u.test(name))
-    e.name = "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1217";
+    e.name = "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1227";
   if (input.faculty != null && text(input.faculty).length > 50) e.faculty = "Факультет — до 50 символов";
   return e;
 }

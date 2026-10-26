@@ -66,7 +66,7 @@ public static class ManagementValidation
     {
         var fields = new Dictionary<string, string>();
         if ((!partial || input.Has("name")) && !GroupName.IsMatch(input.Text("name")))
-            fields["name"] = "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1217";
+            fields["name"] = "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1227";
         if (input.Text("faculty").Length > 50) fields["faculty"] = "Факультет — до 50 символов";
         return fields;
     }

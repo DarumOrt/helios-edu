@@ -30,7 +30,7 @@ export const usersByRole: Record<Role, User> = {
   },
   tutor: {
     id: "u-tutor-1",
-    name: "Наталья Казаринова",
+    name: "Казаринова Н.Л.",
     email: "tutor@pspu.ru",
     role: "tutor",
     tenantId: "pspu",
@@ -43,7 +43,7 @@ export const usersByRole: Record<Role, User> = {
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
-    group: "М1217",
+    group: "М1227",
   },
 };
 

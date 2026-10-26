@@ -49,7 +49,8 @@ public static partial class ManagementEndpoints
         await db.Accounts.Where(user => user.TenantId == group.TenantId && user.Role == "student" && user.Group == group.Name)
             .OrderBy(user => user.Id).Select(user => user.Id).ToListAsync(token),
         await db.CohortCourses.Where(link => link.CohortId == group.Id).OrderBy(link => link.Position)
-            .Select(link => link.CourseId).ToListAsync(token));
+            .Select(link => link.CourseId).ToListAsync(token),
+        group.Year, group.Level, group.DirectionCode, group.Direction, group.Profile);
 
     private static async Task<IResult> CreateCohortAsync(HttpContext context, LearningDbContext db)
     {

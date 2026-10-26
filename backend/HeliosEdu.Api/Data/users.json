@@ -6,7 +6,7 @@
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
   },
   {
     "id": "u-stud-2",
@@ -15,7 +15,7 @@
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
   },
   {
     "id": "u-stud-3",
@@ -24,43 +24,124 @@
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
   },
   {
     "id": "u-stud-5",
-    "name": "Дмитрий Орлов",
+    "name": "Кирилл Бабич",
     "email": "student5@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
   },
   {
     "id": "u-stud-6",
-    "name": "Полина Жукова",
+    "name": "Роман Вертьянов",
     "email": "student6@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
   },
   {
     "id": "u-stud-7",
-    "name": "Артём Белов",
+    "name": "Алина Деменева",
     "email": "student7@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
   },
   {
     "id": "u-stud-8",
-    "name": "Софья Морозова",
+    "name": "Дмитрий Исупов",
     "email": "student8@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "М1217"
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-9",
+    "name": "Михаил Каштанов",
+    "email": "student9@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-10",
+    "name": "Михаил Луканин",
+    "email": "student10@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-11",
+    "name": "Алексей Опутин",
+    "email": "student11@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-12",
+    "name": "Александр Ощепков",
+    "email": "student12@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-13",
+    "name": "Дмитрий Симагин",
+    "email": "student13@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-14",
+    "name": "Владимир Страхов",
+    "email": "student14@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-15",
+    "name": "Илья Худяков",
+    "email": "student15@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-16",
+    "name": "Никита Чекулин",
+    "email": "student16@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
+  },
+  {
+    "id": "u-stud-17",
+    "name": "Илья Штейников",
+    "email": "student17@student.pspu.ru",
+    "role": "student",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК",
+    "group": "М1227"
   },
   {
     "id": "u-stud-4",
@@ -69,12 +150,36 @@
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
-    "group": "ЭК-1237"
+    "group": "1237"
   },
   {
     "id": "u-tutor-1",
-    "name": "Казаринова Наталья Леонидовна",
+    "name": "Казаринова Н.Л.",
     "email": "tutor@pspu.ru",
+    "role": "tutor",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК"
+  },
+  {
+    "id": "u-tutor-2",
+    "name": "Скорнякова А.Ю.",
+    "email": "tutor2@pspu.ru",
+    "role": "tutor",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК"
+  },
+  {
+    "id": "u-tutor-3",
+    "name": "Кузнецов А.Г.",
+    "email": "tutor3@pspu.ru",
+    "role": "tutor",
+    "tenantId": "pspu",
+    "faculty": "ИНЭК"
+  },
+  {
+    "id": "u-tutor-4",
+    "name": "Симакина Н.И.",
+    "email": "tutor4@pspu.ru",
     "role": "tutor",
     "tenantId": "pspu",
     "faculty": "ИНЭК"

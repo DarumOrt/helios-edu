@@ -80,7 +80,7 @@ for (const [name, baseUrl] of [
               ["PUT", "/api/cohorts/co-1/members", { memberIds: [] }],
               ["DELETE", "/api/cohorts/co-1"],
               ["POST", "/api/courses", {}],
-              ["PATCH", "/api/courses/c-matan", {}],
+              ["PATCH", "/api/courses/c-dor-ai", {}],
             ]
           : [])
           assert.equal((await send(method, path, body, organizer, false)).status, 403, `${method} ${path}`);
@@ -150,7 +150,7 @@ for (const [name, baseUrl] of [
         ])
           await expect(await patchUser(createdUser.id, patch), 400, field, message);
         for (const [input, field, message] of [
-          [{ name: "!" }, "name", "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1217"],
+          [{ name: "!" }, "name", "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1227"],
           [{ name: `В-${unique}`, faculty: "я".repeat(51) }, "faculty", "Факультет — до 50 символов"],
         ])
           await expect(await send("POST", "/api/cohorts", input), 400, field, message);

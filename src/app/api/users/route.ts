@@ -8,7 +8,7 @@ import { assignableRoles } from "@/shared/auth/management";
 import { validateUser } from "@/shared/lib/management-validation";
 import type { Role } from "@/shared/types/domain";
 
-// GET ?group=М1217 — только участники группы
+// GET ?group=М1227 — только участники группы
 export async function GET(req: Request) {
   const group = new URL(req.url).searchParams.get("group");
   const response = await backendGet(

@@ -27,7 +27,7 @@ const sql = (query) =>
   );
 const literal = (value) => `'${value.replaceAll("'", "''")}'`;
 const getCourse = async () => {
-  const response = await fetch(`${apiUrl}/api/courses/c-matan`, { headers: { Cookie: cookie } });
+  const response = await fetch(`${apiUrl}/api/courses/c-dor-ai`, { headers: { Cookie: cookie } });
   assert.equal(response.status, 200);
   return response.json();
 };
@@ -52,14 +52,14 @@ test("PostgreSQL сохраняет изменения; перезапуск н�
   const original = await getCourse();
   const changedTitle = `${original.title} [проверка хранения]`;
   try {
-    await sql(`UPDATE "Courses" SET "Title" = ${literal(changedTitle)} WHERE "Id" = 'c-matan'`);
+    await sql(`UPDATE "Courses" SET "Title" = ${literal(changedTitle)} WHERE "Id" = 'c-dor-ai'`);
     assert.equal((await getCourse()).title, changedTitle);
     await compose("restart", "api");
     await waitUntilReady();
     assert.equal((await getCourse()).title, changedTitle);
 
     if (process.env.TEST_WEB_URL) {
-      const response = await fetch(`${process.env.TEST_WEB_URL}/api/courses/c-matan`, {
+      const response = await fetch(`${process.env.TEST_WEB_URL}/api/courses/c-dor-ai`, {
         headers: { Cookie: cookie },
       });
       assert.equal(response.status, 200);
@@ -73,13 +73,13 @@ test("PostgreSQL сохраняет изменения; перезапуск н�
   } finally {
     await compose("start", "api");
     await waitUntilReady();
-    await sql(`UPDATE "Courses" SET "Title" = ${literal(original.title)} WHERE "Id" = 'c-matan'`);
+    await sql(`UPDATE "Courses" SET "Title" = ${literal(original.title)} WHERE "Id" = 'c-dor-ai'`);
   }
   assert.deepEqual(await getCourse(), original);
 });
 
 test("Курс вне группы скрыт даже при наличии старого Enrollment", async () => {
-  const courseId = "c-psych-110";
+  const courseId = "c-project-mgmt";
   try {
     await sql(`DELETE FROM "CohortCourses" WHERE "CohortId" = 'co-1' AND "CourseId" = '${courseId}'`);
     for (const baseUrl of [apiUrl, ...(process.env.TEST_WEB_URL ? [process.env.TEST_WEB_URL] : [])]) {
@@ -100,13 +100,13 @@ test("Курс вне группы скрыт даже при наличии с�
 test("Преподаватель не открывает курс без своего назначения", async () => {
   const session = await login(apiUrl, "tutor@pspu.ru");
   try {
-    await sql(`UPDATE "Courses" SET "TutorId" = 'unassigned' WHERE "Id" = 'c-psych-110'`);
-    const response = await fetch(`${apiUrl}/api/courses/c-psych-110`, {
+    await sql(`UPDATE "Courses" SET "TutorId" = 'unassigned' WHERE "Id" = 'c-project-mgmt'`);
+    const response = await fetch(`${apiUrl}/api/courses/c-project-mgmt`, {
       headers: { Cookie: session.cookie },
     });
     assert.equal(response.status, 404);
   } finally {
-    await sql(`UPDATE "Courses" SET "TutorId" = 'u-tutor-1' WHERE "Id" = 'c-psych-110'`);
+    await sql(`UPDATE "Courses" SET "TutorId" = 'u-tutor-3' WHERE "Id" = 'c-project-mgmt'`);
   }
 });
 

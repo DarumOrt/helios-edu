@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { courses, pairTimes, schedule } from "@/mocks/data";
 import { withCover } from "@/mocks/course-cover-store";
 
-// GET ?group=М1217 — пары группы на неделю, с данными курса для отображения
+// GET ?group=М1227 — пары группы на неделю, с данными курса для отображения
 export async function GET(req: Request) {
   const group = new URL(req.url).searchParams.get("group") ?? "";
   const slots = (schedule[group] ?? []).map((s) => {
