@@ -10,7 +10,7 @@ for (const [name, baseUrl] of [
   test(`${name}: конструктор на отдельном курсе P2`, async (t) => {
     const organizer = await login(baseUrl, "organizer@pspu.ru");
     const admin = await login(baseUrl, "admin@pspu.ru");
-    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+    const tutor = await login(baseUrl, "tutor@pspu.ru");
     const student = await login(baseUrl);
     const unique = `${Date.now()}-${randomBytes(3).toString("hex")}`;
     const send = (method, path, body, actor = tutor, client = true) =>

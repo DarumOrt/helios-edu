@@ -7,7 +7,7 @@ for (const [name, baseUrl] of [
   ...(process.env.TEST_WEB_URL ? [["Next.js", process.env.TEST_WEB_URL]] : []),
 ]) {
   test(`${name}: без сессии курсы, профиль и пользователи недоступны`, async () => {
-    for (const path of ["/api/auth/me", "/api/courses", "/api/courses/c-matan", "/api/users"])
+    for (const path of ["/api/auth/me", "/api/courses", "/api/courses/c-dor-ai", "/api/users"])
       assert.equal((await get(baseUrl, path)).status, 401);
     assert.equal((await get(baseUrl, "/api/courses", "helios-auth=forged")).status, 401);
   });
@@ -20,21 +20,21 @@ for (const [name, baseUrl] of [
         "X-Helios-Client": "web",
         Origin: new URL(baseUrl).origin,
       },
-      body: JSON.stringify({ email: "vagulin@student.pspu.ru", password: "wrong-password" }),
+      body: JSON.stringify({ email: "student@student.pspu.ru", password: "wrong-password" }),
     });
     assert.equal(response.status, 401);
     const crossSite = await fetch(`${baseUrl}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: "https://other.example" },
-      body: JSON.stringify({ email: "vagulin@student.pspu.ru", password: "irrelevant" }),
+      body: JSON.stringify({ email: "student@student.pspu.ru", password: "irrelevant" }),
     });
     assert.equal(crossSite.status, 403);
   });
 
   test(`${name}: роль берётся с сервера; список пользователей доступен только организатору и администратору`, async () => {
     for (const [email, role, status] of [
-      ["vagulin@student.pspu.ru", "student", 403],
-      ["kazarinova@pspu.ru", "tutor", 403],
+      ["student@student.pspu.ru", "student", 403],
+      ["tutor@pspu.ru", "tutor", 403],
       ["organizer@pspu.ru", "organizer", 200],
       ["admin@pspu.ru", "admin", 200],
     ]) {
@@ -73,10 +73,7 @@ for (const [name, baseUrl] of [
     assert.ok(classmates.length > 1);
     assert.ok(classmates.every((member) => member.group === user.group && member.role === "student"));
     assert.ok(classmates.every((member) => !("passwordHash" in member)));
-    assert.equal(
-      (await get(baseUrl, `${prefix}?group=${encodeURIComponent("ЭК-1237")}`, cookie)).status,
-      403,
-    );
+    assert.equal((await get(baseUrl, `${prefix}?group=${encodeURIComponent("1237")}`, cookie)).status, 403);
   });
 
   test(`${name}: поля role и userId в запросе входа не повышают права`, async () => {
@@ -88,7 +85,7 @@ for (const [name, baseUrl] of [
         Origin: new URL(baseUrl).origin,
       },
       body: JSON.stringify({
-        email: "vagulin@student.pspu.ru",
+        email: "student@student.pspu.ru",
         password: demoPassword,
         role: "admin",
         userId: "u-admin",
@@ -184,9 +181,9 @@ if (process.env.TEST_WEB_URL)
     const baseUrl = process.env.TEST_WEB_URL;
     const { cookie } = await login(baseUrl);
     for (const path of [
-      "/api/gradebook?courseId=c-matan",
+      "/api/gradebook?courseId=c-dor-ai",
       "/api/submissions",
-      "/api/analytics/course/c-matan",
+      "/api/analytics/course/c-dor-ai",
       "/api/gradebook/me?userId=u-stud-1",
     ])
       assert.equal((await get(baseUrl, path, cookie)).status, 403);
@@ -210,7 +207,7 @@ if (process.env.TEST_WEB_URL) {
     assert.equal(schedule.group, user.group);
     assert.ok(schedule.slots.length > 0);
     assert.equal(
-      (await get(baseUrl, `/api/schedule?group=${encodeURIComponent("ЭК-1237")}`, cookie)).status,
+      (await get(baseUrl, `/api/schedule?group=${encodeURIComponent("1237")}`, cookie)).status,
       403,
     );
   });
@@ -218,7 +215,7 @@ if (process.env.TEST_WEB_URL) {
   test("Next.js: редактирование обложки требует серверного права course.edit", async () => {
     const baseUrl = process.env.TEST_WEB_URL;
     const put = (cookie) =>
-      fetch(`${baseUrl}/api/courses/c-matan/cover`, {
+      fetch(`${baseUrl}/api/courses/c-dor-ai/cover`, {
         method: "PUT",
         headers: { Cookie: cookie, "Content-Type": "application/json", Origin: new URL(baseUrl).origin },
         // Пустой патч проверяет доступ без изменения обложки в демоданных.
@@ -227,7 +224,7 @@ if (process.env.TEST_WEB_URL) {
     assert.equal((await put("")).status, 401);
     const student = await login(baseUrl);
     assert.equal((await put(student.cookie)).status, 403);
-    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+    const tutor = await login(baseUrl, "tutor@pspu.ru");
     assert.equal((await put(tutor.cookie)).status, 200);
   });
 }
@@ -277,9 +274,9 @@ if (process.env.TEST_WEB_URL)
 if (process.env.TEST_WEB_URL)
   test("Next.js: курс из пути проверяется — аналитика и проверка работ только по видимым курсам", async () => {
     const baseUrl = process.env.TEST_WEB_URL;
-    const { cookie } = await login(baseUrl, "kazarinova@pspu.ru");
+    const { cookie } = await login(baseUrl, "tutor@pspu.ru");
     // свой курс — доступен; несуществующий (или чужой) — как в C#, не найден
-    assert.equal((await get(baseUrl, "/api/analytics/course/c-matan", cookie)).status, 200);
+    assert.equal((await get(baseUrl, "/api/analytics/course/c-dor-ai", cookie)).status, 200);
     assert.equal((await get(baseUrl, "/api/analytics/course/no-such-course", cookie)).status, 404);
     assert.equal((await get(baseUrl, "/api/analytics/lesson/no-such-activity", cookie)).status, 404);
 
@@ -311,14 +308,14 @@ if (process.env.TEST_WEB_URL)
         body: JSON.stringify(body),
       });
     const student = await login(baseUrl);
-    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+    const tutor = await login(baseUrl, "tutor@pspu.ru");
 
     // вопросы для прохождения — без правильных ответов; редактор вопросов студенту закрыт
-    const quiz = await get(baseUrl, "/api/quiz/mq1/questions?courseId=c-matan", student.cookie);
+    const quiz = await get(baseUrl, "/api/quiz/mq1/questions?courseId=c-dor-ai", student.cookie);
     assert.equal(quiz.status, 200);
     const questions = await quiz.json();
     assert.ok(questions.length > 0 && questions.every((q) => !("correct" in q)));
-    const editorPath = "/api/courses/c-matan/activities/mq1/questions";
+    const editorPath = "/api/courses/c-dor-ai/activities/mq1/questions";
     assert.equal((await get(baseUrl, editorPath, student.cookie)).status, 403);
     const full = await get(baseUrl, editorPath, tutor.cookie);
     assert.equal(full.status, 200);
@@ -329,7 +326,7 @@ if (process.env.TEST_WEB_URL)
     assert.equal(
       (
         await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
-          courseId: "c-matan",
+          courseId: "c-dor-ai",
           userId: "u-stud-1",
           text,
         })
@@ -337,22 +334,22 @@ if (process.env.TEST_WEB_URL)
       403,
     );
     const submitted = await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
-      courseId: "c-matan",
+      courseId: "c-dor-ai",
       userId: student.user.id,
       text,
     });
     assert.equal(submitted.status, 201);
     const { items } = await (await get(baseUrl, "/api/submissions", tutor.cookie)).json();
-    assert.ok(items.some((s) => s.text === text && s.courseId === "c-matan"));
+    assert.ok(items.some((s) => s.text === text && s.courseId === "c-dor-ai"));
 
     // объявление пишет преподаватель, получает студент курса
     const announcement = { title: `Объявление ${Date.now()}`, body: "Консультация в пятницу" };
     assert.equal(
-      (await send(student.cookie, "POST", "/api/courses/c-matan/announcements", announcement)).status,
+      (await send(student.cookie, "POST", "/api/courses/c-dor-ai/announcements", announcement)).status,
       403,
     );
     assert.equal(
-      (await send(tutor.cookie, "POST", "/api/courses/c-matan/announcements", announcement)).status,
+      (await send(tutor.cookie, "POST", "/api/courses/c-dor-ai/announcements", announcement)).status,
       201,
     );
     const notifications = await (await get(baseUrl, "/api/notifications", student.cookie)).json();

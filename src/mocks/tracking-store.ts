@@ -53,12 +53,12 @@ function key(userId: string, activityId: string) {
   return `${userId}::${activityId}`;
 }
 
-// ---- сид: правдоподобная активность группы М1217 по курсу c-matan ----
+// ---- сид: правдоподобная активность группы М1227 по курсу c-dor-ai ----
 function seed() {
   if (store.seeded) return;
   store.seeded = true;
 
-  const roster = (cohorts.find((c) => c.name === "М1217")?.memberIds ?? []).filter(
+  const roster = (cohorts.find((c) => c.name === "М1227")?.memberIds ?? []).filter(
     (id) => id !== "u-stud-2", // текущего пользователя оставим "в процессе", он наберёт сам
   );
 
@@ -66,10 +66,19 @@ function seed() {
   const profiles: Record<string, [number, number, number, number]> = {
     "u-stud-1": [100, 14, 8, 95], // Соколова — отличница
     "u-stud-3": [96, 13, 8, 88], // Кузьмин
-    "u-stud-5": [74, 9, 6, 70], // Орлов
-    "u-stud-6": [88, 12, 7, 82], // Жукова
-    "u-stud-7": [40, 5, 3, 55], // Белов — отстаёт
-    "u-stud-8": [62, 10, 4, 64], // Морозова
+    "u-stud-5": [74, 9, 6, 70],
+    "u-stud-6": [88, 12, 7, 82],
+    "u-stud-7": [40, 5, 3, 55], // отстаёт
+    "u-stud-8": [62, 10, 4, 64],
+    "u-stud-9": [91, 13, 8, 86],
+    "u-stud-10": [55, 6, 5, 61],
+    "u-stud-11": [100, 14, 8, 92],
+    "u-stud-12": [33, 4, 2, 48], // отстаёт
+    "u-stud-13": [80, 11, 6, 77],
+    "u-stud-14": [68, 9, 5, 72],
+    "u-stud-15": [85, 12, 7, 80],
+    "u-stud-16": [47, 6, 3, 58],
+    "u-stud-17": [93, 14, 8, 90],
   };
 
   const now = Date.now();
@@ -204,8 +213,8 @@ export function lessonStats(activityId: string): LessonStatRow[] {
 }
 
 function rosterForCourse(_courseId: string | null): string[] {
-  // в мокапе все метрики идут по М1217
-  return (cohorts.find((c) => c.name === "М1217")?.memberIds ?? []).slice();
+  // в мокапе все метрики идут по М1227
+  return (cohorts.find((c) => c.name === "М1227")?.memberIds ?? []).slice();
 }
 
 // агрегированная статистика курса: по каждой активности

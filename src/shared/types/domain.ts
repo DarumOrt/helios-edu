@@ -77,6 +77,10 @@ export interface Course {
   coverColor?: CoverColor;
   category: string;
   tutorId: string;
+  /** короткое название факультета, как у групп: «ИНЭК» */
+  faculty?: string;
+  /** учебный год, например «2026/2027» */
+  academicYear?: string;
   /** нет поля — опубликован. Студенты видят только опубликованные курсы */
   status?: CourseStatus;
   enrolled: number;
@@ -153,6 +157,14 @@ export interface Cohort {
   id: string;
   name: string;
   faculty?: string;
+  /** курс обучения: 1–5 в бакалавриате, 1–2 в магистратуре */
+  year?: number;
+  level?: "bachelor" | "master";
+  /** направление подготовки: код и название, например 44.04.01 «Педагогическое образование» */
+  directionCode?: string;
+  direction?: string;
+  /** профиль (направленность) */
+  profile?: string;
   /** студенты группы — производное от User.group */
   memberIds: string[];
   /** курсы группы: каждый её студент зачислен на них */

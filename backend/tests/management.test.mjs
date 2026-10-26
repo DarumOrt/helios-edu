@@ -11,7 +11,7 @@ for (const [name, baseUrl] of [
     const organizer = await login(baseUrl, "organizer@pspu.ru");
     const admin = await login(baseUrl, "admin@pspu.ru");
     const student = await login(baseUrl);
-    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+    const tutor = await login(baseUrl, "tutor@pspu.ru");
     const unique = `${Date.now()}${randomBytes(2).toString("hex")}`;
     const code = `${[...randomBytes(6)].map((byte) => String.fromCharCode(65 + (byte % 26))).join("")}-123`;
     const send = (method, path, body, actor = organizer, client = true) =>
@@ -80,7 +80,7 @@ for (const [name, baseUrl] of [
               ["PUT", "/api/cohorts/co-1/members", { memberIds: [] }],
               ["DELETE", "/api/cohorts/co-1"],
               ["POST", "/api/courses", {}],
-              ["PATCH", "/api/courses/c-matan", {}],
+              ["PATCH", "/api/courses/c-dor-ai", {}],
             ]
           : [])
           assert.equal((await send(method, path, body, organizer, false)).status, 403, `${method} ${path}`);
@@ -143,14 +143,14 @@ for (const [name, baseUrl] of [
 
       await t.test("валидация возвращает точные тексты полей, неизвестные объекты — 404", async () => {
         for (const [patch, field, message] of [
-          [{ email: "bad" }, "email", "Почта выглядит неполной, например name@pstu.ru"],
+          [{ email: "bad" }, "email", "Почта выглядит неполной, например name@pspu.ru"],
           [{ role: "unknown" }, "role", "Выберите роль"],
           [{ status: null }, "status", "Неизвестный статус"],
           [{ faculty: "я".repeat(51) }, "faculty", "Факультет — до 50 символов"],
         ])
           await expect(await patchUser(createdUser.id, patch), 400, field, message);
         for (const [input, field, message] of [
-          [{ name: "!" }, "name", "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1217"],
+          [{ name: "!" }, "name", "Название — от 2 до 30 символов: буквы, цифры, дефис, например М1227"],
           [{ name: `В-${unique}`, faculty: "я".repeat(51) }, "faculty", "Факультет — до 50 символов"],
         ])
           await expect(await send("POST", "/api/cohorts", input), 400, field, message);
@@ -243,7 +243,7 @@ for (const [name, baseUrl] of [
         );
         await expect(await patchCourse(course.id, { status: "draft" }), 200);
         assert.equal((await get(baseUrl, `/api/courses/${course.id}`, student.cookie)).status, 404);
-        const outsider = await login(baseUrl, "ivanova@student.pspu.ru");
+        const outsider = await login(baseUrl, "student4@student.pspu.ru");
         assert.deepEqual(await (await get(baseUrl, "/api/courses", outsider.cookie)).json(), []);
       });
 

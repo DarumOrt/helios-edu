@@ -31,12 +31,18 @@ public static class DemoData
         }
         await db.SaveChangesAsync(cancellationToken);
 
+        // Группы ИНЭК из расписания 2026/2027; co-1 (М1227) изучает все демокурсы.
         // Связи заполняются только у новых групп: изменения организатора сохраняются при перезапуске.
-        var seedGroups = new[] { ("co-1", "М1217"), ("co-2", "ЭК-1237"), ("co-3", "ПСХ-23-1") };
-        foreach (var (id, name) in seedGroups)
+        await using var cohortsStream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Data", "cohorts.json"));
+        var seedGroups = await JsonSerializer.DeserializeAsync<List<Cohort>>(
+            cohortsStream, new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken)
+            ?? throw new InvalidOperationException("Не удалось прочитать демонстрационные группы.");
+        foreach (var group in seedGroups)
         {
-            if (await db.Cohorts.AnyAsync(group => group.Id == id, cancellationToken)) continue;
-            db.Cohorts.Add(new Cohort { Id = id, Name = name, NormalizedName = name.ToUpperInvariant(), Faculty = "ИНЭК" });
+            var id = group.Id;
+            if (await db.Cohorts.AnyAsync(existing => existing.Id == id, cancellationToken)) continue;
+            group.NormalizedName = group.Name.ToUpperInvariant();
+            db.Cohorts.Add(group);
             if (id == "co-1")
                 db.CohortCourses.AddRange(courses.Select((course, position) => new CohortCourse
                     { CohortId = id, CourseId = course.Id, Position = position }));

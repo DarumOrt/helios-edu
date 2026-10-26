@@ -29,7 +29,7 @@ export function validateRegistration(input: Partial<RegistrationInput>): Registr
 
   if (!email) errors.email = "Укажите почту";
   else if (email.length > 254 || !EMAIL.test(email))
-    errors.email = "Почта выглядит неполной, например name@pstu.ru";
+    errors.email = "Почта выглядит неполной, например name@pspu.ru";
 
   if (!password) errors.password = "Придумайте пароль";
   else if (password.length > 256) errors.password = "Пароль длиннее 256 символов";

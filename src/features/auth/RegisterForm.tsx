@@ -102,7 +102,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
             id="reg-name"
             name="name"
             autoComplete="name"
-            placeholder="Иван Вагулин"
+            placeholder="Имя Фамилия"
             maxLength={100}
             value={values.name}
             onChange={(e) => update("name", e.target.value)}
@@ -124,7 +124,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
             type="email"
             inputMode="email"
             autoComplete="email"
-            placeholder="name@pstu.ru"
+            placeholder="name@pspu.ru"
             maxLength={254}
             value={values.email}
             onChange={(e) => update("email", e.target.value)}
@@ -184,7 +184,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
               {...describedBy("reg-consent", errorOf("consent"))}
             />
             <span className="text-muted-foreground">
-              Согласен на обработку персональных данных (152-ФЗ) для учёбы в электронной среде ПНИПУ
+              Согласен на обработку персональных данных (152-ФЗ) для учёбы в электронной среде ПГГПУ
             </span>
           </label>
           {errorOf("consent") && (

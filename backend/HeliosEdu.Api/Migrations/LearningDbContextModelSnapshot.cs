@@ -114,6 +114,9 @@ namespace HeliosEdu.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("AcademicYear")
+                        .HasColumnType("text");
+
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("text");
@@ -134,6 +137,9 @@ namespace HeliosEdu.Api.Migrations
 
                     b.Property<int>("Enrolled")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Faculty")
+                        .HasColumnType("text");
 
                     b.Property<int>("Position")
                         .HasColumnType("integer");
@@ -168,7 +174,16 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
+                    b.Property<string>("Direction")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DirectionCode")
+                        .HasColumnType("text");
+
                     b.Property<string>("Faculty")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Level")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -179,9 +194,15 @@ namespace HeliosEdu.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Profile")
+                        .HasColumnType("text");
+
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("Year")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

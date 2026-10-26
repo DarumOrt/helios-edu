@@ -24,7 +24,7 @@ const literata = Literata({
 
 export const metadata: Metadata = {
   title: "HeliosEDU",
-  description: "Электронная образовательная среда ПНИПУ (мокап)",
+  description: "Электронная образовательная среда ПГГПУ (мокап)",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

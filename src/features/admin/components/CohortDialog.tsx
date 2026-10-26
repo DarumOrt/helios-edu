@@ -66,7 +66,7 @@ export function CohortDialog({
       }
     >
       <form id="cohort-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
-        <Field id="cohort-name" label="Название" error={fields.name} hint="Например, М1217">
+        <Field id="cohort-name" label="Название" error={fields.name} hint="Например, М1227 или 1237">
           <Input
             id="cohort-name"
             value={name}

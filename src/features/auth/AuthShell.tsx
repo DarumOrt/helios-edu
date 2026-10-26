@@ -40,7 +40,7 @@ export function AuthShell({
             <span
               className={cn("block font-mono text-xs", night ? "text-white/75" : "text-muted-foreground")}
             >
-              ПНИПУ · ИНЭК
+              ПГГПУ · ИНЭК
             </span>
           </span>
         </Link>
@@ -73,7 +73,7 @@ export function AuthShell({
           </div>
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          Электронная образовательная среда ПНИПУ · учебный проект
+          Электронная образовательная среда ПГГПУ · учебный проект
         </p>
       </main>
     </div>

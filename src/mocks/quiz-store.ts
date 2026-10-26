@@ -8,8 +8,8 @@ const store: Map<string, QuizQuestion[]> =
   g.__helios_quiz ??
   (g.__helios_quiz = new Map([
     // исходные наборы: mq1 — матанализ, a3 — тест «основы» во «Введении в педагогику»
-    ["c-matan/mq1", quizQuestions.mq1 ?? []],
-    ["c-ped-101/a3", quizQuestions.a3 ?? []],
+    ["c-dor-ai/mq1", quizQuestions.mq1 ?? []],
+    ["c-ai-teaching/a3", quizQuestions.a3 ?? []],
   ]));
 
 const key = (courseId: string, activityId: string) => `${courseId}/${activityId}`;

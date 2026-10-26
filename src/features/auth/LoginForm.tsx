@@ -60,7 +60,7 @@ export function LoginForm() {
             type="email"
             inputMode="email"
             autoComplete="username"
-            placeholder="name@pstu.ru"
+            placeholder="name@pspu.ru"
             required
             maxLength={254}
             disabled={pending}

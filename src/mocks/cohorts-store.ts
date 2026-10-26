@@ -3,18 +3,17 @@ import { allDemoUsers, updateDemoUser } from "@/mocks/users-store";
 import type { Cohort } from "@/shared/types/domain";
 
 // Группы демо-режима. Состав не хранится: студент в группе, если user.group === cohort.name
-// (так же устроено в C# — Account.Group). Здесь хранятся название, факультет и курсы группы.
+// (так же устроено в C# — Account.Group). Здесь хранятся название, факультет, направление и курсы группы.
 type StoredCohort = Omit<Cohort, "memberIds">;
 
 const g = globalThis as unknown as { __helios_cohorts?: StoredCohort[] };
 const store: StoredCohort[] =
   g.__helios_cohorts ??
-  (g.__helios_cohorts = seed.map(({ id, name }) => ({
-    id,
-    name,
+  (g.__helios_cohorts = seed.map(({ memberIds: _members, ...cohort }) => ({
+    ...cohort,
     faculty: "ИНЭК",
-    // М1217 изучает все демокурсы, у остальных групп курсов пока нет
-    courseIds: name === "М1217" ? courses.map((c) => c.id) : [],
+    // М1227 изучает все демокурсы, у остальных групп курсов пока нет
+    courseIds: cohort.name === "М1227" ? courses.map((c) => c.id) : [],
   })));
 
 const withMembers = (c: StoredCohort): Cohort => ({

@@ -12,6 +12,9 @@ public sealed class Course
     public string Status { get; set; } = "draft";
     public required string Category { get; set; }
     public required string TutorId { get; set; }
+    // Короткое название факультета («ИНЭК») и учебный год («2026/2027») — для поиска курсов.
+    public string? Faculty { get; set; }
+    public string? AcademicYear { get; set; }
     public int Enrolled { get; set; }
     // Пока это демонстрационный прогресс, общий для всех посетителей.
     public int? Progress { get; set; }

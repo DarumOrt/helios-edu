@@ -30,7 +30,7 @@ for (let attempt = 0; ; attempt++) {
 suiteLock.unref();
 after(() => new Promise((resolve) => suiteLock.close(resolve)));
 
-export async function login(baseUrl, email = "vagulin@student.pspu.ru", password = demoPassword) {
+export async function login(baseUrl, email = "student@student.pspu.ru", password = demoPassword) {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: {
