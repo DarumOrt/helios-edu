@@ -47,7 +47,12 @@ export function Sidebar() {
             </span>
             <div>
               <div className="text-lg leading-tight font-bold tracking-tight text-foreground">HeliosEDU</div>
-              <div className="font-mono text-xs text-muted-foreground">ПНИПУ · ИНЭК</div>
+              <div
+                className="font-mono text-xs text-muted-foreground"
+                title="Пермский государственный гуманитарно-педагогический университет · факультет информатики и экономики"
+              >
+                ПГГПУ · ИНЭК
+              </div>
             </div>
           </Link>
           <button

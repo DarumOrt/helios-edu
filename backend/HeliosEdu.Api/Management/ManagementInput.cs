@@ -54,7 +54,7 @@ public static class ManagementValidation
             fields["name"] = "Укажите имя и фамилию — от 2 до 100 символов";
         var email = input.Text("email");
         if ((!partial || input.Has("email")) && (email.Length > 254 || !Email.IsMatch(email)))
-            fields["email"] = "Почта выглядит неполной, например name@pstu.ru";
+            fields["email"] = "Почта выглядит неполной, например name@pspu.ru";
         if (!Roles.Contains(role)) fields["role"] = "Выберите роль";
         if (input.Has("status") && !UserStatuses.Contains(input.Choice("status"))) fields["status"] = "Неизвестный статус";
         if (input.Text("faculty").Length > 50) fields["faculty"] = "Факультет — до 50 символов";

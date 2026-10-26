@@ -45,7 +45,7 @@ export function validateUser(input: Partial<UserInput>, partial = false): FieldE
   if (has("name") && (name.length < 2 || name.length > 100))
     e.name = "Укажите имя и фамилию — от 2 до 100 символов";
   if (has("email") && (!email || email.length > 254 || !EMAIL.test(email)))
-    e.email = "Почта выглядит неполной, например name@pstu.ru";
+    e.email = "Почта выглядит неполной, например name@pspu.ru";
   if (has("role") && !ROLES.includes(input.role as Role)) e.role = "Выберите роль";
   if (input.status !== undefined && !USER_STATUSES.includes(input.status)) e.status = "Неизвестный статус";
   if (input.faculty != null && text(input.faculty).length > 50) e.faculty = "Факультет — до 50 символов";

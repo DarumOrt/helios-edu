@@ -32,7 +32,7 @@ public static class DemoData
         await db.SaveChangesAsync(cancellationToken);
 
         // Связи заполняются только у новых групп: изменения организатора сохраняются при перезапуске.
-        var seedGroups = new[] { ("co-1", "М1217"), ("co-2", "ЭК-1237"), ("co-3", "ПСХ-23-1") };
+        var seedGroups = new[] { ("co-1", "М1217"), ("co-2", "ЭК-1237"), ("co-3", "ПИ-1247") };
         foreach (var (id, name) in seedGroups)
         {
             if (await db.Cohorts.AnyAsync(group => group.Id == id, cancellationToken)) continue;

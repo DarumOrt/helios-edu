@@ -152,19 +152,34 @@ export const courses: Course[] = [
 ];
 
 export const programs: Program[] = [
+  // Программы факультета информатики и экономики ПГГПУ (по сайту pspu.ru); состав курсов — условный.
   {
-    id: "p-ped-bachelor",
-    title: "Бакалавриат: Педагогическое образование",
-    description: "Очная форма, 4 года",
-    courseIds: ["c-ped-101", "c-psych-110", "c-info-201"],
+    id: "p-ai-bachelor",
+    title: "Прикладная информатика и системы искусственного интеллекта",
+    description: "Бакалавриат, очная форма, 4 года",
+    courseIds: ["c-matan", "c-info-201", "c-ped-101"],
     rule: "sequential",
   },
   {
-    id: "p-it-teacher",
-    title: "Учитель информатики",
-    description: "Профессиональная переподготовка",
-    courseIds: ["c-info-201", "c-ped-101"],
+    id: "p-informatics-labor",
+    title: "Информатика и Труд (3D-моделирование, компьютерная графика, робототехника)",
+    description: "Бакалавриат, педагогическое образование с двумя профилями, очная форма, 5 лет",
+    courseIds: ["c-ped-101", "c-psych-110", "c-info-201"],
     rule: "any-order",
+  },
+  {
+    id: "p-finance-econ",
+    title: "Финансово-экономическое образование",
+    description: "Бакалавриат, очная форма, 5 лет",
+    courseIds: ["c-matan", "c-ped-101"],
+    rule: "any-order",
+  },
+  {
+    id: "p-ai-education",
+    title: "Искусственный интеллект в образовании",
+    description: "Магистратура, очная форма, 2 года",
+    courseIds: ["c-info-201", "c-psych-110"],
+    rule: "by-deadline",
   },
 ];
 
@@ -320,14 +335,14 @@ export const cohorts: Omit<Cohort, "courseIds">[] = [
     memberIds: ["u-stud-1", "u-stud-2", "u-stud-3", "u-stud-5", "u-stud-6", "u-stud-7", "u-stud-8"],
   },
   { id: "co-2", name: "ЭК-1237", memberIds: ["u-stud-4"] },
-  { id: "co-3", name: "ПСХ-23-1", memberIds: [] },
+  { id: "co-3", name: "ПИ-1247", memberIds: [] },
 ];
 
 export const users: User[] = [
   {
     id: "u-stud-1",
     name: "Анастасия Соколова",
-    email: "sokolova@student.pspu.ru",
+    email: "student1@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -336,7 +351,7 @@ export const users: User[] = [
   {
     id: "u-stud-2",
     name: "Иван Вагулин",
-    email: "vagulin@student.pspu.ru",
+    email: "student@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -345,7 +360,7 @@ export const users: User[] = [
   {
     id: "u-stud-3",
     name: "Кирилл Кузьмин",
-    email: "kuzmin@student.pspu.ru",
+    email: "student3@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -354,7 +369,7 @@ export const users: User[] = [
   {
     id: "u-stud-5",
     name: "Дмитрий Орлов",
-    email: "orlov@student.pspu.ru",
+    email: "student5@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -363,7 +378,7 @@ export const users: User[] = [
   {
     id: "u-stud-6",
     name: "Полина Жукова",
-    email: "zhukova@student.pspu.ru",
+    email: "student6@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -372,7 +387,7 @@ export const users: User[] = [
   {
     id: "u-stud-7",
     name: "Артём Белов",
-    email: "belov@student.pspu.ru",
+    email: "student7@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -381,7 +396,7 @@ export const users: User[] = [
   {
     id: "u-stud-8",
     name: "Софья Морозова",
-    email: "morozova@student.pspu.ru",
+    email: "student8@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -390,7 +405,7 @@ export const users: User[] = [
   {
     id: "u-stud-4",
     name: "Ольга Иванова",
-    email: "ivanova@student.pspu.ru",
+    email: "student4@student.pspu.ru",
     role: "student",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -399,7 +414,7 @@ export const users: User[] = [
   {
     id: "u-tutor-1",
     name: "Казаринова Наталья Леонидовна",
-    email: "kazarinova@pspu.ru",
+    email: "tutor@pspu.ru",
     role: "tutor",
     tenantId: "pspu",
     faculty: "ИНЭК",
@@ -422,7 +437,7 @@ export const users: User[] = [
   },
 ];
 
-// Звонки — условные, для мокапа. Для реального ПНИПУ взять из расписания вуза.
+// Звонки — условные, для мокапа. Для реального ПГГПУ взять из расписания вуза.
 export const pairTimes: PairTime[] = [
   { n: 1, start: "08:00", end: "09:35" },
   { n: 2, start: "09:45", end: "11:20" },

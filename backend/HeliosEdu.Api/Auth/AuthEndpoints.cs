@@ -132,7 +132,7 @@ public static class AuthEndpoints
 
         if (email.Length == 0) fields["email"] = "Укажите почту";
         else if (email.Length > 254 || !LooksLikeEmail(email))
-            fields["email"] = "Почта выглядит неполной, например name@pstu.ru";
+            fields["email"] = "Почта выглядит неполной, например name@pspu.ru";
 
         if (password.Length == 0) fields["password"] = "Придумайте пароль";
         else if (password.Length > 256) fields["password"] = "Пароль длиннее 256 символов";

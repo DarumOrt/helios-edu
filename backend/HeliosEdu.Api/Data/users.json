@@ -2,7 +2,7 @@
   {
     "id": "u-stud-1",
     "name": "Анастасия Соколова",
-    "email": "sokolova@student.pspu.ru",
+    "email": "student1@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -11,7 +11,7 @@
   {
     "id": "u-stud-2",
     "name": "Иван Вагулин",
-    "email": "vagulin@student.pspu.ru",
+    "email": "student@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -20,7 +20,7 @@
   {
     "id": "u-stud-3",
     "name": "Кирилл Кузьмин",
-    "email": "kuzmin@student.pspu.ru",
+    "email": "student3@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -29,7 +29,7 @@
   {
     "id": "u-stud-5",
     "name": "Дмитрий Орлов",
-    "email": "orlov@student.pspu.ru",
+    "email": "student5@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -38,7 +38,7 @@
   {
     "id": "u-stud-6",
     "name": "Полина Жукова",
-    "email": "zhukova@student.pspu.ru",
+    "email": "student6@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -47,7 +47,7 @@
   {
     "id": "u-stud-7",
     "name": "Артём Белов",
-    "email": "belov@student.pspu.ru",
+    "email": "student7@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -56,7 +56,7 @@
   {
     "id": "u-stud-8",
     "name": "Софья Морозова",
-    "email": "morozova@student.pspu.ru",
+    "email": "student8@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -65,7 +65,7 @@
   {
     "id": "u-stud-4",
     "name": "Ольга Иванова",
-    "email": "ivanova@student.pspu.ru",
+    "email": "student4@student.pspu.ru",
     "role": "student",
     "tenantId": "pspu",
     "faculty": "ИНЭК",
@@ -74,7 +74,7 @@
   {
     "id": "u-tutor-1",
     "name": "Казаринова Наталья Леонидовна",
-    "email": "kazarinova@pspu.ru",
+    "email": "tutor@pspu.ru",
     "role": "tutor",
     "tenantId": "pspu",
     "faculty": "ИНЭК"

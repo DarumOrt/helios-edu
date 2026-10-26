@@ -98,7 +98,7 @@ test("Курс вне группы скрыт даже при наличии с�
 });
 
 test("Преподаватель не открывает курс без своего назначения", async () => {
-  const session = await login(apiUrl, "kazarinova@pspu.ru");
+  const session = await login(apiUrl, "tutor@pspu.ru");
   try {
     await sql(`UPDATE "Courses" SET "TutorId" = 'unassigned' WHERE "Id" = 'c-psych-110'`);
     const response = await fetch(`${apiUrl}/api/courses/c-psych-110`, {

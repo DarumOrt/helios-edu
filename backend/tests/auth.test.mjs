@@ -20,21 +20,21 @@ for (const [name, baseUrl] of [
         "X-Helios-Client": "web",
         Origin: new URL(baseUrl).origin,
       },
-      body: JSON.stringify({ email: "vagulin@student.pspu.ru", password: "wrong-password" }),
+      body: JSON.stringify({ email: "student@student.pspu.ru", password: "wrong-password" }),
     });
     assert.equal(response.status, 401);
     const crossSite = await fetch(`${baseUrl}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: "https://other.example" },
-      body: JSON.stringify({ email: "vagulin@student.pspu.ru", password: "irrelevant" }),
+      body: JSON.stringify({ email: "student@student.pspu.ru", password: "irrelevant" }),
     });
     assert.equal(crossSite.status, 403);
   });
 
   test(`${name}: роль берётся с сервера; список пользователей доступен только организатору и администратору`, async () => {
     for (const [email, role, status] of [
-      ["vagulin@student.pspu.ru", "student", 403],
-      ["kazarinova@pspu.ru", "tutor", 403],
+      ["student@student.pspu.ru", "student", 403],
+      ["tutor@pspu.ru", "tutor", 403],
       ["organizer@pspu.ru", "organizer", 200],
       ["admin@pspu.ru", "admin", 200],
     ]) {
@@ -88,7 +88,7 @@ for (const [name, baseUrl] of [
         Origin: new URL(baseUrl).origin,
       },
       body: JSON.stringify({
-        email: "vagulin@student.pspu.ru",
+        email: "student@student.pspu.ru",
         password: demoPassword,
         role: "admin",
         userId: "u-admin",
@@ -227,7 +227,7 @@ if (process.env.TEST_WEB_URL) {
     assert.equal((await put("")).status, 401);
     const student = await login(baseUrl);
     assert.equal((await put(student.cookie)).status, 403);
-    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+    const tutor = await login(baseUrl, "tutor@pspu.ru");
     assert.equal((await put(tutor.cookie)).status, 200);
   });
 }
@@ -277,7 +277,7 @@ if (process.env.TEST_WEB_URL)
 if (process.env.TEST_WEB_URL)
   test("Next.js: курс из пути проверяется — аналитика и проверка работ только по видимым курсам", async () => {
     const baseUrl = process.env.TEST_WEB_URL;
-    const { cookie } = await login(baseUrl, "kazarinova@pspu.ru");
+    const { cookie } = await login(baseUrl, "tutor@pspu.ru");
     // свой курс — доступен; несуществующий (или чужой) — как в C#, не найден
     assert.equal((await get(baseUrl, "/api/analytics/course/c-matan", cookie)).status, 200);
     assert.equal((await get(baseUrl, "/api/analytics/course/no-such-course", cookie)).status, 404);
@@ -311,7 +311,7 @@ if (process.env.TEST_WEB_URL)
         body: JSON.stringify(body),
       });
     const student = await login(baseUrl);
-    const tutor = await login(baseUrl, "kazarinova@pspu.ru");
+    const tutor = await login(baseUrl, "tutor@pspu.ru");
 
     // вопросы для прохождения — без правильных ответов; редактор вопросов студенту закрыт
     const quiz = await get(baseUrl, "/api/quiz/mq1/questions?courseId=c-matan", student.cookie);
