@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSubmission, reviewSubmission } from "@/mocks/submissions-store";
 import { backendForward } from "@/shared/lib/backend";
 import { addPersonal } from "@/mocks/announcements-store";
+import { setGrade } from "@/mocks/gradebook-store";
 
 // POST { grade, feedback } — оценка работы. Сервер — C# (права и курс проверяет он), демо — моки ниже.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -39,5 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     body: `${submission.assignmentTitle}: ${grade} из ${submission.maxGrade}`,
     link: "/gradebook",
   });
+  // оценка за работу — в журнал, как SaveGrade в C#
+  setGrade(submission.courseId, submission.userId, submission.assignmentId, grade as number);
   return NextResponse.json(reviewSubmission(id, grade as number, feedback as string));
 }

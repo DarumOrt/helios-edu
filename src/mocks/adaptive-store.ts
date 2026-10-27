@@ -527,6 +527,11 @@ export function learn(
   return changes.map((c) => ({ ...c, status: refreshed.get(c.skillId)!.status }));
 }
 
+/** Завершённые попытки тестов курса — для журнала оценок (лучшая попытка) */
+export function submittedAttempts(courseId: string): Attempt[] {
+  return state.attempts.filter((a) => a.courseId === courseId && a.submittedAt);
+}
+
 export function completed(userId: string, courseId: string): Set<string> {
   const done = new Set(
     state.events
