@@ -68,6 +68,16 @@ jobs:
       - run: node --test backend/tests/course-builder.test.mjs
       - run: node --test backend/tests/adaptive.test.mjs
       - run: node --test backend/tests/catalog.test.mjs
+      # Вход ограничен 60 разами в минуту с одного адреса (защита от подбора пароля), а все тесты идут
+      # с одного адреса. Перезапуск API обнуляет счётчик — дальше тесты не упираются в 429.
+      - name: Reset login rate limit
+        run: |
+          docker compose --profile backend restart api
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8080/api/health/ready && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/api/health/ready
       - run: node --test backend/tests/grades.test.mjs
       - run: node --test backend/tests/notifications.test.mjs
       - run: node --test backend/tests/api.test.mjs
