@@ -24,6 +24,7 @@ npm ci              # установка строго по lock-файлу (не
 npm run dev         # http://localhost:3000
 npm run check       # typecheck + lint + format:check + test — то же, что в CI
 npm test            # модульные тесты (Vitest): права, валидация, формулы — рядом с кодом, *.test.ts
+npm run api:types   # типы из описания C# API (нужен запущенный API) → docs/api/openapi.json, src/shared/types/api.gen.ts
 npm run lint:fix    # автоисправление ESLint
 npm run format      # Prettier на весь проект
 npm run build       # production-сборка
@@ -62,6 +63,9 @@ backend/tests/          проверки API на настоящем PostgreSQL
   правила ролей — `shared/auth/management.ts`, поля — `shared/lib/management-validation.ts`.
   В серверном режиме маршруты Next пересылают запрос в C# (`backendForward`); пока эндпоинта нет — `501`.
   Задания для бэкенда с контрактом и тестами — `docs/backend/*.md`.
+- Контракт Next ↔ C# проверяется типами: C# описывает ответы (`.Produces<T>()`, `/openapi/v1.json`),
+  `npm run api:types` собирает `src/shared/types/api.gen.ts`, а `src/shared/types/contract.ts` сверяет его с `domain.ts`.
+  Поменяли ответ в C# — перегенерируйте типы в том же PR; CI падает, если они устарели или разошлись с интерфейсом.
 - Id модулей и материалов уникальны **только внутри курса** (исходные `a2`, `a3` повторяются в разных курсах).
   Всё, что ссылается на материал (вопросы тестов, сданные работы, аналитика урока), — по паре `courseId` + `activityId`.
   Новые id в конструкторе — глобально уникальные (`s-…`, `a-…`).

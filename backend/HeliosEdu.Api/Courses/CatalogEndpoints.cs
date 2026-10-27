@@ -50,6 +50,6 @@ public static class CatalogEndpoints
                 course.Sections.OrderBy(section => section.Order)
                     .Select(section => new CatalogSection(section.Title, section.Activities.Count)).ToList(),
                 accessible.Contains(course.Id))));
-        }).RequireAuthorization();
+        }).RequireAuthorization().Produces<CatalogCourse[]>();
     }
 }

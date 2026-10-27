@@ -1,0 +1,1384 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "HeliosEdu.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users/classmates": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["ManagementEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/catalog": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCourse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["ManagementEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "patch": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cohorts": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CohortInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["ManagementEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cohorts/{id}": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cohorts/{id}/members": {
+      "put": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/sections": {
+      "post": {
+        "tags": ["CourseBuilderEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/sections/{sectionId}": {
+      "patch": {
+        "tags": ["CourseBuilderEndpoints"],
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["CourseBuilderEndpoints"],
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/sections/order": {
+      "put": {
+        "tags": ["CourseBuilderEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/sections/{sectionId}/activities": {
+      "post": {
+        "tags": ["CourseBuilderEndpoints"],
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/sections/{sectionId}/activities/order": {
+      "put": {
+        "tags": ["CourseBuilderEndpoints"],
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/activities/{activityId}": {
+      "patch": {
+        "tags": ["CourseBuilderEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["CourseBuilderEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/skills": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SkillInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/skills/{skillId}": {
+      "patch": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "skillId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "skillId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/skills/import": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/activities/{activityId}/skills": {
+      "put": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/quizzes/{activityId}/questions": {
+      "get": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/quizzes/{activityId}/attempts": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/adaptive": {
+      "get": {
+        "tags": ["AdaptiveEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["AdaptiveEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/adaptive/students/{userId}/skills/{skillId}": {
+      "put": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skillId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/adaptive/students/{userId}/pin": {
+      "put": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/events": {
+      "get": {
+        "tags": ["AdaptiveEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/attempts/{attemptId}/answers": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "attemptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/attempts/{attemptId}/hint": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "attemptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/attempts/{attemptId}/submit": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "attemptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/me/courses/{id}/progress": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/me/courses/{id}/next": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/me/recommendations/{recommendationId}": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "recommendationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/me/courses/{id}/events": {
+      "post": {
+        "tags": ["AdaptiveEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Activity": {
+        "required": ["id", "type", "title"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "durationMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "completed": {
+            "type": ["null", "boolean"]
+          },
+          "due": {
+            "type": ["null", "string"]
+          },
+          "description": {
+            "type": ["null", "string"]
+          },
+          "maxGrade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "src": {
+            "type": ["null", "string"]
+          },
+          "pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "CatalogCohort": {
+        "required": ["id", "name", "year", "level", "directionCode", "direction", "profile"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "year": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "level": {
+            "type": ["null", "string"]
+          },
+          "directionCode": {
+            "type": ["null", "string"]
+          },
+          "direction": {
+            "type": ["null", "string"]
+          },
+          "profile": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "CatalogCourse": {
+        "required": [
+          "id",
+          "code",
+          "title",
+          "description",
+          "cover",
+          "coverColor",
+          "category",
+          "faculty",
+          "academicYear",
+          "tutor",
+          "cohorts",
+          "sections",
+          "accessible"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover": {
+            "type": ["null", "string"]
+          },
+          "coverColor": {
+            "type": ["null", "string"]
+          },
+          "category": {
+            "type": "string"
+          },
+          "faculty": {
+            "type": ["null", "string"]
+          },
+          "academicYear": {
+            "type": ["null", "string"]
+          },
+          "tutor": {
+            "$ref": "#/components/schemas/CatalogTutor"
+          },
+          "cohorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogCohort"
+            }
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogSection"
+            }
+          },
+          "accessible": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CatalogSection": {
+        "required": ["title", "activities"],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "activities": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "CatalogTutor": {
+        "required": ["id", "name"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CohortInfo": {
+        "required": [
+          "id",
+          "name",
+          "faculty",
+          "memberIds",
+          "courseIds",
+          "year",
+          "level",
+          "directionCode",
+          "direction",
+          "profile"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "faculty": {
+            "type": ["null", "string"]
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "courseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "year": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "level": {
+            "type": ["null", "string"]
+          },
+          "directionCode": {
+            "type": ["null", "string"]
+          },
+          "direction": {
+            "type": ["null", "string"]
+          },
+          "profile": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "CourseDetail": {
+        "required": [
+          "sections",
+          "id",
+          "code",
+          "title",
+          "description",
+          "cover",
+          "category",
+          "tutorId",
+          "enrolled",
+          "progress",
+          "status",
+          "coverColor",
+          "faculty",
+          "academicYear"
+        ],
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Section"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover": {
+            "type": ["null", "string"]
+          },
+          "category": {
+            "type": "string"
+          },
+          "tutorId": {
+            "type": "string"
+          },
+          "enrolled": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "progress": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "coverColor": {
+            "type": ["null", "string"]
+          },
+          "faculty": {
+            "type": ["null", "string"]
+          },
+          "academicYear": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "CourseSummary": {
+        "required": [
+          "id",
+          "code",
+          "title",
+          "description",
+          "cover",
+          "category",
+          "tutorId",
+          "enrolled",
+          "progress",
+          "status",
+          "coverColor",
+          "faculty",
+          "academicYear"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover": {
+            "type": ["null", "string"]
+          },
+          "category": {
+            "type": "string"
+          },
+          "tutorId": {
+            "type": "string"
+          },
+          "enrolled": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "progress": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "coverColor": {
+            "type": ["null", "string"]
+          },
+          "faculty": {
+            "type": ["null", "string"]
+          },
+          "academicYear": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": ["email", "password"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": ["null", "string"]
+          },
+          "password": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "RegisterRequest": {
+        "required": ["name", "email", "password", "consent"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          },
+          "password": {
+            "type": ["null", "string"]
+          },
+          "consent": {
+            "type": ["null", "boolean"]
+          }
+        }
+      },
+      "Section": {
+        "required": ["id", "title"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
+          }
+        }
+      },
+      "SkillInfo": {
+        "required": [
+          "id",
+          "courseId",
+          "sectionId",
+          "code",
+          "title",
+          "description",
+          "order",
+          "isAuto",
+          "pInit",
+          "pLearn",
+          "pSlip",
+          "pGuess",
+          "prerequisiteIds",
+          "activityIds"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "sectionId": {
+            "type": ["null", "string"]
+          },
+          "code": {
+            "type": ["null", "string"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["null", "string"]
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "isAuto": {
+            "type": "boolean"
+          },
+          "pInit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "pLearn": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "pSlip": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "pGuess": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "prerequisiteIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activityIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UserInfo": {
+        "required": ["id", "name", "email", "role", "tenantId", "faculty", "group", "status"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "faculty": {
+            "type": ["null", "string"]
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "HeliosEdu.Api"
+    },
+    {
+      "name": "ManagementEndpoints"
+    },
+    {
+      "name": "CourseBuilderEndpoints"
+    },
+    {
+      "name": "AdaptiveEndpoints"
+    }
+  ]
+}

@@ -17,12 +17,12 @@ public static partial class ManagementEndpoints
             var result = new List<CohortInfo>();
             foreach (var group in groups) result.Add(await CohortResult(db, group, context.RequestAborted));
             return Results.Ok(result);
-        }).RequireAuthorization(AccessRules.ReadCohorts);
+        }).RequireAuthorization(AccessRules.ReadCohorts).Produces<CohortInfo[]>();
         cohorts.MapGet("/{id}", async Task<IResult> (string id, HttpContext context, LearningDbContext db) =>
         {
             var group = await FindCohort(db, id, Actor(context).TenantId, false, context.RequestAborted);
             return group is null ? Fail(404, "not found") : Results.Ok(await CohortResult(db, group, context.RequestAborted));
-        }).RequireAuthorization(AccessRules.ReadCohorts);
+        }).RequireAuthorization(AccessRules.ReadCohorts).Produces<CohortInfo>();
         cohorts.MapPost("", CreateCohortAsync).RequireAuthorization(AccessRules.ManageCohorts);
         cohorts.MapPatch("/{id}", UpdateCohortAsync).RequireAuthorization(AccessRules.ManageCohorts);
         cohorts.MapPut("/{id}/members", UpdateMembersAsync).RequireAuthorization(AccessRules.ManageCohorts);

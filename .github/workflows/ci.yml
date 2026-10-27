@@ -41,6 +41,14 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:8080/api/health/ready
+      # Описание API и типы из него должны быть свежими: поменяли C# — выполните npm run api:types и закоммитьте.
+      - name: OpenAPI types are up to date
+        run: |
+          node scripts/api-types.mjs
+          git diff --exit-code -- docs/api/openapi.json src/shared/types/api.gen.ts || {
+            echo "::error::C# API изменился: выполните npm run api:types (с запущенным API) и закоммитьте docs/api/openapi.json и src/shared/types/api.gen.ts"
+            exit 1
+          }
       - name: Start Next.js with backend enabled at runtime
         run: |
           cp -r public .next/standalone/public
