@@ -7,6 +7,7 @@ import { PageHeader, Breadcrumbs, DataState } from "@/shared/ui";
 import { VideoPlayer } from "@/features/player/VideoPlayer";
 import { LessonStatsPanel } from "@/features/analytics/components/LessonStatsPanel";
 import { RoleGate } from "@/shared/auth/RoleGate";
+import { useActivityEvents } from "@/features/adaptive/useActivityEvents";
 import type { Course, Activity } from "@/shared/types/domain";
 
 export default function VideoLessonPage({
@@ -20,6 +21,7 @@ export default function VideoLessonPage({
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
     .find((a) => a.id === activityId);
+  const onComplete = useActivityEvents(courseId, activity?.id);
 
   return (
     <div>
@@ -43,6 +45,7 @@ export default function VideoLessonPage({
               activityId={activity.id}
               src={activity.src ?? "/media/lesson-matan.mp4"}
               title={activity.title}
+              onComplete={onComplete}
             />
             <RoleGate roles={["tutor", "admin", "organizer"]}>
               <div className="mt-8">

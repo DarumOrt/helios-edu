@@ -26,6 +26,15 @@ function courseFromPath(path: string, query: URLSearchParams): { courseId?: stri
   return nested ? { courseId: decodeURIComponent(nested) } : {};
 }
 
+// Адаптивное обучение (P5) права проверяет сам C# API: ученик курса, преподаватель курса, своя попытка.
+function isAdaptivePath(path: string): boolean {
+  return (
+    /^\/api\/courses\/[^/]+\/(skills|quizzes|adaptive|events)(\/|$)/.test(path) ||
+    /^\/api\/courses\/[^/]+\/activities\/[^/]+\/skills$/.test(path) ||
+    /^\/api\/(attempts|me)\//.test(path)
+  );
+}
+
 export async function proxy(request: NextRequest) {
   // В демо-режиме данные — моки, серверной сессии нет; права показывает только интерфейс.
   if (resolveDataSource(request.cookies.get(DATA_SOURCE_COOKIE)?.value).source === "demo")
@@ -40,7 +49,8 @@ export async function proxy(request: NextRequest) {
     /^\/api\/users\/[^/]+$/.test(path) ||
     path === "/api/courses" ||
     /^\/api\/courses\/[^/]+$/.test(path) ||
-    path === "/api/catalog"
+    path === "/api/catalog" ||
+    isAdaptivePath(path)
   )
     return NextResponse.next();
   const session = await backendGet("/api/auth/me");
@@ -67,7 +77,7 @@ export async function proxy(request: NextRequest) {
     } catch {
       return Response.json({ error: "Некорректный запрос" }, { status: 400 });
     }
-    if (/^\/api\/(tracking|quiz|assignment)\//.test(path) && body.userId && body.userId !== user.id)
+    if (/^\/api\/(tracking|assignment)\//.test(path) && body.userId && body.userId !== user.id)
       return forbidden();
     if (!fromPath.courseId && typeof body.courseId === "string") courseId = body.courseId;
     if (

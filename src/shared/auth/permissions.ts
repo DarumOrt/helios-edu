@@ -68,7 +68,6 @@ export function actionForMockApi(path: string, method: string): Action | null {
   // GET групп — для аналитики; изменения — управление группами (C# проверяет ещё раз)
   if (path === "/api/cohorts" || path.startsWith("/api/cohorts/"))
     return method === "GET" ? "analytics.view" : "cohort.manage";
-  if (method === "POST" && /^\/api\/quiz\/[^/]+\/submit$/.test(path)) return "quiz.take";
   if (/^\/api\/assignment\/[^/]+\/submit$/.test(path)) return "assignment.submit";
   if (
     [
@@ -79,7 +78,6 @@ export function actionForMockApi(path: string, method: string): Action | null {
       "/api/tracking/events",
       "/api/notifications",
     ].includes(path) ||
-    /^\/api\/quiz\/[^/]+\/questions$/.test(path) ||
     /^\/api\/notifications\/[^/]+\/read$/.test(path)
   )
     return "course.view";

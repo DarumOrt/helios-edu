@@ -24,7 +24,22 @@ interface LiveStats {
   position: number;
 }
 
-export function VideoPlayer({ activityId, src, title }: { activityId: string; src: string; title: string }) {
+export function VideoPlayer({
+  activityId,
+  src,
+  title,
+  onComplete,
+}: {
+  activityId: string;
+  src: string;
+  title: string;
+  /** вызывается один раз, когда материал засчитан */
+  onComplete?: (coverage: number) => void;
+}) {
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
   const user = useSession((s) => s.user);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -130,6 +145,7 @@ export function VideoPlayer({ activityId, src, title }: { activityId: string; sr
           position: v.currentTime,
         });
         toast.success("Материал засчитан", { description: `Покрытие ${cov}%` });
+        onCompleteRef.current?.(cov);
       }
 
       setStats({

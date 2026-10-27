@@ -22,6 +22,7 @@ import { canEditCourse } from "@/shared/auth/management";
 import { CourseBuilder } from "@/features/course-builder/components/CourseBuilder";
 import { AnnouncementDialog, AnnouncementsCard } from "@/features/course-builder/components/Announcements";
 import { cn } from "@/shared/lib/utils";
+import { AdaptiveRoute } from "@/features/adaptive/components/AdaptiveRoute";
 import { useSession } from "@/shared/auth/session";
 import type { Course } from "@/shared/types/domain";
 
@@ -31,6 +32,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const role = useSession((s) => s.role);
   const user = useSession((s) => s.user);
   const canSeeStats = can(role, "analytics.view");
+  const learner = can(role, "quiz.take");
   // преподаватель правит только свой курс; администратор и организатор — любой
   const canEdit = course ? canEditCourse(user, course) : false;
   const [tab, setTab] = useState<"content" | "stats">("content");
@@ -71,11 +73,10 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                     </span>
                   </div>
                 </div>
-                {course.progress != null && (
+                {/* у ученика прогресс считается по навыкам — в блоке «Ваш маршрут» */}
+                {course.progress != null && !learner && (
                   <div className="md:border-l md:pl-5">
-                    <div className="mb-1.5 text-sm text-muted-foreground">
-                      {canSeeStats ? "Средний прогресс группы" : "Ваш прогресс"}
-                    </div>
+                    <div className="mb-1.5 text-sm text-muted-foreground">Средний прогресс группы</div>
                     <div className="font-mono text-3xl font-semibold tabular-nums">{course.progress}%</div>
                     <Progress
                       value={course.progress}
@@ -86,6 +87,8 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 )}
               </CardBody>
             </Card>
+
+            {learner && <AdaptiveRoute course={course} />}
 
             {/* Табы */}
             <div className="mb-5 flex gap-1 border-b">

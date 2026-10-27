@@ -310,14 +310,14 @@ if (process.env.TEST_WEB_URL)
     const student = await login(baseUrl);
     const tutor = await login(baseUrl, "tutor@pspu.ru");
 
-    // вопросы для прохождения — без правильных ответов; редактор вопросов студенту закрыт
-    const quiz = await get(baseUrl, "/api/quiz/mq1/questions?courseId=c-dor-ai", student.cookie);
+    // вопросы теста (P5): ученику — без правильных ответов и подсказок, менять их может только преподаватель
+    const questionsPath = "/api/courses/c-dor-ai/quizzes/mq1/questions";
+    const quiz = await get(baseUrl, questionsPath, student.cookie);
     assert.equal(quiz.status, 200);
     const questions = await quiz.json();
-    assert.ok(questions.length > 0 && questions.every((q) => !("correct" in q)));
-    const editorPath = "/api/courses/c-dor-ai/activities/mq1/questions";
-    assert.equal((await get(baseUrl, editorPath, student.cookie)).status, 403);
-    const full = await get(baseUrl, editorPath, tutor.cookie);
+    assert.ok(questions.length > 0 && questions.every((q) => !("correct" in q) && !("hints" in q)));
+    assert.equal((await send(student.cookie, "PUT", questionsPath, { questions })).status, 403);
+    const full = await get(baseUrl, questionsPath, tutor.cookie);
     assert.equal(full.status, 200);
     assert.ok((await full.json()).every((q) => "correct" in q));
 

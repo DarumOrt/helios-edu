@@ -42,7 +42,7 @@ export function QuestionsDialog({
     data,
     error: loadError,
     isLoading,
-  } = useSWR<QuizQuestion[]>(`/api/courses/${courseId}/activities/${quiz.id}/questions`, fetcher, {
+  } = useSWR<QuizQuestion[]>(`/api/courses/${courseId}/quizzes/${quiz.id}/questions`, fetcher, {
     revalidateOnFocus: false,
   });
   // null — пока не начали править, показываем загруженные вопросы
@@ -72,7 +72,7 @@ export function QuestionsDialog({
       onClose={onClose}
       className="max-w-2xl"
       title={`Вопросы: ${quiz.title}`}
-      description="Студенты видят вопросы без правильных ответов. Результат сразу попадает в рейтинг группы."
+      description="Студенты видят вопросы без правильных ответов и подсказок. Ответ проверяется сразу и меняет освоение навыков."
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={pending}>

@@ -7,6 +7,7 @@ import { PageHeader, Breadcrumbs, DataState } from "@/shared/ui";
 import { DocumentReader } from "@/features/player/DocumentReader";
 import { LessonStatsPanel } from "@/features/analytics/components/LessonStatsPanel";
 import { RoleGate } from "@/shared/auth/RoleGate";
+import { useActivityEvents } from "@/features/adaptive/useActivityEvents";
 import type { Course, Activity } from "@/shared/types/domain";
 
 export default function DocumentLessonPage({
@@ -20,6 +21,7 @@ export default function DocumentLessonPage({
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
     .find((a) => a.id === activityId);
+  const onComplete = useActivityEvents(courseId, activity?.id);
 
   const kind = activity?.type === "presentation" ? "presentation" : "pdf";
 
@@ -46,6 +48,7 @@ export default function DocumentLessonPage({
               kind={kind}
               title={activity.title}
               totalPages={activity.pages ?? 10}
+              onComplete={onComplete}
             />
             <RoleGate roles={["tutor", "admin", "organizer"]}>
               <div className="mt-8">

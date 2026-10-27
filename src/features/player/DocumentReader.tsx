@@ -19,14 +19,21 @@ export function DocumentReader({
   kind,
   totalPages,
   pageTitles,
+  onComplete,
 }: {
   activityId: string;
+  /** вызывается один раз, когда материал засчитан */
+  onComplete?: (coverage: number) => void;
   kind: "pdf" | "presentation";
   title: string;
   totalPages: number;
   pageTitles?: string[];
 }) {
   const user = useSession((s) => s.user);
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
   const sessionRef = useRef(newSessionId());
   const viewed = useRef<Set<number>>(new Set([0]));
   const activeSec = useRef(0);
@@ -99,6 +106,7 @@ export function DocumentReader({
           verb: "completed",
         });
         toast.success("Материал засчитан", { description: `Просмотрено ${cov}% страниц` });
+        onCompleteRef.current?.(cov);
       }
       setCoverage(cov);
       setActiveTime(Math.round(activeSec.current));

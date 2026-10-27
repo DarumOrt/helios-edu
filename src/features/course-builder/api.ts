@@ -26,7 +26,7 @@ export const builderApi = {
   orderActivities: (courseId: string, sectionId: string, activityIds: string[]) =>
     api.put<Activity[]>(`${c(courseId)}/sections/${sectionId}/activities/order`, { activityIds }),
   saveQuestions: (courseId: string, activityId: string, questions: QuizQuestion[]) =>
-    api.put<QuizQuestion[]>(`${c(courseId)}/activities/${activityId}/questions`, { questions }),
+    api.put<QuizQuestion[]>(`${c(courseId)}/quizzes/${activityId}/questions`, { questions }),
   announce: (courseId: string, title: string, body: string) =>
     api.post<Announcement>(`${c(courseId)}/announcements`, { title, body }),
 };
