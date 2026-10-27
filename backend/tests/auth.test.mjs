@@ -229,6 +229,16 @@ if (process.env.TEST_WEB_URL) {
     assert.equal((await put(student.cookie)).status, 403);
     const tutor = await login(baseUrl, "tutor@pspu.ru");
     assert.equal((await put(tutor.cookie)).status, 200);
+
+    // пересылка в C# сама добавляет X-Helios-Client — поэтому изменения без своего Origin Next отклоняет
+    const remove = (origin) =>
+      fetch(`${baseUrl}/api/courses/c-dor-ai/skills/no-such-skill`, {
+        method: "DELETE",
+        headers: { Cookie: tutor.cookie, ...(origin && { Origin: origin }) },
+      });
+    assert.equal((await remove()).status, 403);
+    assert.equal((await remove("https://other.example")).status, 403);
+    assert.equal((await remove(new URL(baseUrl).origin)).status, 404);
   });
 }
 
