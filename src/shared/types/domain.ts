@@ -199,3 +199,97 @@ export interface CatalogCourse {
   sections: { title: string; activities: number }[];
   accessible: boolean;
 }
+
+// ---- Адаптивное обучение (P5). Контракт — docs/backend/p5-adaptive.md, один для моков и C# ----
+
+export type SkillStatus = "locked" | "learning" | "mastered";
+
+export interface Skill {
+  id: string;
+  courseId: string;
+  sectionId?: string | null;
+  code?: string | null;
+  title: string;
+  description?: string | null;
+  order: number;
+  /** создан системой для модуля без навыков */
+  isAuto: boolean;
+  pInit: number;
+  pLearn: number;
+  pSlip: number;
+  pGuess: number;
+  prerequisiteIds: string[];
+  activityIds: string[];
+}
+
+/** Вопрос теста: преподаватель видит всё, ученик — без correct и hints, с hintsCount */
+export interface AdaptiveQuestion {
+  id: string;
+  type: "mcq" | "short" | "boolean";
+  text: string;
+  options: string[];
+  correct?: number | string | boolean;
+  hints?: string[];
+  hintsCount?: number;
+  skillId?: string | null;
+  order: number;
+}
+
+export interface AttemptStart {
+  attemptId: string;
+  questions: AdaptiveQuestion[];
+}
+
+export interface SkillChange {
+  skillId: string;
+  before: number;
+  after: number;
+  status: SkillStatus;
+}
+
+export interface AnswerResult {
+  isCorrect: boolean;
+  correct: number | string | boolean;
+  skills: SkillChange[];
+}
+
+export interface HintResult {
+  level: number;
+  text: string;
+  hintsLeft: number;
+}
+
+export interface AttemptResult {
+  score: number;
+  max: number;
+  percent: number;
+}
+
+export interface SkillProgress {
+  id: string;
+  title: string;
+  code?: string | null;
+  pKnown: number;
+  status: SkillStatus;
+}
+
+export interface AdaptiveProgress {
+  progress: number;
+  skills: SkillProgress[];
+  materials: { done: number; total: number };
+}
+
+export type ReasonCode =
+  "pinned_by_teacher" | "linear_order" | "weakest_skill" | "review_material" | "all_mastered";
+
+export interface AdaptiveNext {
+  recommendation: {
+    id: string;
+    activityId?: string | null;
+    skillId?: string | null;
+    reasonCode: ReasonCode;
+    reasonText: string;
+  };
+  /** материалы для повторения по слабым навыкам */
+  personal: { skillId: string; activityIds: string[] }[];
+}
