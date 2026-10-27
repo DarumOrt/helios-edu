@@ -2,20 +2,49 @@ using HeliosEdu.Api.Courses;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Management;
 using Microsoft.EntityFrameworkCore;
+using HeliosEdu.Api.Adaptive;
 
 namespace HeliosEdu.Api.Data;
 
 public sealed class LearningDbContext(DbContextOptions<LearningDbContext> options) : DbContext(options)
 {
+    private void ProtectLearningEvents()
+    {
+        if (ChangeTracker.Entries<LearningEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Журнал обучения допускает только добавление событий.");
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ProtectLearningEvents();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ProtectLearningEvents();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Cohort> Cohorts => Set<Cohort>();
     public DbSet<CohortCourse> CohortCourses => Set<CohortCourse>();
+    public DbSet<Skill> Skills => Set<Skill>();
+    public DbSet<SkillPrerequisite> SkillPrerequisites => Set<SkillPrerequisite>();
+    public DbSet<ActivitySkill> ActivitySkills => Set<ActivitySkill>();
+    public DbSet<QuizQuestion> QuizQuestions => Set<QuizQuestion>();
+    public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
+    public DbSet<AttemptAnswer> AttemptAnswers => Set<AttemptAnswer>();
+    public DbSet<LearningEvent> LearningEvents => Set<LearningEvent>();
+    public DbSet<SkillMastery> SkillMastery => Set<SkillMastery>();
+    public DbSet<Recommendation> Recommendations => Set<Recommendation>();
+    public DbSet<StudentPin> StudentPins => Set<StudentPin>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ConfigureAdaptive();
         modelBuilder.Entity<Account>().HasIndex(account => account.NormalizedEmail).IsUnique();
         modelBuilder.Entity<Account>().Property(account => account.Id).HasMaxLength(100);
         modelBuilder.Entity<Account>().Property(account => account.Status).HasDefaultValue("active");

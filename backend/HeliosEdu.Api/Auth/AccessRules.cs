@@ -1,11 +1,15 @@
 using System.Security.Claims;
 using HeliosEdu.Api.Courses;
 using HeliosEdu.Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace HeliosEdu.Api.Auth;
 
 public static class AccessRules
 {
+    // P5 намеренно использует зачисления; выдача каталога P1 по группам остаётся отдельным контрактом.
+    public static Task<bool> IsAdaptiveStudent(LearningDbContext db, Account actor, string courseId, CancellationToken token) =>
+        actor.Role == "student" ? db.Enrollments.AnyAsync(item => item.AccountId == actor.Id && item.CourseId == courseId, token) : Task.FromResult(false);
     public const string ManageUsers = "user.manage";
     public const string ManageCohorts = "cohort.manage";
     public const string ReadCohorts = "cohort.read";

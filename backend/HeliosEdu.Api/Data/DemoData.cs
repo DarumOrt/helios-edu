@@ -70,5 +70,6 @@ public static class DemoData
                     db.Enrollments.Add(new Enrollment { AccountId = account.Id, CourseId = course.Id });
         }
         await db.SaveChangesAsync(cancellationToken);
+        await HeliosEdu.Api.Adaptive.AdaptiveSeed.SeedAsync(db, cancellationToken);
     }
 }

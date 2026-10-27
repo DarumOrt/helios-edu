@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.RateLimiting;
 using HeliosEdu.Api.Management;
+using HeliosEdu.Api.Adaptive;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
     ?? throw new InvalidOperationException("Задайте ConnectionStrings__Database для PostgreSQL.");
 
 builder.Services.AddDbContext<LearningDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddScoped<AdaptiveEngine>();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
 builder.Services.AddProblemDetails();
@@ -49,6 +51,7 @@ app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();
 app.MapCatalogEndpoints();
+app.MapAdaptiveEndpoints();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
