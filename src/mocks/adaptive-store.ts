@@ -1,6 +1,7 @@
 import "server-only";
 import { quizQuestions, users } from "@/mocks/data";
 import { findDemoCourse } from "@/mocks/course-store";
+import { listSubmissions } from "@/mocks/submissions-store";
 import type {
   Activity,
   AdaptiveNext,
@@ -534,6 +535,9 @@ export function completed(userId: string, courseId: string): Set<string> {
   );
   for (const a of state.attempts)
     if (a.userId === userId && a.courseId === courseId && a.submittedAt) done.add(a.activityId);
+  // сданная работа — тоже пройденный материал (как в C#)
+  for (const s of listSubmissions())
+    if (s.userId === userId && s.courseId === courseId) done.add(s.assignmentId);
   return done;
 }
 

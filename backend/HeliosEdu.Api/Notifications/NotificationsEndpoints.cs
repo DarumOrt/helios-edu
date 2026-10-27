@@ -102,7 +102,7 @@ public static class NotificationsEndpoints
             foreach (var activity in course.Sections.SelectMany(section => section.Activities))
             {
                 if (activity.Type is not ("assignment" or "quiz") || submitted.Contains(course.Id + "/" + activity.Id)) continue;
-                if (!DateTimeOffset.TryParse(activity.Due, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var due)) continue;
+                if (activity.Due is not { } due) continue;
                 if (due < now || due - now > DeadlineWindow) continue;
                 var id = $"due-{course.Id}-{activity.Id}";
                 result.Add(new NotificationInfo(id, "deadline", "Скоро дедлайн",

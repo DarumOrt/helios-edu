@@ -30,7 +30,8 @@ function toType(schema) {
   if (types.includes("integer") || types.includes("number")) return `number${nullable}`;
   if (types.includes("boolean")) return `boolean${nullable}`;
   if (types.includes("array")) return `${wrap(toType(schema.items))}[]${nullable}`;
-  if (types.includes("string")) return `string${nullable}`;
+  // поле со своим JsonConverter (срок сдачи) .NET описывает без type, только с format — это строка
+  if (types.includes("string") || (!types.length && schema.format)) return `string${nullable}`;
   if (types.includes("object") || schema.properties) {
     if (schema.properties) return objectType(schema) + nullable;
     if (schema.additionalProperties)

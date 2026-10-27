@@ -43,7 +43,7 @@ public static partial class ManagementEndpoints
         db.Courses.Add(course);
         db.Entry(course).Property("Position").CurrentValue = position + 1;
         await db.SaveChangesAsync(context.RequestAborted);
-        return Results.Json(CourseSummary.From(course), statusCode: 201);
+        return Results.Json(CourseSummary.From(course, CourseStats.Empty), statusCode: 201);
     }
 
     private static async Task<IResult> UpdateCourseAsync(string id, HttpContext context, LearningDbContext db)
@@ -64,6 +64,7 @@ public static partial class ManagementEndpoints
         if (input.Has("academicYear")) course.AcademicYear = input.OptionalText("academicYear");
         if (input.Has("status")) course.Status = input.Choice("status");
         await db.SaveChangesAsync(context.RequestAborted);
-        return Results.Ok(CourseSummary.From(course));
+        return Results.Ok(CourseSummary.From(course, (await CourseProgress.ForViewer(db,
+            (Account)context.Items[typeof(Account)]!, [course.Id], context.RequestAborted))[course.Id]));
     }
 }

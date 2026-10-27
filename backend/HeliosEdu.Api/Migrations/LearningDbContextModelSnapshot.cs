@@ -494,16 +494,10 @@ namespace HeliosEdu.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Enrolled")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Faculty")
                         .HasColumnType("text");
 
                     b.Property<int>("Position")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("Progress")
                         .HasColumnType("integer");
 
                     b.Property<string>("Status")
@@ -930,14 +924,11 @@ namespace HeliosEdu.Api.Migrations
                                     b2.Property<string>("Id")
                                         .HasColumnType("text");
 
-                                    b2.Property<bool?>("Completed")
-                                        .HasColumnType("boolean");
-
                                     b2.Property<string>("Description")
                                         .HasColumnType("text");
 
-                                    b2.Property<string>("Due")
-                                        .HasColumnType("text");
+                                    b2.Property<DateTimeOffset?>("Due")
+                                        .HasColumnType("timestamp with time zone");
 
                                     b2.Property<int?>("DurationMin")
                                         .HasColumnType("integer");

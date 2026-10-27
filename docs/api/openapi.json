@@ -1113,7 +1113,7 @@
             "type": ["null", "boolean"]
           },
           "due": {
-            "type": ["null", "string"]
+            "format": "date-time"
           },
           "description": {
             "type": ["null", "string"]
