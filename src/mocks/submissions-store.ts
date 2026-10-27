@@ -182,11 +182,16 @@ export function hasSubmissions(courseId: string, assignmentId: string): boolean 
   );
 }
 
-export function listSubmissions(filter?: { status?: Submission["status"] }): SubmissionFull[] {
+export function listSubmissions(filter?: {
+  status?: Submission["status"];
+  courseId?: string;
+}): SubmissionFull[] {
   seed();
   let arr = Array.from(store.items.values());
   if (filter?.status) arr = arr.filter((s) => s.status === filter.status);
-  return arr.map(enrich).sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
+  let full = arr.map(enrich);
+  if (filter?.courseId) full = full.filter((s) => s.courseId === filter.courseId);
+  return full.sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
 }
 
 export function getSubmission(id: string): SubmissionFull | null {

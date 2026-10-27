@@ -122,12 +122,13 @@ public static class GradesEndpoints
         }).ToList();
     }
 
-    private static async Task<IResult> ListAsync(string? status, HttpContext context, LearningDbContext db)
+    private static async Task<IResult> ListAsync(string? status, string? courseId, HttpContext context, LearningDbContext db)
     {
         if (!CanReview(Actor(context))) return Fail(403, "Недостаточно прав");
         var visible = AccessRules.VisibleCourses(db, context.User).Select(course => course.Id);
         var query = db.Submissions.AsNoTracking().Where(item => visible.Contains(item.CourseId));
         if (!string.IsNullOrEmpty(status)) query = query.Where(item => item.Status == status);
+        if (!string.IsNullOrEmpty(courseId)) query = query.Where(item => item.CourseId == courseId);
         var items = await query.OrderByDescending(item => item.SubmittedAt).ToListAsync(context.RequestAborted);
         return Results.Ok(new SubmissionList(await Describe(db, items, context.RequestAborted)));
     }

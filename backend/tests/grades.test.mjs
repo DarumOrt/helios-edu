@@ -67,6 +67,12 @@ for (const [name, baseUrl] of [
     const work = items.find((s) => s.userId === student.user.id && s.assignmentId === "ma1");
     assert.ok(work, "работа видна преподавателю курса");
     assert.equal(work.courseId, "c-dor-ai");
+    // фильтр по курсу: администратор видит все курсы, с фильтром — только выбранный
+    const admin = await login(baseUrl, "admin@pspu.ru");
+    const filtered = (await (await get(baseUrl, "/api/submissions?courseId=c-dor-ai", admin.cookie)).json())
+      .items;
+    assert.ok(filtered.some((s) => s.id === work.id));
+    assert.ok(filtered.every((s) => s.courseId === "c-dor-ai"));
     if (submitted.status === 201) {
       assert.equal(work.text, text);
       const tooHigh = await send(tutor.cookie, "POST", `/api/submissions/${work.id}/review`, { grade: 101 });
