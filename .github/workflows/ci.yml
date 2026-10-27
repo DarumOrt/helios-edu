@@ -85,6 +85,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
+      # Модульные тесты правил (Vitest). Шаг внутри этой проверки: имя проверки обязательно в защите main.
+      - run: npm test
 
   build:
     name: Next build
