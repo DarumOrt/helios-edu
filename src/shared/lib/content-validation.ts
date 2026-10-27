@@ -75,6 +75,13 @@ export function validateQuestions(questions: unknown): FieldErrors {
     } else if (q.type === "short") {
       if (!text(q.correct)) return { questions: `${n}: укажите правильный ответ` };
     } else return { questions: `${n}: неизвестный тип вопроса` };
+    const hints = q.hints ?? [];
+    if (
+      !Array.isArray(hints) ||
+      hints.length > 3 ||
+      hints.some((h) => typeof h !== "string" || h.length > 500)
+    )
+      return { questions: `${n}: не больше 3 подсказок до 500 символов` };
   }
   return {};
 }

@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import useSWR from "swr";
-import { Users, BookOpen, ListTree, BarChart3, Megaphone, Pencil, Check } from "lucide-react";
+import { Users, BookOpen, ListTree, BarChart3, Megaphone, Pencil, Check, Target, Route } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import {
   PageHeader,
@@ -23,6 +23,8 @@ import { CourseBuilder } from "@/features/course-builder/components/CourseBuilde
 import { AnnouncementDialog, AnnouncementsCard } from "@/features/course-builder/components/Announcements";
 import { cn } from "@/shared/lib/utils";
 import { AdaptiveRoute } from "@/features/adaptive/components/AdaptiveRoute";
+import { SkillsEditor } from "@/features/adaptive/components/SkillsEditor";
+import { AdaptivePanel } from "@/features/adaptive/components/AdaptivePanel";
 import { useSession } from "@/shared/auth/session";
 import type { Course } from "@/shared/types/domain";
 
@@ -35,7 +37,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const learner = can(role, "quiz.take");
   // преподаватель правит только свой курс; администратор и организатор — любой
   const canEdit = course ? canEditCourse(user, course) : false;
-  const [tab, setTab] = useState<"content" | "stats">("content");
+  const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive">("content");
   const [building, setBuilding] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
 
@@ -100,6 +102,16 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                   Статистика
                 </Tab>
               )}
+              {canEdit && (
+                <>
+                  <Tab active={tab === "skills"} onClick={() => setTab("skills")} icon={Target}>
+                    Навыки
+                  </Tab>
+                  <Tab active={tab === "adaptive"} onClick={() => setTab("adaptive")} icon={Route}>
+                    Адаптация
+                  </Tab>
+                </>
+              )}
               {canEdit && tab === "content" && (
                 <div className="ml-auto flex items-center gap-2 pb-1.5">
                   <Button variant="ghost" size="sm" onClick={() => setAnnouncing(true)}>
@@ -137,6 +149,8 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {announcing && <AnnouncementDialog courseId={course.id} onClose={() => setAnnouncing(false)} />}
 
             {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
+            {tab === "skills" && canEdit && <SkillsEditor course={course} />}
+            {tab === "adaptive" && canEdit && <AdaptivePanel course={course} />}
           </>
         )}
       </DataState>

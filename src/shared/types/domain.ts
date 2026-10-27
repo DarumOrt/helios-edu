@@ -94,6 +94,10 @@ export interface QuizQuestion {
   text: string;
   options?: string[];
   correct?: number | string | boolean;
+  /** до 3 подсказок — от намёка к почти готовому решению (P5) */
+  hints?: string[];
+  /** навык, который проверяет вопрос; нет — навыки материала или модуля */
+  skillId?: string | null;
 }
 
 export interface QuizAttempt {
@@ -292,4 +296,42 @@ export interface AdaptiveNext {
   };
   /** материалы для повторения по слабым навыкам */
   personal: { skillId: string; activityIds: string[] }[];
+}
+
+export interface StudentMastery {
+  pKnown: number;
+  status: SkillStatus;
+  unlockedByTeacher: boolean;
+}
+
+export interface StudentPin {
+  activityId: string;
+  reason: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** Панель адаптации преподавателя: GET /api/courses/{id}/adaptive */
+export interface AdaptiveDashboard {
+  enabled: boolean;
+  skills: Skill[];
+  students: {
+    id: string;
+    name: string;
+    progress: number;
+    skills: Record<string, StudentMastery>;
+    pin?: StudentPin | null;
+  }[];
+}
+
+export interface LearningEvent {
+  id: number;
+  at: string;
+  userId: string;
+  actorId: string;
+  courseId: string;
+  activityId?: string | null;
+  skillId?: string | null;
+  type: string;
+  payload: Record<string, unknown>;
 }
