@@ -3,7 +3,19 @@
 // (строка/число/массив) — здесь будет ошибка компиляции с именем поля.
 // Как обновить api.gen.ts — scripts/api-types.mjs (npm run api:types).
 import type * as Api from "./api.gen";
-import type { Activity, CatalogCohort, CatalogCourse, Cohort, Course, Section, Skill, User } from "./domain";
+import type {
+  Activity,
+  CatalogCohort,
+  CatalogCourse,
+  Cohort,
+  Course,
+  GradeRow,
+  Section,
+  Skill,
+  StudentCourseGrades,
+  SubmissionFull,
+  User,
+} from "./domain";
 
 type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T];
 
@@ -45,4 +57,9 @@ export type ApiContract = [
   Assert<SameFields<Api.CohortInfo, Cohort>>,
   Assert<SameFields<Api.SkillInfo, Skill>>,
   Assert<SameFields<Api.UserInfo, User>>,
+  Assert<SameFields<Api.SubmissionInfo, SubmissionFull>>,
+  Assert<SameFields<Api.GradeRow, GradeRow>>,
+  Assert<SameFields<Api.GradeItem, GradeRow["items"][number]>>,
+  Assert<SameFields<Api.StudentCourseGrades, StudentCourseGrades>>,
+  Assert<SameFields<Api.SubmitResult, Pick<SubmissionFull, "id" | "status">>>,
 ];

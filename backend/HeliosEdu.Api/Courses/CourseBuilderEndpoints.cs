@@ -171,6 +171,8 @@ public static class CourseBuilderEndpoints
         var section = course.Sections.Find(section => section.Activities.Any(activity => activity.Id == activityId));
         var activity = section?.Activities.Find(activity => activity.Id == activityId);
         if (section is null || activity is null) return Fail(404, "not found");
+        if (await db.Submissions.AnyAsync(item => item.CourseId == course.Id && item.ActivityId == activityId, context.RequestAborted))
+            return Fail(409, "По заданию уже есть сданные работы — удалить его нельзя, чтобы не потерять оценки");
         // История попыток остаётся в снимках, текущие привязки удалённого материала очищаются.
         db.ActivitySkills.RemoveRange(await db.ActivitySkills.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));
         db.QuizQuestions.RemoveRange(await db.QuizQuestions.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));

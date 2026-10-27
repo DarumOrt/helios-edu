@@ -26,9 +26,11 @@ function courseFromPath(path: string, query: URLSearchParams): { courseId?: stri
   return nested ? { courseId: decodeURIComponent(nested) } : {};
 }
 
-// Адаптивное обучение (P5) права проверяет сам C# API: ученик курса, преподаватель курса, своя попытка.
-function isAdaptivePath(path: string): boolean {
+// Эти маршруты пересылаются в C#, права проверяет он: адаптивное обучение (ученик курса, преподаватель курса,
+// своя попытка), сданные работы и журнал оценок.
+function checkedByApi(path: string): boolean {
   return (
+    /^\/api\/(assignment|submissions|gradebook)(\/|$)/.test(path) ||
     /^\/api\/courses\/[^/]+\/(skills|quizzes|adaptive|events)(\/|$)/.test(path) ||
     /^\/api\/courses\/[^/]+\/activities\/[^/]+\/skills$/.test(path) ||
     /^\/api\/(attempts|me)\//.test(path)
@@ -50,7 +52,7 @@ export async function proxy(request: NextRequest) {
     path === "/api/courses" ||
     /^\/api\/courses\/[^/]+$/.test(path) ||
     path === "/api/catalog" ||
-    isAdaptivePath(path)
+    checkedByApi(path)
   )
     return NextResponse.next();
   const session = await backendGet("/api/auth/me");

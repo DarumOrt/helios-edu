@@ -14,6 +14,8 @@ public sealed class ManagementInput(JsonElement body)
     public string Text(string name) => Value(name) is { ValueKind: JsonValueKind.String } value
         ? value.GetString()!.Trim() : "";
     public string? OptionalText(string name) => Text(name) is { Length: > 0 } text ? text : null;
+    public double? Number(string name) => Value(name) is { ValueKind: JsonValueKind.Number } value &&
+        value.TryGetDouble(out var number) && double.IsFinite(number) ? number : null;
     public string Choice(string name, string fallback = "") => Value(name) is not { } value || value.ValueKind == JsonValueKind.Null
         ? fallback : value.ValueKind == JsonValueKind.String ? value.GetString()! : "";
     public string[]? Ids(string name)

@@ -68,6 +68,7 @@ jobs:
       - run: node --test backend/tests/course-builder.test.mjs
       - run: node --test backend/tests/adaptive.test.mjs
       - run: node --test backend/tests/catalog.test.mjs
+      - run: node --test backend/tests/grades.test.mjs
       - run: node --test backend/tests/api.test.mjs
       - name: Backend logs
         if: failure()

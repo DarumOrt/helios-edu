@@ -3,6 +3,7 @@ using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Management;
 using Microsoft.EntityFrameworkCore;
 using HeliosEdu.Api.Adaptive;
+using HeliosEdu.Api.Grades;
 
 namespace HeliosEdu.Api.Data;
 
@@ -41,10 +42,23 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<SkillMastery> SkillMastery => Set<SkillMastery>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();
     public DbSet<StudentPin> StudentPins => Set<StudentPin>();
+    public DbSet<Submission> Submissions => Set<Submission>();
+    public DbSet<Grade> Grades => Set<Grade>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ConfigureAdaptive();
+        // одна работа на ученика и задание; id материалов уникальны только внутри курса
+        modelBuilder.Entity<Submission>().HasIndex(item => new { item.CourseId, item.ActivityId, item.UserId }).IsUnique();
+        modelBuilder.Entity<Submission>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Submission>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Grade>().HasKey(item => new { item.CourseId, item.ActivityId, item.UserId });
+        modelBuilder.Entity<Grade>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Grade>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Account>().HasIndex(account => account.NormalizedEmail).IsUnique();
         modelBuilder.Entity<Account>().Property(account => account.Id).HasMaxLength(100);
         modelBuilder.Entity<Account>().Property(account => account.Status).HasDefaultValue("active");

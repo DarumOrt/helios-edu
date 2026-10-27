@@ -1,10 +1,13 @@
-import { audit } from "@/mocks/audit-store";
+import { audit, auditIfOk } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { getSubmission, reviewSubmission } from "@/mocks/submissions-store";
+import { backendForward } from "@/shared/lib/backend";
 
-// POST { grade, feedback } — оценка работы. Доступ к курсу проверяет proxy.ts (серверный режим).
+// POST { grade, feedback } — оценка работы. Сервер — C# (права и курс проверяет он), демо — моки ниже.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const forwarded = await backendForward(req, `/api/submissions/${encodeURIComponent(id)}/review`);
+  if (forwarded) return auditIfOk(forwarded, "Проверена работа", id);
   const submission = getSubmission(id);
   if (!submission) return NextResponse.json({ error: "not found" }, { status: 404 });
 

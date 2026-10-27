@@ -184,9 +184,10 @@ if (process.env.TEST_WEB_URL)
       "/api/gradebook?courseId=c-dor-ai",
       "/api/submissions",
       "/api/analytics/course/c-dor-ai",
-      "/api/gradebook/me?userId=u-stud-1",
     ])
       assert.equal((await get(baseUrl, path, cookie)).status, 403);
+    // свои оценки: ученик берётся из сессии, чужой userId в адресе ничего не меняет
+    assert.equal((await get(baseUrl, "/api/gradebook/me?userId=u-stud-1", cookie)).status, 200);
     const response = await fetch(`${baseUrl}/api/tracking/progress`, {
       method: "POST",
       headers: { Cookie: cookie, "Content-Type": "application/json", Origin: new URL(baseUrl).origin },
@@ -321,26 +322,17 @@ if (process.env.TEST_WEB_URL)
     assert.equal(full.status, 200);
     assert.ok((await full.json()).every((q) => "correct" in q));
 
-    // сданное задание появляется у преподавателя; чужой userId не принимается
+    // сданное задание появляется у преподавателя; автор — из сессии, чужой userId в теле игнорируется
     const text = `Ответ ${Date.now()}`;
-    assert.equal(
-      (
-        await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
-          courseId: "c-dor-ai",
-          userId: "u-stud-1",
-          text,
-        })
-      ).status,
-      403,
-    );
     const submitted = await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
       courseId: "c-dor-ai",
-      userId: student.user.id,
+      userId: "u-stud-1",
       text,
     });
     assert.equal(submitted.status, 201);
     const { items } = await (await get(baseUrl, "/api/submissions", tutor.cookie)).json();
-    assert.ok(items.some((s) => s.text === text && s.courseId === "c-dor-ai"));
+    const mine = items.find((s) => s.text === text && s.courseId === "c-dor-ai");
+    assert.equal(mine?.userId, student.user.id);
 
     // объявление пишет преподаватель, получает студент курса
     const announcement = { title: `Объявление ${Date.now()}`, body: "Консультация в пятницу" };
