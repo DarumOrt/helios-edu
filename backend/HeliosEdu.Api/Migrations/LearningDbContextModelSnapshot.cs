@@ -528,6 +528,84 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Grades.Grade", b =>
+                {
+                    b.Property<string>("CourseId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ActivityId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("GradedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GradedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("CourseId", "ActivityId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Grades");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Grades.Submission", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActivityId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Feedback")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CourseId", "ActivityId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("Submissions");
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Management.Cohort", b =>
                 {
                     b.Property<string>("Id")
@@ -811,6 +889,36 @@ namespace HeliosEdu.Api.Migrations
                         });
 
                     b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Grades.Grade", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Grades.Submission", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Management.CohortCourse", b =>

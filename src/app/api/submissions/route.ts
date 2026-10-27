@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 import { listSubmissions } from "@/mocks/submissions-store";
-import { backendJson } from "@/shared/lib/backend";
-import type { Course, Submission } from "@/shared/types/domain";
+import { backendForward } from "@/shared/lib/backend";
+import type { Submission } from "@/shared/types/domain";
 
+// GET ?status= — работы на проверку. Сервер — C#: только курсы, которые видит пользователь (преподавателю — свои).
 export async function GET(req: Request) {
   const url = new URL(req.url);
+  const forwarded = await backendForward(req, `/api/submissions${url.search}`);
+  if (forwarded) return forwarded;
   const status = url.searchParams.get("status") as Submission["status"] | null;
-  let items = listSubmissions(status ? { status } : undefined);
-
-  // Сервер: только работы по курсам, которые видит пользователь (преподавателю — свои)
-  const visible = await backendJson<Pick<Course, "id">[]>("/api/courses");
-  if (visible && !visible.ok) return visible.response;
-  if (visible) {
-    const ids = new Set(visible.data.map((c) => c.id));
-    items = items.filter((s) => ids.has(s.courseId));
-  }
-  return NextResponse.json({ items });
+  return NextResponse.json({ items: listSubmissions(status ? { status } : undefined) });
 }

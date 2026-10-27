@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Threading.RateLimiting;
 using HeliosEdu.Api.Management;
 using HeliosEdu.Api.Adaptive;
+using HeliosEdu.Api.Grades;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -54,6 +55,7 @@ app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();
 app.MapCatalogEndpoints();
 app.MapAdaptiveEndpoints();
+app.MapGradesEndpoints();
 app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.

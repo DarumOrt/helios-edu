@@ -38,8 +38,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   return NextResponse.json(result);
 }
 
-// DELETE — задание со сданными работами не удаляется: пропали бы оценки.
-// Работы пока хранятся в Next, поэтому это правило проверяем здесь и в серверном режиме.
+// DELETE — задание со сданными работами не удаляется: пропали бы оценки (в сервере это проверяет C#).
 export async function DELETE(req: Request, { params }: Ctx) {
   const { id, activityId } = await params;
   const demo = (await getDataSource()).source === "demo";
@@ -49,10 +48,10 @@ export async function DELETE(req: Request, { params }: Ctx) {
     if (editor instanceof NextResponse) return editor;
     if (!findActivity(id, activityId)) return fail(404, "not found");
   }
-  if (hasSubmissions(id, activityId))
-    return fail(409, "По заданию уже есть сданные работы — удалить его нельзя, чтобы не потерять оценки");
   const forwarded = await backendForward(req, path(id, activityId));
   if (forwarded) return forwarded;
+  if (hasSubmissions(id, activityId))
+    return fail(409, "По заданию уже есть сданные работы — удалить его нельзя, чтобы не потерять оценки");
   deleteActivity(id, activityId);
   return new NextResponse(null, { status: 204 });
 }

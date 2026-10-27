@@ -124,6 +124,25 @@ export interface Submission {
   submittedAt?: string;
 }
 
+/** Работа с подробностями для проверки: GET /api/submissions, POST /api/submissions/{id}/review */
+export interface SubmissionFull extends Submission {
+  userName: string;
+  group?: string;
+  assignmentTitle: string;
+  courseId: string;
+  courseTitle: string;
+  maxGrade: number;
+}
+
+/** Оценки ученика по курсу: GET /api/gradebook/me → { courses } */
+export interface StudentCourseGrades {
+  courseId: string;
+  courseTitle: string;
+  courseCode: string;
+  items: { itemId: string; itemTitle: string; grade: number | null; max: number }[];
+  total: number;
+}
+
 export interface GradeRow {
   userId: string;
   userName: string;

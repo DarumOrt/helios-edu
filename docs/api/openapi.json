@@ -849,6 +849,149 @@
           }
         }
       }
+    },
+    "/api/assignment/{activityId}/submit": {
+      "post": {
+        "tags": ["GradesEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions": {
+      "get": {
+        "tags": ["GradesEndpoints"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/review": {
+      "post": {
+        "tags": ["GradesEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gradebook": {
+      "get": {
+        "tags": ["GradesEndpoints"],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GradeRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gradebook/grade": {
+      "post": {
+        "tags": ["GradesEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gradebook/me": {
+      "get": {
+        "tags": ["GradesEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentGrades"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1203,6 +1346,51 @@
           }
         }
       },
+      "GradeItem": {
+        "required": ["itemId", "itemTitle", "grade", "max"],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "itemTitle": {
+            "type": "string"
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          },
+          "max": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "GradeRow": {
+        "required": ["userId", "userName", "items", "total"],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeItem"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          }
+        }
+      },
       "LoginRequest": {
         "required": ["email", "password"],
         "type": "object",
@@ -1335,6 +1523,140 @@
           }
         }
       },
+      "StudentCourseGrades": {
+        "required": ["courseId", "courseTitle", "courseCode", "items", "total"],
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string"
+          },
+          "courseTitle": {
+            "type": "string"
+          },
+          "courseCode": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeItem"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          }
+        }
+      },
+      "StudentGrades": {
+        "required": ["courses"],
+        "type": "object",
+        "properties": {
+          "courses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentCourseGrades"
+            }
+          }
+        }
+      },
+      "SubmissionInfo": {
+        "required": [
+          "id",
+          "assignmentId",
+          "courseId",
+          "userId",
+          "text",
+          "fileName",
+          "status",
+          "grade",
+          "feedback",
+          "submittedAt",
+          "userName",
+          "group",
+          "assignmentTitle",
+          "courseTitle",
+          "maxGrade"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "assignmentId": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": ["null", "string"]
+          },
+          "status": {
+            "type": "string"
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          },
+          "feedback": {
+            "type": ["null", "string"]
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "assignmentTitle": {
+            "type": "string"
+          },
+          "courseTitle": {
+            "type": "string"
+          },
+          "maxGrade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "SubmissionList": {
+        "required": ["items"],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionInfo"
+            }
+          }
+        }
+      },
+      "SubmitResult": {
+        "required": ["id", "status"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
       "UserInfo": {
         "required": ["id", "name", "email", "role", "tenantId", "faculty", "group", "status"],
         "type": "object",
@@ -1379,6 +1701,9 @@
     },
     {
       "name": "AdaptiveEndpoints"
+    },
+    {
+      "name": "GradesEndpoints"
     }
   ]
 }

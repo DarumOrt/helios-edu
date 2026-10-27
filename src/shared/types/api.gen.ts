@@ -96,6 +96,20 @@ export type CourseSummary = {
   academicYear: string | null;
 };
 
+export type GradeItem = {
+  itemId: string;
+  itemTitle: string;
+  grade: number | null;
+  max: number;
+};
+
+export type GradeRow = {
+  userId: string;
+  userName: string;
+  items: GradeItem[];
+  total: number;
+};
+
 export type LoginRequest = {
   email: string | null;
   password: string | null;
@@ -130,6 +144,45 @@ export type SkillInfo = {
   pGuess: number;
   prerequisiteIds: string[];
   activityIds: string[];
+};
+
+export type StudentCourseGrades = {
+  courseId: string;
+  courseTitle: string;
+  courseCode: string;
+  items: GradeItem[];
+  total: number;
+};
+
+export type StudentGrades = {
+  courses: StudentCourseGrades[];
+};
+
+export type SubmissionInfo = {
+  id: string;
+  assignmentId: string;
+  courseId: string;
+  userId: string;
+  text: string;
+  fileName: string | null;
+  status: string;
+  grade: number | null;
+  feedback: string | null;
+  submittedAt: string;
+  userName: string;
+  group: string | null;
+  assignmentTitle: string;
+  courseTitle: string;
+  maxGrade: number;
+};
+
+export type SubmissionList = {
+  items: SubmissionInfo[];
+};
+
+export type SubmitResult = {
+  id: string;
+  status: string;
 };
 
 export type UserInfo = {

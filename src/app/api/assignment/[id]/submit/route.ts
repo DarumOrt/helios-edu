@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { submitAssignment } from "@/mocks/submissions-store";
 import { findActivity } from "@/mocks/course-store";
+import { backendForward } from "@/shared/lib/backend";
 
-// POST { courseId, userId, text, fileName? } — сдать задание. Доступ к курсу и userId проверяет proxy.ts.
+// POST { courseId, userId, text, fileName? } — сдать задание. Сервер — C# (Grades/GradesEndpoints.cs,
+// ученик из сессии), демо — моки ниже.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const forwarded = await backendForward(req, `/api/assignment/${encodeURIComponent(id)}/submit`);
+  if (forwarded) return forwarded;
   let body: { courseId?: unknown; userId?: unknown; text?: unknown; fileName?: unknown };
   try {
     body = await req.json();
