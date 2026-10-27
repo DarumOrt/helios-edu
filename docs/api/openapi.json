@@ -93,7 +93,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserInfo"
+                    "$ref": "#/components/schemas/ClassmateInfo"
                   }
                 }
               }
@@ -946,6 +946,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1363,6 +1370,21 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "ClassmateInfo": {
+        "required": ["id", "name", "group"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
           }
         }
       },

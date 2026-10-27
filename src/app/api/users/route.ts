@@ -6,9 +6,9 @@ import { findCohortByName } from "@/mocks/cohorts-store";
 import { demoActorWith, fail, readJson, str } from "@/mocks/management-guards";
 import { assignableRoles } from "@/shared/auth/management";
 import { validateUser } from "@/shared/lib/management-validation";
-import type { Role } from "@/shared/types/domain";
+import type { Classmate, Role } from "@/shared/types/domain";
 
-// GET ?group=М1227 — только участники группы
+// GET ?group=М1227 — студенты группы без почты (Classmate); без группы — все пользователи (управление)
 export async function GET(req: Request) {
   const group = new URL(req.url).searchParams.get("group");
   const response = await backendGet(
@@ -16,7 +16,12 @@ export async function GET(req: Request) {
   );
   if (response) return response;
   const users = allDemoUsers();
-  return NextResponse.json(group ? users.filter((u) => u.group === group) : users);
+  if (!group) return NextResponse.json(users);
+  const classmates: Classmate[] = users
+    .filter((u) => u.group === group && u.role === "student")
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .map(({ id, name, group }) => ({ id, name, group }));
+  return NextResponse.json(classmates);
 }
 
 // POST { name, email, role, group?, faculty? } — создать пользователя (user.manage).

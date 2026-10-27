@@ -71,8 +71,13 @@ for (const [name, baseUrl] of [
     assert.equal(response.status, 200);
     const classmates = await response.json();
     assert.ok(classmates.length > 1);
-    assert.ok(classmates.every((member) => member.group === user.group && member.role === "student"));
-    assert.ok(classmates.every((member) => !("passwordHash" in member)));
+    assert.ok(classmates.every((member) => member.group === user.group));
+    // почту и роль одногруппников студент не получает
+    assert.ok(
+      classmates.every(
+        (member) => !("email" in member) && !("role" in member) && !("passwordHash" in member),
+      ),
+    );
     assert.equal((await get(baseUrl, `${prefix}?group=${encodeURIComponent("1237")}`, cookie)).status, 403);
   });
 

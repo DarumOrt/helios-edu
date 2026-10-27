@@ -67,6 +67,12 @@ export type CatalogTutor = {
   name: string;
 };
 
+export type ClassmateInfo = {
+  id: string;
+  name: string;
+  group: string | null;
+};
+
 export type CohortInfo = {
   id: string;
   name: string;

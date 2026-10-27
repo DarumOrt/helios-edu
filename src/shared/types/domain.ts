@@ -136,6 +136,13 @@ export interface SubmissionFull extends Submission {
   maxGrade: number;
 }
 
+/** Одногруппник: GET /api/users?group=… — без почты, контакты видит только управление */
+export interface Classmate {
+  id: string;
+  name: string;
+  group?: string;
+}
+
 /** Своя работа ученика: GET /api/assignment/{id}/submission?courseId=… (не сдавал — пустой объект) */
 export interface MySubmission {
   submission?: SubmissionFull;

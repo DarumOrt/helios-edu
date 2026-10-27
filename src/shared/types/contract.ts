@@ -17,6 +17,7 @@ import type {
   StudentCourseGrades,
   SubmissionFull,
   MySubmission,
+  Classmate,
   AttemptsSummary,
   User,
 } from "./domain";
@@ -67,6 +68,7 @@ export type ApiContract = [
   Assert<SameFields<Api.StudentCourseGrades, StudentCourseGrades>>,
   Assert<SameFields<Api.SubmitResult, Pick<SubmissionFull, "id" | "status">>>,
   Assert<SameFields<Api.MySubmission, MySubmission>>,
+  Assert<SameFields<Api.ClassmateInfo, Classmate>>,
   Assert<SameFields<Api.AttemptsSummary, AttemptsSummary>>,
   Assert<SameFields<Api.AnnouncementInfo, Announcement>>,
   Assert<SameFields<Api.NotificationInfo, Notification>>,

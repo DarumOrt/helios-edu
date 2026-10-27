@@ -22,6 +22,9 @@ public sealed class LoginSession
     public DateTimeOffset ExpiresAt { get; set; }
 }
 
+/// <summary>Одногруппник: без почты и роли — контакты видит только управление (/api/users).</summary>
+public sealed record ClassmateInfo(string Id, string Name, string? Group);
+
 public sealed record UserInfo(string Id, string Name, string Email, string Role,
     string TenantId, string? Faculty, string? Group, string Status)
 {
