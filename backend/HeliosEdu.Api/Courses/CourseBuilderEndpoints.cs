@@ -71,6 +71,11 @@ public static class CourseBuilderEndpoints
         var section = course.Sections.Find(section => section.Id == sectionId);
         if (section is null) return Fail(404, "not found");
         if (section.Activities.Count > 0) return Fail(409, "В модуле есть материалы — сначала удалите или перенесите их");
+        var skills = await db.Skills.Where(skill => skill.CourseId == course.Id && skill.SectionId == sectionId).ToListAsync(context.RequestAborted);
+        var skillIds = skills.Select(skill => skill.Id).ToArray();
+        if (await db.SkillMastery.AnyAsync(item => skillIds.Contains(item.SkillId), context.RequestAborted))
+            return Fail(409, "По навыкам модуля уже есть результаты учеников");
+        db.Skills.RemoveRange(skills);
         course.Sections.Remove(section);
         Renumber(course);
         await db.SaveChangesAsync(context.RequestAborted);
@@ -166,6 +171,10 @@ public static class CourseBuilderEndpoints
         var section = course.Sections.Find(section => section.Activities.Any(activity => activity.Id == activityId));
         var activity = section?.Activities.Find(activity => activity.Id == activityId);
         if (section is null || activity is null) return Fail(404, "not found");
+        // История попыток остаётся в снимках, текущие привязки удалённого материала очищаются.
+        db.ActivitySkills.RemoveRange(await db.ActivitySkills.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));
+        db.QuizQuestions.RemoveRange(await db.QuizQuestions.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));
+        db.StudentPins.RemoveRange(await db.StudentPins.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));
         section.Activities.Remove(activity);
         Positions(db, section);
         await db.SaveChangesAsync(context.RequestAborted);
