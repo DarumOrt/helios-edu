@@ -42,6 +42,8 @@ public sealed class Activity
     [JsonConverter(typeof(UtcIsoDateConverter))] public DateTimeOffset? Due { get; set; }
     public string? Description { get; set; }
     public int? MaxGrade { get; set; }
+    // тест: сколько попыток можно завершить (null — без ограничения)
+    public int? MaxAttempts { get; set; }
     public string? Src { get; set; }
     public int? Pages { get; set; }
 }

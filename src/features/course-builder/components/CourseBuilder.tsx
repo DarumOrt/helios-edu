@@ -129,6 +129,7 @@ export function CourseBuilder({ course }: { course: Course }) {
                 a.pages && `${a.pages} стр.`,
                 a.durationMin && `${a.durationMin} мин`,
                 a.maxGrade && `из ${a.maxGrade}`,
+                a.maxAttempts && `попыток: ${a.maxAttempts}`,
               ].filter(Boolean);
               return (
                 <li key={a.id} className="flex items-center gap-3 px-5 py-3">

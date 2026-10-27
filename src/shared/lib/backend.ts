@@ -69,6 +69,9 @@ export function isSameOrigin(request: Request): boolean {
 export async function backendForward(request: Request, path: string): Promise<Response | null> {
   // тело читаем только при включённом сервере: иначе моковому маршруту оно нужно целым
   if (!process.env.BACKEND_API_URL || (await getDataSource()).source === "demo") return null;
+  // заголовок X-Helios-Client к C# добавляем сами, поэтому чужой сайт отсекаем здесь — по Origin
+  if (!["GET", "HEAD"].includes(request.method) && !isSameOrigin(request))
+    return Response.json({ error: "Недостаточно прав" }, { status: 403 });
   const hasBody = !["GET", "HEAD", "DELETE"].includes(request.method);
   const response = await backendRequest(path, {
     method: request.method,

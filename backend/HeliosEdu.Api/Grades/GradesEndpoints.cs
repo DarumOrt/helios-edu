@@ -20,6 +20,7 @@ public static class GradesEndpoints
     {
         var group = app.MapGroup("/api").RequireAuthorization().AddEndpointFilter<ManagementWriteFilter>();
         group.MapPost("/assignment/{activityId}/submit", SubmitAsync).Produces<SubmitResult>(201);
+        group.MapGet("/assignment/{activityId}/submission", MySubmissionAsync).Produces<MySubmission>();
         group.MapGet("/submissions", ListAsync).Produces<SubmissionList>();
         group.MapPost("/submissions/{id}/review", ReviewAsync).Produces<SubmissionInfo>();
         group.MapGet("/gradebook", CourseGradesAsync).Produces<GradeRow[]>();
@@ -76,6 +77,20 @@ public static class GradesEndpoints
         return Results.Json(new SubmitResult(submission.Id, submission.Status), statusCode: 201);
     }
 
+    /// <summary>Своя работа по заданию — статус, текст, оценка и комментарий. Не сдавал — пустой ответ.</summary>
+    private static async Task<IResult> MySubmissionAsync(string activityId, string? courseId, HttpContext context,
+        LearningDbContext db)
+    {
+        var actor = Actor(context);
+        if (actor.Role != "student") return Fail(403, "Недостаточно прав");
+        var course = string.IsNullOrEmpty(courseId) ? null : await VisibleCourse(db, context.User, courseId, context.RequestAborted);
+        if (course is null || Material(course, activityId)?.Type != "assignment") return Fail(404, "not found");
+        var submission = await db.Submissions.AsNoTracking().SingleOrDefaultAsync(item => item.CourseId == course.Id &&
+            item.ActivityId == activityId && item.UserId == actor.Id, context.RequestAborted);
+        return Results.Ok(new MySubmission(submission is null ? null
+            : (await Describe(db, [submission], context.RequestAborted))[0]));
+    }
+
     // ---- проверка работ ----
 
     private static bool CanReview(Account actor) => actor.Role is "admin" or "tutor";
@@ -107,12 +122,13 @@ public static class GradesEndpoints
         }).ToList();
     }
 
-    private static async Task<IResult> ListAsync(string? status, HttpContext context, LearningDbContext db)
+    private static async Task<IResult> ListAsync(string? status, string? courseId, HttpContext context, LearningDbContext db)
     {
         if (!CanReview(Actor(context))) return Fail(403, "Недостаточно прав");
         var visible = AccessRules.VisibleCourses(db, context.User).Select(course => course.Id);
         var query = db.Submissions.AsNoTracking().Where(item => visible.Contains(item.CourseId));
         if (!string.IsNullOrEmpty(status)) query = query.Where(item => item.Status == status);
+        if (!string.IsNullOrEmpty(courseId)) query = query.Where(item => item.CourseId == courseId);
         var items = await query.OrderByDescending(item => item.SubmittedAt).ToListAsync(context.RequestAborted);
         return Results.Ok(new SubmissionList(await Describe(db, items, context.RequestAborted)));
     }

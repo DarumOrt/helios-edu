@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { submitAssignment } from "@/mocks/submissions-store";
 import { findActivity } from "@/mocks/course-store";
 import { backendForward } from "@/shared/lib/backend";
+import { getDemoActor } from "@/mocks/demo-actor";
+import { visibleDemoCourses } from "@/mocks/demo-courses";
 
-// POST { courseId, userId, text, fileName? } — сдать задание. Сервер — C# (Grades/GradesEndpoints.cs,
-// ученик из сессии), демо — моки ниже.
+// POST { courseId, text, fileName? } — сдать задание. Ученик в обоих режимах — тот, кто вошёл
+// (userId из тела не используется). Сервер — C# (Grades/GradesEndpoints.cs), демо — моки ниже.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/assignment/${encodeURIComponent(id)}/submit`);
@@ -15,9 +17,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch {
     return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
   }
-  if (typeof body.courseId !== "string" || typeof body.userId !== "string")
+  if (typeof body.courseId !== "string")
     return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
-  if (findActivity(body.courseId, id)?.activity.type !== "assignment")
+  const actor = await getDemoActor();
+  if (actor.role !== "student") return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+  const courseId = body.courseId;
+  if (
+    !(await visibleDemoCourses()).some((c) => c.id === courseId) ||
+    findActivity(courseId, id)?.activity.type !== "assignment"
+  )
     return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const text = typeof body.text === "string" ? body.text.trim() : "";
@@ -35,9 +43,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   try {
     const saved = submitAssignment({
-      courseId: body.courseId,
+      courseId,
       assignmentId: id,
-      userId: body.userId,
+      userId: actor.id,
       text,
       fileName,
     });

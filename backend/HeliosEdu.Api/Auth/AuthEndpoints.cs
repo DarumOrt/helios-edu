@@ -103,8 +103,8 @@ public static class AuthEndpoints
             var classmates = await db.Accounts.AsNoTracking().Where(user =>
                 user.TenantId == account.TenantId && user.Group == group && user.Role == "student")
                 .OrderBy(user => user.Name).ToListAsync(cancellationToken);
-            return Results.Ok(classmates.Select(UserInfo.From));
-        }).RequireAuthorization().Produces<UserInfo[]>();
+            return Results.Ok(classmates.Select(user => new ClassmateInfo(user.Id, user.Name, user.Group)));
+        }).RequireAuthorization().Produces<ClassmateInfo[]>();
 
         app.MapGet("/api/users", async (LearningDbContext db, CancellationToken cancellationToken) =>
         {

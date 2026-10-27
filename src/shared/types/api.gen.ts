@@ -10,6 +10,7 @@ export type Activity = {
   due?: string;
   description?: string | null;
   maxGrade?: number | null;
+  maxAttempts?: number | null;
   src?: string | null;
   pages?: number | null;
 };
@@ -21,6 +22,13 @@ export type AnnouncementInfo = {
   body: string;
   authorName: string;
   createdAt: string;
+};
+
+export type AttemptsSummary = {
+  maxAttempts: number | null;
+  used: number;
+  open: boolean;
+  bestPercent: number | null;
 };
 
 export type CatalogCohort = {
@@ -57,6 +65,12 @@ export type CatalogSection = {
 export type CatalogTutor = {
   id: string;
   name: string;
+};
+
+export type ClassmateInfo = {
+  id: string;
+  name: string;
+  group: string | null;
 };
 
 export type CohortInfo = {
@@ -122,6 +136,10 @@ export type GradeRow = {
 export type LoginRequest = {
   email: string | null;
   password: string | null;
+};
+
+export type MySubmission = {
+  submission: SubmissionInfo | null;
 };
 
 export type NotificationInfo = {

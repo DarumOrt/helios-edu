@@ -24,7 +24,10 @@ export function StudentGrades() {
   );
 
   const courses = data?.courses ?? [];
-  const avg = courses.length ? Math.round(courses.reduce((s, c) => s + c.total, 0) / courses.length) : 0;
+  // до десятых, как итоги курсов (C# округляет итог так же)
+  const avg = courses.length
+    ? Math.round((courses.reduce((s, c) => s + c.total, 0) / courses.length) * 10) / 10
+    : 0;
 
   return (
     <DataState

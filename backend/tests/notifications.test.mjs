@@ -75,6 +75,12 @@ for (const [name, baseUrl] of [
       200,
     );
     assert.equal((await unread()).read, true);
+    // несуществующее и чужое уведомление отметить нельзя
+    assert.equal((await send(student.cookie, "POST", "/api/notifications/no-such/read", {})).status, 404);
+    assert.equal(
+      (await send(outsider.cookie, "POST", `/api/notifications/${announcement.id}/read`, {})).status,
+      404,
+    );
 
     // «скоро дедлайн»: задание со сроком завтра появляется у ученика, у преподавателя — нет
     const section = (await (await get(baseUrl, root, tutor.cookie)).json()).sections[0];

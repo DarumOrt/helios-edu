@@ -903,6 +903,9 @@ namespace HeliosEdu.Api.Migrations
                                     b2.Property<int?>("DurationMin")
                                         .HasColumnType("integer");
 
+                                    b2.Property<int?>("MaxAttempts")
+                                        .HasColumnType("integer");
+
                                     b2.Property<int?>("MaxGrade")
                                         .HasColumnType("integer");
 

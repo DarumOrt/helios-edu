@@ -91,12 +91,32 @@ public static partial class AdaptiveEndpoints
         return Results.Ok(parsed);
     }
 
+    /// <summary>Свои попытки теста: сколько можно, сколько завершено, есть ли начатая, лучший результат.</summary>
+    private static async Task<IResult> Attempts(string activityId, HttpContext http, LearningDbContext db)
+    {
+        if (QuizError(http, activityId) is { } error) return error;
+        var course = Current(http); var userId = Actor(http).Id;
+        var mine = await db.QuizAttempts.AsNoTracking().Where(item => item.CourseId == course.Id &&
+            item.ActivityId == activityId && item.UserId == userId).ToListAsync(http.RequestAborted);
+        var done = mine.Where(item => item.SubmittedAt != null && item.Max > 0).ToList();
+        int? best = done.Count == 0 ? null : done.Max(item =>
+            (int)Math.Round(100d * (item.Score ?? 0) / item.Max, MidpointRounding.AwayFromZero));
+        return Results.Ok(new AttemptsSummary(Quiz(course, activityId).MaxAttempts, done.Count,
+            mine.Any(item => item.SubmittedAt == null), best));
+    }
+
+    private static Courses.Activity Quiz(Courses.Course course, string activityId) =>
+        course.Sections.SelectMany(section => section.Activities).First(item => item.Id == activityId);
+
     private static async Task<IResult> StartAttempt(string activityId, HttpContext http, LearningDbContext db, AdaptiveEngine engine)
     {
         if (QuizError(http, activityId) is { } error) return error;
         var course = Current(http); var userId = Actor(http).Id; var token = http.RequestAborted;
         var existing = await db.QuizAttempts.SingleOrDefaultAsync(item => item.CourseId == course.Id && item.ActivityId == activityId && item.UserId == userId && item.SubmittedAt == null, token);
         if (existing is not null) return Results.Ok(new { attemptId = existing.Id, questions = AdaptiveJson.Read<AttemptQuestion[]>(existing.Questions).Select(item => StudentQuestion(item.Question)) });
+        if (Quiz(course, activityId).MaxAttempts is { } limit && await db.QuizAttempts.CountAsync(item => item.CourseId == course.Id &&
+                item.ActivityId == activityId && item.UserId == userId && item.SubmittedAt != null, token) >= limit)
+            return Fail(409, "Попытки закончились");
         var questions = await db.QuizQuestions.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).OrderBy(item => item.Order).ThenBy(item => item.Id).ToListAsync(token);
         if (questions.Count == 0) return Fail(409, "В тесте пока нет вопросов");
         var skills = await db.Skills.Where(item => item.CourseId == course.Id).ToListAsync(token);

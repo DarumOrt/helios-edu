@@ -769,6 +769,49 @@ test("P5: навыки, BKT, попытки, рекомендации и руч�
     await expect(await send("DELETE", `${root}/sections/${unmarked.id}`), 409);
   });
 
+  await t.test("лимит попыток: сводка, 409 после последней, поле теста", async () => {
+    const limited = await expect(
+      await send("POST", `${root}/sections/${section.id}/activities`, {
+        type: "quiz",
+        title: "Тест с одной попыткой",
+        maxAttempts: 1,
+      }),
+      201,
+    );
+    assert.equal(limited.maxAttempts, 1);
+    await expect(
+      await send("PATCH", `${root}/activities/${limited.id}`, { maxAttempts: 21 }),
+      400,
+      "maxAttempts",
+      "Попыток — от 1 до 20 или без ограничения",
+    );
+    await expect(
+      await send("PUT", `${root}/quizzes/${limited.id}/questions`, [
+        { type: "boolean", text: "Одна попытка?", correct: true },
+      ]),
+      200,
+    );
+    const summary = (actor = other) => read(`${root}/quizzes/${limited.id}/attempts`, actor);
+    assert.deepEqual(await summary(), { maxAttempts: 1, used: 0, open: false });
+    // сводка не начинает попытку; преподавателю она закрыта
+    assert.equal((await get(apiUrl, `${root}/quizzes/${limited.id}/attempts`, tutor.cookie)).status, 403);
+    const attempt = await start(other, limited);
+    assert.equal((await summary()).open, true);
+    await answer(attempt, attempt.questions[0].id, true, other);
+    await submit(attempt, other);
+    assert.deepEqual(await summary(), { maxAttempts: 1, used: 1, open: false, bestPercent: 100 });
+    const denied = await expect(await send("POST", `${root}/quizzes/${limited.id}/attempts`, {}, other), 409);
+    assert.equal(denied.error, "Попытки закончились");
+    // снять лимит — пустое значение
+    assert.ok(
+      !(
+        "maxAttempts" in
+        (await expect(await send("PATCH", `${root}/activities/${limited.id}`, { maxAttempts: null }), 200))
+      ),
+    );
+    await expect(await send("DELETE", `${root}/activities/${limited.id}`), 204);
+  });
+
   await t.test("демо-сид актуального c-dor-ai проверяется только чтением", async () => {
     const seedSkills = await read("/api/courses/c-dor-ai/skills");
     assert.equal(seedSkills.length, 4);

@@ -13,7 +13,7 @@ public sealed class ContentInput
         ["video"] = ["title", "src", "durationMin"],
         ["pdf"] = ["title", "pages", "src"],
         ["presentation"] = ["title", "pages", "src"],
-        ["quiz"] = ["title", "due", "durationMin"],
+        ["quiz"] = ["title", "due", "durationMin", "maxAttempts"],
         ["assignment"] = ["title", "due", "description", "maxGrade"]
     };
     private static readonly Regex Source = new(@"^(https://|/)\S+$", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking,
@@ -66,7 +66,8 @@ public sealed class ContentInput
         foreach (var (key, max, message) in new[] {
             ("pages", 500, "Страниц — от 1 до 500"),
             ("durationMin", 600, "Длительность — от 1 до 600 минут"),
-            ("maxGrade", 1000, "Максимальная оценка — от 1 до 1000") })
+            ("maxGrade", 1000, "Максимальная оценка — от 1 до 1000"),
+            ("maxAttempts", 20, "Попыток — от 1 до 20 или без ограничения") })
             if (Provided(key) && (Number(key) is not { } number || number < 1 || number > max)) errors[key] = message;
         if ((Text("description")?.Length ?? 0) > 4000) errors["description"] = "Условие — до 4000 символов";
         if (!partial && type == "video" && string.IsNullOrEmpty(Text("src"))) errors["src"] = "Укажите ссылку на видеофайл";
@@ -86,6 +87,7 @@ public sealed class ContentInput
                 case "pages": activity.Pages = Number(key); break;
                 case "durationMin": activity.DurationMin = Number(key); break;
                 case "maxGrade": activity.MaxGrade = Number(key); break;
+                case "maxAttempts": activity.MaxAttempts = Number(key); break;
             }
     }
 

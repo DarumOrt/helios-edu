@@ -152,7 +152,8 @@ public static class CourseBuilderEndpoints
             // SectionId входит в owned-ключ: создаём копию вместо изменения владельца tracked-сущности.
             var moved = new Activity { Id = activity.Id, Type = activity.Type, Title = activity.Title,
                 Src = activity.Src, Pages = activity.Pages, DurationMin = activity.DurationMin,
-                Description = activity.Description, MaxGrade = activity.MaxGrade, Due = activity.Due };
+                Description = activity.Description, MaxGrade = activity.MaxGrade, MaxAttempts = activity.MaxAttempts,
+                Due = activity.Due };
             from.Activities.Remove(activity);
             to.Activities.Add(moved);
             db.ChangeTracker.DetectChanges();

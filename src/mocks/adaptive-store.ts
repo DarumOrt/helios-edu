@@ -527,6 +527,11 @@ export function learn(
   return changes.map((c) => ({ ...c, status: refreshed.get(c.skillId)!.status }));
 }
 
+/** Завершённые попытки тестов курса — для журнала оценок (лучшая попытка) */
+export function submittedAttempts(courseId: string): Attempt[] {
+  return state.attempts.filter((a) => a.courseId === courseId && a.submittedAt);
+}
+
 export function completed(userId: string, courseId: string): Set<string> {
   const done = new Set(
     state.events
@@ -679,7 +684,7 @@ export function next(course: Course, userId: string): AdaptiveNext {
     reason = "Нет доступных заданий: проверьте пререквизиты навыков";
   }
 
-  // без дублей: показанная рекомендация на тот же материал возвращается как есть
+  // без дублей: показанная рекомендация на тот же материал возвращается та же (с актуальным объяснением)
   let last = state.recommendations.filter((r) => r.userId === userId && r.courseId === course.id).at(-1);
   if (!last || last.status !== "shown" || (last.activityId ?? null) !== activityId) {
     last = {
@@ -703,6 +708,9 @@ export function next(course: Course, userId: string): AdaptiveNext {
       activityId,
       skillId,
     });
+  } else {
+    // та же рекомендация, но объяснение — по текущему освоению (как в AdaptiveEngine.cs)
+    Object.assign(last, { reasonCode: code, reasonText: reason, skillId });
   }
   return {
     recommendation: {

@@ -54,6 +54,7 @@ export function ActivityDialog({
     due: toLocalInput(activity?.due),
     description: activity?.description ?? "",
     maxGrade: activity?.maxGrade?.toString() ?? (activity ? "" : "100"),
+    maxAttempts: activity?.maxAttempts?.toString() ?? "",
     sectionId,
   });
   const { pending, fields, error, run, setFields } = useFormSubmit();
@@ -70,6 +71,7 @@ export function ActivityDialog({
       due: fromLocalInput(v.due),
       description: v.description || null,
       maxGrade: num(v.maxGrade),
+      maxAttempts: num(v.maxAttempts),
     };
     // только поля этого типа — как и на сервере
     const payload = Object.fromEntries(Object.entries(all).filter(([k]) => has(k))) as ActivityPayload;
@@ -238,6 +240,25 @@ export function ActivityDialog({
                 onChange={(e) => set("maxGrade", e.target.value)}
                 disabled={pending}
                 {...describedBy("act-max", fields.maxGrade)}
+              />
+            </Field>
+          )}
+          {has("maxAttempts") && (
+            <Field
+              id="act-attempts"
+              label="Попыток"
+              error={fields.maxAttempts}
+              hint="Пусто — без ограничения; в оценку идёт лучшая"
+            >
+              <Input
+                id="act-attempts"
+                type="number"
+                min={1}
+                max={20}
+                value={v.maxAttempts}
+                onChange={(e) => set("maxAttempts", e.target.value)}
+                disabled={pending}
+                {...describedBy("act-attempts", fields.maxAttempts, true)}
               />
             </Field>
           )}

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Skeleton } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
-import { TriangleAlert } from "lucide-react";
+import { SearchX, ShieldAlert, TriangleAlert } from "lucide-react";
+import { ApiError } from "@/shared/lib/api-client";
 
 interface Props {
   loading?: boolean;
@@ -31,6 +32,25 @@ export function DataState({
           <Skeleton className="h-3 w-1/2" />
         </div>
       )
+    );
+  }
+  // 404 и 403 — не сбой: обновление страницы не поможет (чужой курс API отдаёт как несуществующий)
+  if (error instanceof ApiError && error.status === 404) {
+    return (
+      <EmptyState
+        icon={SearchX}
+        title="Не найдено"
+        description="Такой страницы нет или она вам недоступна — проверьте ссылку"
+      />
+    );
+  }
+  if (error instanceof ApiError && error.status === 403) {
+    return (
+      <EmptyState
+        icon={ShieldAlert}
+        title="Нет доступа"
+        description="Этот раздел недоступен для вашей роли"
+      />
     );
   }
   if (error) {

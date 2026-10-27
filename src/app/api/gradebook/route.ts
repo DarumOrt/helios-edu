@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCourseGrades } from "@/mocks/gradebook-store";
 import { backendForward } from "@/shared/lib/backend";
+import { demoCourseReviewer } from "@/mocks/management-guards";
 
 // GET ?courseId= — журнал оценок курса. Сервер — C#: оценки преподавателя и лучшие попытки тестов.
 export async function GET(req: Request) {
@@ -9,5 +10,7 @@ export async function GET(req: Request) {
   if (forwarded) return forwarded;
   const courseId = url.searchParams.get("courseId");
   if (!courseId) return NextResponse.json({ error: "courseId required" }, { status: 400 });
+  const access = await demoCourseReviewer("analytics.view", courseId);
+  if (access instanceof NextResponse) return access;
   return NextResponse.json(getCourseGrades(courseId));
 }

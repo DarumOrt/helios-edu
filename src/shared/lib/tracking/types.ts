@@ -45,6 +45,8 @@ export interface ProgressSnapshot {
   pagesViewed?: number;
   totalPages?: number;
   durationSec?: number;
+  /** видео: где остановился, сек — с этого места просмотр продолжается при следующем открытии */
+  position?: number;
   ts: number;
 }
 

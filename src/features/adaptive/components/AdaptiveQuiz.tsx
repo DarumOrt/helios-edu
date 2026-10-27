@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
-import { ArrowRight, CheckCircle2, Lightbulb, RotateCcw, Trophy, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardList, Lightbulb, RotateCcw, Trophy, XCircle } from "lucide-react";
 import { ApiError, fetcher } from "@/shared/lib/api-client";
 import { Badge, Button, Card, CardBody, DataState, Progress, buttonVariants } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
@@ -15,6 +15,7 @@ import type {
   AnswerResult,
   AttemptResult,
   AttemptStart,
+  AttemptsSummary,
   HintResult,
   Skill,
 } from "@/shared/types/domain";
@@ -29,15 +30,19 @@ interface QuestionState {
 }
 
 // Адаптивный тест: ответ проверяется сразу, видно, как меняется освоение навыков; подсказки — по запросу.
+// Новая попытка начинается только кнопкой (открытие страницы её не тратит); начатую — продолжаем сразу.
 export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activityId: string }) {
+  const summaryKey = adaptiveKeys.attempts(courseId, activityId);
+  const { data: summary, error: summaryError } = useSWR<AttemptsSummary>(summaryKey, fetcher);
   // round меняет ключ — «пройти ещё раз» начинает новую попытку
   const [round, setRound] = useState(0);
+  const [started, setStarted] = useState(false);
   const {
     data: attempt,
     error,
     isLoading,
   } = useSWR<AttemptStart>(
-    ["attempt", courseId, activityId, round],
+    started || summary?.open ? ["attempt", courseId, activityId, round] : null,
     () => adaptiveApi.startAttempt(courseId, activityId),
     { revalidateOnFocus: false, revalidateIfStale: false, shouldRetryOnError: false },
   );
@@ -46,6 +51,8 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
   const [state, setState] = useState<Record<string, QuestionState>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [finished, setFinished] = useState<AttemptResult | null>(null);
+  // завершение с пропущенными вопросами — только после подтверждения
+  const [confirming, setConfirming] = useState(false);
 
   const questions = attempt?.questions ?? [];
   const answered = questions.filter((q) => state[q.id]?.result).length;
@@ -88,6 +95,11 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
 
   async function finish() {
     if (!attempt) return;
+    if (answered < questions.length && !confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     setBusy("submit");
     try {
       const result = await adaptiveApi.submit(attempt.attemptId);
@@ -107,6 +119,7 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
         }),
       }).catch(() => undefined);
       void refreshRoute();
+      void mutate(summaryKey);
     } catch {
       toast.error("Не удалось завершить тест");
     } finally {
@@ -117,10 +130,26 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
   function again() {
     setState({});
     setFinished(null);
+    setStarted(true);
     setRound((r) => r + 1);
   }
 
-  if (finished) return <QuizResult result={finished} courseId={courseId} onAgain={again} />;
+  const left = summary?.maxAttempts == null ? null : summary.maxAttempts - summary.used;
+  if (finished)
+    return (
+      <QuizResult
+        result={finished}
+        courseId={courseId}
+        left={left}
+        onAgain={left === 0 ? undefined : again}
+      />
+    );
+  if (!started && !summary?.open)
+    return (
+      <DataState loading={!summary && !summaryError} error={summaryError}>
+        {summary && <QuizStart summary={summary} left={left} onStart={again} />}
+      </DataState>
+    );
 
   return (
     <DataState
@@ -222,14 +251,32 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
           );
         })}
 
-        <div className="sticky bottom-4 flex justify-end">
-          <Button onClick={finish} disabled={busy !== null} size="lg" className="shadow-elevate">
-            {busy === "submit"
-              ? "Завершаем…"
-              : answered < questions.length
-                ? "Завершить досрочно"
-                : "Завершить тест"}
-          </Button>
+        <div className="sticky bottom-4 flex flex-col items-end gap-2">
+          {confirming && (
+            <p
+              role="alert"
+              className="rounded-md bg-warning-soft px-4 py-2 text-sm text-warning shadow-elevate"
+            >
+              Без ответа {questions.length - answered} из {questions.length} — они засчитаются как неверные.
+              Завершить?
+            </p>
+          )}
+          <div className="flex gap-2">
+            {confirming && (
+              <Button variant="outline" onClick={() => setConfirming(false)} className="shadow-elevate">
+                Продолжить тест
+              </Button>
+            )}
+            <Button onClick={finish} disabled={busy !== null} size="lg" className="shadow-elevate">
+              {busy === "submit"
+                ? "Завершаем…"
+                : confirming
+                  ? "Да, завершить"
+                  : answered < questions.length
+                    ? "Завершить досрочно"
+                    : "Завершить тест"}
+            </Button>
+          </div>
         </div>
       </div>
     </DataState>
@@ -274,14 +321,54 @@ function Feedback({
   );
 }
 
+const attemptsLeft = (left: number | null) =>
+  left == null ? "Попыток — без ограничения" : left > 0 ? `Осталось попыток: ${left}` : "Попытки закончились";
+
+function QuizStart({
+  summary,
+  left,
+  onStart,
+}: {
+  summary: AttemptsSummary;
+  left: number | null;
+  onStart: () => void;
+}) {
+  return (
+    <Card>
+      <CardBody className="py-10 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft text-primary">
+          <ClipboardList size={24} aria-hidden />
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {attemptsLeft(left)}
+          {summary.used > 0 && ` · завершено: ${summary.used}`}
+        </p>
+        {summary.bestPercent != null && (
+          <p className="mt-1 text-sm">
+            Лучший результат: <span className="font-mono font-semibold">{summary.bestPercent}%</span> — он
+            идёт в оценку
+          </p>
+        )}
+        <Button className="mt-6" size="lg" onClick={onStart} disabled={left === 0}>
+          {left === 0 ? "Попытки закончились" : summary.used > 0 ? "Начать заново" : "Начать тест"}
+        </Button>
+      </CardBody>
+    </Card>
+  );
+}
+
 function QuizResult({
   result,
   courseId,
   onAgain,
+  left,
 }: {
   result: AttemptResult;
   courseId: string;
-  onAgain: () => void;
+  /** нет — попытки закончились */
+  onAgain?: () => void;
+  /** сколько попыток осталось (сводка обновляется после завершения); null — без ограничения */
+  left: number | null;
 }) {
   return (
     <Card className="overflow-hidden">
@@ -301,10 +388,13 @@ function QuizResult({
           <Link href={`/courses/${courseId}`} className={buttonVariants()}>
             Что дальше <ArrowRight size={16} aria-hidden />
           </Link>
-          <Button variant="outline" onClick={onAgain}>
-            <RotateCcw size={16} aria-hidden /> Пройти ещё раз
-          </Button>
+          {onAgain && (
+            <Button variant="outline" onClick={onAgain}>
+              <RotateCcw size={16} aria-hidden /> Пройти ещё раз
+            </Button>
+          )}
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">{attemptsLeft(left)}</p>
       </CardBody>
     </Card>
   );

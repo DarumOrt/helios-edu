@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 import { toast } from "sonner";
 import { Card, CardBody, Badge, Progress } from "@/shared/ui";
 import { Eye, Gauge, MousePointerClick, Pause, CheckCircle2, Activity } from "lucide-react";
 import { tracker, newSessionId } from "@/shared/lib/tracking/tracker";
 import { useSession } from "@/shared/auth/session";
 import { fmtDuration } from "@/shared/lib/format";
+import { fetcher } from "@/shared/lib/api-client";
+import type { ActivityProgress } from "@/shared/lib/tracking/types";
 
 const BUCKET_SEC = 5; // размер корзины покрытия
 const COMPLETE_AT = 90; // % покрытия для статуса "завершено"
@@ -42,6 +45,16 @@ export function VideoPlayer({
   }, [onComplete]);
   const user = useSession((s) => s.user);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // прежний прогресс: покрытие не начинается с нуля, просмотр продолжается с места остановки
+  const { data: prior } = useSWR<ActivityProgress | null>(
+    `/api/tracking/progress?userId=${encodeURIComponent(user.id)}&activityId=${encodeURIComponent(activityId)}`,
+    fetcher,
+    { revalidateOnFocus: false, revalidateIfStale: false },
+  );
+  const priorRef = useRef<ActivityProgress | null>(null);
+  const resumed = useRef(false);
+  // переход к месту остановки — не перемотка ученика
+  const autoSeek = useRef(false);
 
   const sessionRef = useRef(newSessionId());
   const watched = useRef<Set<number>>(new Set());
@@ -51,6 +64,25 @@ export function VideoPlayer({
   const maxRate = useRef(1);
   const completedRef = useRef(false);
   const lastProgressSent = useRef(0);
+
+  useEffect(() => {
+    priorRef.current = prior ?? null;
+    if (prior?.completed) completedRef.current = true;
+    resume();
+  }, [prior]);
+
+  /** Перейти к месту остановки — один раз, когда известны и прогресс, и длина видео. */
+  function resume() {
+    const v = videoRef.current;
+    const at = priorRef.current?.position;
+    if (resumed.current || !v || !v.duration || at == null) return;
+    resumed.current = true;
+    // досмотренное до конца начинаем сначала
+    if (at > 1 && at < v.duration - 5) {
+      autoSeek.current = true;
+      v.currentTime = at;
+    }
+  }
 
   const [stats, setStats] = useState<LiveStats>({
     coverage: 0,
@@ -93,9 +125,11 @@ export function VideoPlayer({
     return d > 0 ? Math.ceil(d / BUCKET_SEC) : 0;
   }
 
+  /** Покрытие: эта сессия, но не меньше прежнего (корзины прошлых сессий не хранятся). */
   function coverage() {
     const tb = totalBuckets();
-    return tb > 0 ? Math.min(100, Math.round((watched.current.size / tb) * 100)) : 0;
+    const session = tb > 0 ? Math.min(100, Math.round((watched.current.size / tb) * 100)) : 0;
+    return Math.max(session, priorRef.current?.coverage ?? 0);
   }
 
   function sendProgress(useBeacon = false) {
@@ -113,6 +147,7 @@ export function VideoPlayer({
         pauses: pauses.current,
         maxRate: maxRate.current,
         durationSec: v?.duration ?? 0,
+        position: v ? Math.round(v.currentTime) : undefined,
         ts: Date.now(),
       },
       useBeacon,
@@ -193,6 +228,10 @@ export function VideoPlayer({
       payload,
     });
 
+  // до первого тика — прежние покрытие и статус
+  const shownCoverage = Math.max(stats.coverage, prior?.coverage ?? 0);
+  const shownCompleted = stats.completed || Boolean(prior?.completed);
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <div className="lg:col-span-2">
@@ -208,7 +247,12 @@ export function VideoPlayer({
               pauses.current += 1;
               ev("paused", e.currentTarget.currentTime);
             }}
+            onLoadedMetadata={resume}
             onSeeked={(e) => {
+              if (autoSeek.current) {
+                autoSeek.current = false;
+                return;
+              }
               seeks.current += 1;
               ev("seeked", e.currentTarget.currentTime);
             }}
@@ -221,8 +265,8 @@ export function VideoPlayer({
           <CardBody className="py-3">
             <div className="flex items-center justify-between">
               <h3 className="font-medium">{title}</h3>
-              <Badge tone={stats.completed ? "success" : stats.playing ? "info" : "neutral"}>
-                {stats.completed ? "завершено" : stats.playing ? "идёт просмотр" : "пауза"}
+              <Badge tone={shownCompleted ? "success" : stats.playing ? "info" : "neutral"}>
+                {shownCompleted ? "завершено" : stats.playing ? "идёт просмотр" : "пауза"}
               </Badge>
             </div>
           </CardBody>
@@ -241,9 +285,9 @@ export function VideoPlayer({
           <div>
             <div className="mb-1.5 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Покрытие материала</span>
-              <span className="font-semibold tabular-nums">{stats.coverage}%</span>
+              <span className="font-semibold tabular-nums">{shownCoverage}%</span>
             </div>
-            <Progress value={stats.coverage} tone={stats.completed ? "success" : "primary"} />
+            <Progress value={shownCoverage} tone={shownCompleted ? "success" : "primary"} />
             <div className="mt-1 text-xs text-muted-foreground">
               засчитывается только просмотр с активной вкладкой, перемотка не считается
             </div>
@@ -257,7 +301,7 @@ export function VideoPlayer({
           </div>
 
           <div className="flex items-center gap-2 border-t pt-2 text-xs">
-            {stats.completed ? (
+            {shownCompleted ? (
               <span className="flex items-center gap-1.5 font-medium text-success">
                 <CheckCircle2 size={14} /> Материал изучен
               </span>

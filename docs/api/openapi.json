@@ -93,7 +93,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserInfo"
+                    "$ref": "#/components/schemas/ClassmateInfo"
                   }
                 }
               }
@@ -662,6 +662,31 @@
             "description": "OK"
           }
         }
+      },
+      "get": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptsSummary"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/courses/{id}/adaptive": {
@@ -877,12 +902,53 @@
         }
       }
     },
+    "/api/assignment/{activityId}/submission": {
+      "get": {
+        "tags": ["GradesEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubmission"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/submissions": {
       "get": {
         "tags": ["GradesEndpoints"],
         "parameters": [
           {
             "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
             "in": "query",
             "schema": {
               "type": "string"
@@ -1123,6 +1189,11 @@
             "type": ["null", "integer", "string"],
             "format": "int32"
           },
+          "maxAttempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
           "src": {
             "type": ["null", "string"]
           },
@@ -1155,6 +1226,30 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AttemptsSummary": {
+        "required": ["maxAttempts", "used", "open", "bestPercent"],
+        "type": "object",
+        "properties": {
+          "maxAttempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "used": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "bestPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
           }
         }
       },
@@ -1275,6 +1370,21 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "ClassmateInfo": {
+        "required": ["id", "name", "group"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
           }
         }
       },
@@ -1520,6 +1630,22 @@
           },
           "password": {
             "type": ["null", "string"]
+          }
+        }
+      },
+      "MySubmission": {
+        "required": ["submission"],
+        "type": "object",
+        "properties": {
+          "submission": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SubmissionInfo"
+              }
+            ]
           }
         }
       },

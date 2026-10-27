@@ -63,8 +63,11 @@ public static class NotificationsEndpoints
         return Results.Json(Info(announcement), statusCode: 201);
     }
 
+    private static async Task<IResult> ListNotificationsAsync(HttpContext context, LearningDbContext db) =>
+        Results.Ok(await Collect(context, db));
+
     /// <summary>Уведомления пользователя: объявления видимых курсов, личные (оценки) и близкие сроки (ученику).</summary>
-    private static async Task<IResult> ListNotificationsAsync(HttpContext context, LearningDbContext db)
+    private static async Task<List<NotificationInfo>> Collect(HttpContext context, LearningDbContext db)
     {
         var actor = Actor(context);
         var token = context.RequestAborted;
@@ -82,7 +85,7 @@ public static class NotificationsEndpoints
         foreach (var n in await db.Notifications.AsNoTracking().Where(n => n.UserId == actor.Id).ToListAsync(token))
             result.Add(new NotificationInfo(n.Id, n.Type, n.Title, n.Body, n.CreatedAt, read.Contains(n.Id), n.Link));
         if (actor.Role == "student") result.AddRange(await Deadlines(db, actor, courses, read, token));
-        return Results.Ok(result.OrderByDescending(item => item.CreatedAt));
+        return result.OrderByDescending(item => item.CreatedAt).ToList();
     }
 
     /// <summary>
@@ -116,6 +119,8 @@ public static class NotificationsEndpoints
     {
         var actor = Actor(context);
         if (id.Length is 0 or > 200) return Fail(400, "Некорректный запрос");
+        // отметить можно только своё уведомление (чужое и несуществующее — 404)
+        if (!(await Collect(context, db)).Any(item => item.Id == id)) return Fail(404, "not found");
         // повторное нажатие (или два открытых окна) — не ошибка
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO "NotificationReads" ("UserId", "NotificationId", "ReadAt")

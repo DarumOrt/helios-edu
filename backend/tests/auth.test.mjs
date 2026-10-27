@@ -71,8 +71,13 @@ for (const [name, baseUrl] of [
     assert.equal(response.status, 200);
     const classmates = await response.json();
     assert.ok(classmates.length > 1);
-    assert.ok(classmates.every((member) => member.group === user.group && member.role === "student"));
-    assert.ok(classmates.every((member) => !("passwordHash" in member)));
+    assert.ok(classmates.every((member) => member.group === user.group));
+    // почту и роль одногруппников студент не получает
+    assert.ok(
+      classmates.every(
+        (member) => !("email" in member) && !("role" in member) && !("passwordHash" in member),
+      ),
+    );
     assert.equal((await get(baseUrl, `${prefix}?group=${encodeURIComponent("1237")}`, cookie)).status, 403);
   });
 
@@ -211,6 +216,8 @@ if (process.env.TEST_WEB_URL) {
       (await get(baseUrl, `/api/schedule?group=${encodeURIComponent("1237")}`, cookie)).status,
       403,
     );
+    // без группы — 400, как в демо
+    assert.equal((await get(baseUrl, "/api/schedule", cookie)).status, 400);
   });
 
   test("Next.js: редактирование обложки требует серверного права course.edit", async () => {
@@ -227,6 +234,16 @@ if (process.env.TEST_WEB_URL) {
     assert.equal((await put(student.cookie)).status, 403);
     const tutor = await login(baseUrl, "tutor@pspu.ru");
     assert.equal((await put(tutor.cookie)).status, 200);
+
+    // пересылка в C# сама добавляет X-Helios-Client — поэтому изменения без своего Origin Next отклоняет
+    const remove = (origin) =>
+      fetch(`${baseUrl}/api/courses/c-dor-ai/skills/no-such-skill`, {
+        method: "DELETE",
+        headers: { Cookie: tutor.cookie, ...(origin && { Origin: origin }) },
+      });
+    assert.equal((await remove()).status, 403);
+    assert.equal((await remove("https://other.example")).status, 403);
+    assert.equal((await remove(new URL(baseUrl).origin)).status, 404);
   });
 }
 

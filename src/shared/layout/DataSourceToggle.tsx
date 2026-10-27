@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Database, FlaskConical, type LucideIcon } from "lucide-react";
 import { api } from "@/shared/lib/api-client";
 import { cn } from "@/shared/lib/utils";
+import { useSession } from "@/shared/auth/session";
+import { useSessionStore } from "@/stores/session-store";
 import type { DataSource, DataSourceState } from "@/shared/lib/data-source";
 
 const options: { value: DataSource; label: string; icon: LucideIcon; hint: string }[] = [
@@ -24,14 +26,17 @@ const options: { value: DataSource; label: string; icon: LucideIcon; hint: strin
 
 // Переключатель источника данных — инструмент показа, оформлен как служебный (как и демо-роль).
 // После переключения страница перезагружается: сервер заново решает, нужен ли вход.
+// В демо вход — выбором роли; переходя с сервера, остаёмся в той же роли, а не в последней выбранной.
 export function DataSourceToggle({ state, className }: { state: DataSourceState; className?: string }) {
   const [pending, setPending] = useState<DataSource | null>(null);
+  const role = useSession((s) => s.role);
 
   async function choose(source: DataSource) {
     if (source === state.source || pending) return;
     setPending(source);
     try {
       await api.post("/api/data-source", { source });
+      if (source === "demo") useSessionStore.getState().setRole(role);
       window.location.reload();
     } catch {
       setPending(null);

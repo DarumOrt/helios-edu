@@ -17,6 +17,8 @@ export interface ActivityInput {
   durationMin?: number | null;
   description?: string | null;
   maxGrade?: number | null;
+  /** тест: сколько попыток можно завершить; null — без ограничения */
+  maxAttempts?: number | null;
 }
 
 const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -49,6 +51,8 @@ export function validateActivity(input: Partial<ActivityInput>, partial = false)
     e.description = "Условие — до 4000 символов";
   if (input.maxGrade != null && !isInt(input.maxGrade, 1, 1000))
     e.maxGrade = "Максимальная оценка — от 1 до 1000";
+  if (input.maxAttempts != null && !isInt(input.maxAttempts, 1, 20))
+    e.maxAttempts = "Попыток — от 1 до 20 или без ограничения";
   // обязательные поля по типу (при создании)
   if (!partial && input.type === "video" && !text(input.src)) e.src = "Укажите ссылку на видеофайл";
   if (!partial && (input.type === "pdf" || input.type === "presentation") && input.pages == null)
@@ -91,7 +95,7 @@ export const ACTIVITY_FIELDS: Record<BuilderActivityType, (keyof ActivityInput)[
   video: ["title", "src", "durationMin"],
   pdf: ["title", "pages", "src"],
   presentation: ["title", "pages", "src"],
-  quiz: ["title", "due", "durationMin"],
+  quiz: ["title", "due", "durationMin", "maxAttempts"],
   assignment: ["title", "due", "description", "maxGrade"],
 };
 

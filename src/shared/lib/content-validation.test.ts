@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickActivityFields, validateQuestions } from "./content-validation";
+import { pickActivityFields, validateActivity, validateQuestions } from "./content-validation";
 
 describe("validateQuestions — вопросы теста", () => {
   it("правильный набор с подсказками", () => {
@@ -43,5 +43,27 @@ describe("pickActivityFields — лишние поля материала отб
     const fields = pickActivityFields("video", { title: " Лекция ", src: "/media/x.mp4", due: "2026-11-01" });
     expect(fields).toMatchObject({ title: "Лекция", src: "/media/x.mp4" });
     expect(fields).not.toHaveProperty("due");
+  });
+});
+
+describe("validateActivity — лимит попыток теста (ContentInput.cs)", () => {
+  it("от 1 до 20, пусто — без ограничения", () => {
+    const quiz = { type: "quiz" as const, title: "Тест" };
+    expect(validateActivity({ ...quiz, maxAttempts: 3 })).toEqual({});
+    expect(validateActivity({ ...quiz, maxAttempts: null })).toEqual({});
+    for (const bad of [0, 21, 1.5])
+      expect(validateActivity({ ...quiz, maxAttempts: bad }).maxAttempts).toBe(
+        "Попыток — от 1 до 20 или без ограничения",
+      );
+  });
+
+  it("попытки есть только у теста", () => {
+    expect(pickActivityFields("quiz", { title: "Т", maxAttempts: 2 })).toEqual({
+      title: "Т",
+      maxAttempts: 2,
+    });
+    expect(pickActivityFields("assignment", { title: "З", maxAttempts: 2 })).not.toHaveProperty(
+      "maxAttempts",
+    );
   });
 });
