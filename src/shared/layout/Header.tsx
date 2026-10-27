@@ -10,6 +10,7 @@ import { api } from "@/shared/lib/api-client";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { DataSourceToggle } from "./DataSourceToggle";
+import { ThemeToggle } from "./ThemeToggle";
 import { NotificationsBell } from "@/features/notifications/components/NotificationsBell";
 
 export function Header() {
@@ -54,6 +55,7 @@ export function Header() {
       </button>
       <DataSourceToggle state={dataSource} className="sm:mr-2 lg:mr-auto" />
       <RoleSwitcher />
+      <ThemeToggle />
       <NotificationsBell />
       <Link
         href="/profile"

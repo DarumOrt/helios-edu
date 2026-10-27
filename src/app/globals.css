@@ -43,6 +43,10 @@
 
   --color-danger: hsl(var(--danger));
   --color-danger-soft: hsl(var(--danger-soft));
+  --color-danger-foreground: hsl(var(--danger-foreground));
+
+  /* Текст на светлом небе приветствия — тёмный в обеих темах: небо показывает время суток, а не тему */
+  --color-sky-ink: hsl(var(--sky-ink));
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
@@ -54,9 +58,9 @@
   --radius-sm: calc(var(--radius) - 6px);
 
   /* Карточки отделяет белый фон и едва заметная тень, а не рамка */
-  --shadow-soft: 0 1px 2px 0 rgb(20 33 61 / 0.04);
-  --shadow-card: 0 1px 2px 0 rgb(20 33 61 / 0.04), 0 6px 20px -10px rgb(20 33 61 / 0.1);
-  --shadow-elevate: 0 14px 32px -14px rgb(20 33 61 / 0.25), 0 2px 6px -2px rgb(20 33 61 / 0.06);
+  --shadow-soft: 0 1px 2px 0 hsl(var(--shadow) / 0.04);
+  --shadow-card: 0 1px 2px 0 hsl(var(--shadow) / 0.04), 0 6px 20px -10px hsl(var(--shadow) / 0.1);
+  --shadow-elevate: 0 14px 32px -14px hsl(var(--shadow) / 0.25), 0 2px 6px -2px hsl(var(--shadow) / 0.06);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 
@@ -167,16 +171,19 @@
 
     --danger: 3 63% 44%; /* #B8302A */
     --danger-soft: 5 81% 94%;
+    --danger-foreground: 0 0% 100%;
 
     --border: 213 39% 91%; /* #DFE7F1 */
     --input: 214 35% 87%;
     --ring: 215 75% 46%;
     --grid: 214 47% 93%;
+    --sky-ink: 221 51% 16%;
+    --shadow: 221 51% 16%;
 
     --radius: 0.75rem; /* 12px — мягкая, дружелюбная форма */
   }
 
-  /* Тёмная тема: токены готовы, переключатель — отдельной задачей */
+  /* Тёмная тема: data-theme на <html> ставит shared/lib/theme.ts (выбор — в шапке кабинета) */
   [data-theme="dark"] {
     --background: 221 39% 10%; /* #0F1522 */
     --foreground: 216 43% 93%;
@@ -197,10 +204,13 @@
     --warning-soft: 38 55% 13%;
     --danger: 4 82% 72%;
     --danger-soft: 4 38% 16%;
+    --danger-foreground: 221 39% 10%;
     --border: 221 34% 21%;
     --input: 221 32% 25%;
     --ring: 214 87% 70%;
     --grid: 221 36% 15%;
+    /* на тёмном фоне тень почти не видна — карточки отделяет более светлый фон */
+    --shadow: 0 0% 0%;
     color-scheme: dark;
   }
 
