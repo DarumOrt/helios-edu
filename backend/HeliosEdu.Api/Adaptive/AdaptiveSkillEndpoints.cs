@@ -178,8 +178,7 @@ public static partial class AdaptiveEndpoints
     private static async Task TeacherCourseChange(HttpContext http, LearningDbContext db, AdaptiveEngine engine, string action, CancellationToken token)
     {
         var courseId = Current(http).Id;
-        foreach (var student in await db.Enrollments.Where(item => item.CourseId == courseId &&
-            db.Accounts.Any(account => account.Id == item.AccountId && account.Role == "student")).Select(item => item.AccountId).ToListAsync(token))
+        foreach (var student in await AccessRules.CourseStudents(db, courseId).Select(account => account.Id).ToListAsync(token))
             await engine.Override(student, Actor(http).Id, courseId, action, "Изменены настройки обучения курса", token);
     }
 }

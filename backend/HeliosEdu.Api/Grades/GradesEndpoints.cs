@@ -164,12 +164,8 @@ public static class GradesEndpoints
 
     // ---- журнал оценок ----
 
-    /// <summary>Ученики курса — студенты групп, которым назначен курс (как VisibleCourses).</summary>
     private static Task<List<Account>> Students(LearningDbContext db, string courseId, CancellationToken token) =>
-        db.Accounts.AsNoTracking().Where(account => account.Role == "student" && db.CohortCourses.Any(link =>
-                link.CourseId == courseId && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
-                    cohort.TenantId == account.TenantId && cohort.Name == account.Group)))
-            .OrderBy(account => account.Name).ToListAsync(token);
+        AccessRules.CourseStudents(db, courseId).AsNoTracking().OrderBy(account => account.Name).ToListAsync(token);
 
     /// <summary>Оценки ученика по колонкам: поставленная преподавателем, иначе для теста — лучшая попытка.</summary>
     private static async Task<Dictionary<string, Dictionary<string, double>>> Marks(LearningDbContext db, string courseId,
@@ -248,7 +244,14 @@ public static class GradesEndpoints
     {
         var actor = Actor(context);
         if (actor.Role != "student") return Fail(403, "Недостаточно прав");
-        var courses = await AccessRules.VisibleCourses(db, context.User).AsNoTracking().AsSplitQuery()
+        // Оценки принадлежат ученику, а не группе: курс, где он сдавал работы и тесты, остаётся в списке
+        // и после перевода в другую группу, и после архивации курса (черновик ученик не видит).
+        var visible = AccessRules.VisibleCourses(db, context.User).Select(course => course.Id);
+        var mine = db.Grades.Where(grade => grade.UserId == actor.Id).Select(grade => grade.CourseId)
+            .Union(db.Submissions.Where(item => item.UserId == actor.Id).Select(item => item.CourseId))
+            .Union(db.QuizAttempts.Where(item => item.UserId == actor.Id && item.SubmittedAt != null).Select(item => item.CourseId));
+        var courses = await db.Courses.Where(course => visible.Contains(course.Id) ||
+                course.Status != "draft" && mine.Contains(course.Id)).AsNoTracking().AsSplitQuery()
             .Include(course => course.Sections.OrderBy(section => section.Order))
             .ThenInclude(section => section.Activities.OrderBy(activity => EF.Property<int>(activity, "Position")))
             .OrderBy(course => EF.Property<int>(course, "Position")).ToListAsync(context.RequestAborted);

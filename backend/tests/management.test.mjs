@@ -220,8 +220,31 @@ for (const [name, baseUrl] of [
           "Выберите преподавателя",
         );
         await expect(await patchCourse(course.id, { status: "bad" }), 400, "status", "Неизвестный статус");
+        // преподаватель правит карточку своего курса, но не поля управления; чужой курс ему не виден
+        const own = await expect(
+          await send(
+            "PATCH",
+            `/api/courses/${course.id}`,
+            { title: "Свой курс", description: "Новое" },
+            tutor,
+          ),
+          200,
+        );
+        assert.deepEqual([own.title, own.description], ["Свой курс", "Новое"]);
+        for (const field of ["tutorId", "faculty", "academicYear"]) {
+          const denied = await expect(
+            await send("PATCH", `/api/courses/${course.id}`, { [field]: null }, tutor),
+            403,
+          );
+          assert.equal(denied.error, "Преподавателя, факультет и учебный год курса меняет организатор");
+        }
+        const stranger = await login(baseUrl, "tutor2@pspu.ru");
         assert.equal(
-          (await send("PATCH", `/api/courses/${course.id}`, { title: "Попытка" }, tutor)).status,
+          (await send("PATCH", `/api/courses/${course.id}`, { title: "Чужой" }, stranger)).status,
+          404,
+        );
+        assert.equal(
+          (await send("PATCH", `/api/courses/${course.id}`, { title: "Попытка" }, student)).status,
           403,
         );
         for (const status of ["draft", "published", "archived"]) {

@@ -426,21 +426,6 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("HeliosEdu.Api.Auth.Enrollment", b =>
-                {
-                    b.Property<string>("AccountId")
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("CourseId")
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("AccountId", "CourseId");
-
-                    b.HasIndex("CourseId");
-
-                    b.ToTable("Enrollments");
-                });
-
             modelBuilder.Entity("HeliosEdu.Api.Auth.LoginSession", b =>
                 {
                     b.Property<string>("TokenHash")
@@ -860,21 +845,6 @@ namespace HeliosEdu.Api.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("HeliosEdu.Api.Auth.Enrollment", b =>
-                {
-                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

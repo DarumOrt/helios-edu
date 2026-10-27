@@ -7,9 +7,17 @@ namespace HeliosEdu.Api.Auth;
 
 public static class AccessRules
 {
-    // P5 намеренно использует зачисления; выдача каталога P1 по группам остаётся отдельным контрактом.
-    public static Task<bool> IsAdaptiveStudent(LearningDbContext db, Account actor, string courseId, CancellationToken token) =>
-        actor.Role == "student" ? db.Enrollments.AnyAsync(item => item.AccountId == actor.Id && item.CourseId == courseId, token) : Task.FromResult(false);
+    /// <summary>
+    /// Ученики курса — студенты групп, которым он назначен. Та же связь, что в VisibleCourses:
+    /// курс в новой группе сразу доступен её студентам, после перевода в другую группу — нет.
+    /// </summary>
+    public static IQueryable<Account> CourseStudents(LearningDbContext db, string courseId) =>
+        db.Accounts.Where(account => account.Role == "student" && db.CohortCourses.Any(link =>
+            link.CourseId == courseId && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
+                cohort.TenantId == account.TenantId && cohort.Name == account.Group)));
+
+    public static Task<bool> IsCourseStudent(LearningDbContext db, Account actor, string courseId, CancellationToken token) =>
+        actor.Role == "student" ? CourseStudents(db, courseId).AnyAsync(account => account.Id == actor.Id, token) : Task.FromResult(false);
     public const string ManageUsers = "user.manage";
     public const string ManageCohorts = "cohort.manage";
     public const string ReadCohorts = "cohort.read";
@@ -33,7 +41,7 @@ public static class AccessRules
         if (user.IsInRole("admin") || user.IsInRole("organizer")) return db.Courses;
         var accountId = user.FindFirstValue(ClaimTypes.NameIdentifier);
         if (user.IsInRole("tutor")) return db.Courses.Where(course => course.TutorId == accountId);
-        // Эталон — visibleDemoCourses: старый Enrollment не обходит группу и статус.
+        // Эталон — visibleDemoCourses.
         return db.Courses.Where(course => course.Status == "published" && db.CohortCourses.Any(link =>
             link.CourseId == course.Id && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
                 db.Accounts.Any(account => account.Id == accountId && account.Role == "student" &&

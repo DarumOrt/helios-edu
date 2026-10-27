@@ -22,7 +22,7 @@
 | Что | Где смотреть |
 | --- | --- |
 | Права на курс | `AccessRules.CanEditCourse` (admin и organizer — любой курс, tutor — только свой) |
-| Зачисление | таблица `Enrollments` (`AccountId`, `CourseId`) |
+| Ученики курса | `AccessRules.CourseStudents`: студенты групп, которым назначен курс (таблица `Enrollments` удалена) |
 | Вопросы тестов сейчас | `src/mocks/quiz-store.ts`, `src/mocks/data.ts` (`quizQuestions.mq1`), тип `QuizQuestion` в `src/shared/types/domain.ts` |
 | Проверка ответа сейчас | `scoreAnswers` в `src/mocks/quiz-store.ts`, маршрут `src/app/api/quiz/[id]/submit/route.ts` |
 | Формат ошибок и защита | как в P1/P2: `{ error, fields? }`, изменяющие запросы — с `X-Helios-Client: web`, иначе `403` |
@@ -196,7 +196,7 @@ progress       = round(100 · (0.7·skillsShare + 0.3·materialsShare))
 Ответы ошибок — `{ error, fields? }`: `400` поля, `403` права, `404` нет курса/навыка/материала/попытки,
 `409` конфликт. Курс, который пользователю не виден, — `404`. Изменяющие запросы — с `X-Helios-Client: web`.
 
-**Права:** «преподаватель курса» = `AccessRules.CanEditCourse`. «Ученик курса» = есть строка в `Enrollments`;
+**Права:** «преподаватель курса» = `AccessRules.CanEditCourse`. «Ученик курса» = `AccessRules.IsCourseStudent` (курс назначен его группе);
 иначе на `/api/me/…` — `403 { error: "Вы не записаны на этот курс" }`.
 
 ### 3.1. Навыки (преподаватель курса; читать могут и ученики курса)
@@ -342,7 +342,7 @@ docs/backend/p2-course-builder.md и backend/tests/management.test.mjs.
   AttemptAnswers, LearningEvents (только добавление), SkillMastery, Recommendations, StudentPins,
   Course.AdaptiveEnabled;
 - авто-навык модуля (раздел 1), BKT, статусы, прогресс и выбор следующего задания строго по разделу 2;
-- эндпоинты раздела 3 с правами (AccessRules.CanEditCourse для преподавателя, Enrollments для ученика,
+- эндпоинты раздела 3 с правами (AccessRules.CanEditCourse для преподавателя, CourseStudents для ученика,
   пользователь только из сессии, X-Helios-Client: web на изменяющих запросах) и текстами ошибок раздела 4;
 - каждое действие пишет событие в LearningEvents в той же транзакции;
 - сид раздела 5 для c-matan (перенеси вопросы quizQuestions.mq1 из src/mocks/data.ts, добавь подсказки,
