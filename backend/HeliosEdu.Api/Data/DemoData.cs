@@ -40,8 +40,12 @@ public static class DemoData
         foreach (var group in seedGroups)
         {
             var id = group.Id;
-            if (await db.Cohorts.AnyAsync(existing => existing.Id == id, cancellationToken)) continue;
             group.NormalizedName = group.Name.ToUpperInvariant();
+            var (name, tenant) = (group.NormalizedName, group.TenantId);
+            // В старой демобазе группа с тем же названием могла остаться под другим id (М1217 была co-1):
+            // такую группу не трогаем, иначе заполнение упадёт на уникальном названии.
+            if (await db.Cohorts.AnyAsync(existing => existing.Id == id ||
+                    existing.TenantId == tenant && existing.NormalizedName == name, cancellationToken)) continue;
             db.Cohorts.Add(group);
             if (id == "co-1")
                 db.CohortCourses.AddRange(courses.Select((course, position) => new CohortCourse
