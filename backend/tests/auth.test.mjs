@@ -211,6 +211,8 @@ if (process.env.TEST_WEB_URL) {
       (await get(baseUrl, `/api/schedule?group=${encodeURIComponent("1237")}`, cookie)).status,
       403,
     );
+    // без группы — 400, как в демо
+    assert.equal((await get(baseUrl, "/api/schedule", cookie)).status, 400);
   });
 
   test("Next.js: редактирование обложки требует серверного права course.edit", async () => {

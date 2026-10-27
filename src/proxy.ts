@@ -65,7 +65,13 @@ export async function proxy(request: NextRequest) {
 
   const requestedUser = request.nextUrl.searchParams.get("userId");
   const requestedGroup = request.nextUrl.searchParams.get("group");
-  if (path === "/api/schedule" && !can(user.role, "analytics.view") && requestedGroup !== user.group)
+  // без группы маршрут сам ответит 400 — как в демо
+  if (
+    path === "/api/schedule" &&
+    !can(user.role, "analytics.view") &&
+    requestedGroup &&
+    requestedGroup !== user.group
+  )
     return forbidden();
   const fromPath = courseFromPath(path, request.nextUrl.searchParams);
   if (fromPath.missing) return Response.json({ error: "not found" }, { status: 404 });
