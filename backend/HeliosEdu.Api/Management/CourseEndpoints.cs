@@ -37,7 +37,8 @@ public static partial class ManagementEndpoints
             return Duplicate("code", "Курс с таким кодом уже есть");
         var course = new Course { Id = $"c-{Guid.NewGuid():N}", Code = code, Title = input.Text("title"),
             Category = input.Text("category"), Description = input.Text("description"), TutorId = input.Text("tutorId"),
-            Status = "draft", CoverColor = CoverColors[RandomNumberGenerator.GetInt32(CoverColors.Length)] };
+            Status = "draft", CoverColor = CoverColors[RandomNumberGenerator.GetInt32(CoverColors.Length)],
+            Faculty = input.OptionalText("faculty"), AcademicYear = input.OptionalText("academicYear") };
         var position = await db.Courses.MaxAsync(item => (int?)EF.Property<int>(item, "Position"), context.RequestAborted) ?? -1;
         db.Courses.Add(course);
         db.Entry(course).Property("Position").CurrentValue = position + 1;
@@ -59,6 +60,8 @@ public static partial class ManagementEndpoints
         if (input.Has("category")) course.Category = input.Text("category");
         if (input.Has("description")) course.Description = input.Text("description");
         if (input.Has("tutorId")) course.TutorId = input.Text("tutorId");
+        if (input.Has("faculty")) course.Faculty = input.OptionalText("faculty");
+        if (input.Has("academicYear")) course.AcademicYear = input.OptionalText("academicYear");
         if (input.Has("status")) course.Status = input.Choice("status");
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(CourseSummary.From(course));

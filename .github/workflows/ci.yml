@@ -58,6 +58,7 @@ jobs:
       # После рестарта счётчик входов пуст: auth и management не делят лимит 60/мин.
       - run: node --test backend/tests/management.test.mjs
       - run: node --test backend/tests/course-builder.test.mjs
+      - run: node --test backend/tests/catalog.test.mjs
       - run: node --test backend/tests/api.test.mjs
       - name: Backend logs
         if: failure()

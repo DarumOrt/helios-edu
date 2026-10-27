@@ -3,6 +3,7 @@
 import { useSession } from "@/shared/auth/session";
 import { Select } from "@/shared/ui";
 import type { Role } from "@/shared/types/domain";
+import { mutate } from "swr";
 
 const roles: { value: Role; label: string }[] = [
   { value: "admin", label: "Администратор" },
@@ -23,7 +24,11 @@ export function RoleSwitcher() {
       <span className="max-sm:sr-only">демо-роль</span>
       <Select
         value={role}
-        onChange={(e) => setRole(e.target.value as Role)}
+        onChange={(e) => {
+          setRole(e.target.value as Role);
+          // данные прошлой роли (курсы, поиск, оценки) перезапрашиваются под новой
+          void mutate(() => true);
+        }}
         className="h-8 border-dashed bg-transparent text-xs"
       >
         {roles.map((r) => (

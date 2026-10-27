@@ -19,6 +19,8 @@ export interface CoursePayload {
   description?: string;
   tutorId?: string;
   status?: CourseStatus;
+  faculty?: string;
+  academicYear?: string;
 }
 
 export const adminApi = {

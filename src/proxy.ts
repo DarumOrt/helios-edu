@@ -39,7 +39,8 @@ export async function proxy(request: NextRequest) {
     path === "/api/users" ||
     /^\/api\/users\/[^/]+$/.test(path) ||
     path === "/api/courses" ||
-    /^\/api\/courses\/[^/]+$/.test(path)
+    /^\/api\/courses\/[^/]+$/.test(path) ||
+    path === "/api/catalog"
   )
     return NextResponse.next();
   const session = await backendGet("/api/auth/me");

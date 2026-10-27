@@ -5,7 +5,10 @@ import type { Activity, Course, Section } from "@/shared/types/domain";
 // Курсы демо-режима: исходные моки + созданные в админке + правки карточки (название, статус…)
 // + содержание из конструктора курса (модули и материалы).
 // Id модулей и материалов исходных курсов уникальны только внутри курса (как в C#), новые — глобально.
-type CourseMeta = Pick<Course, "title" | "description" | "category" | "tutorId" | "status">;
+type CourseMeta = Pick<
+  Course,
+  "title" | "description" | "category" | "tutorId" | "status" | "faculty" | "academicYear"
+>;
 
 interface CourseState {
   created: Course[];
@@ -40,7 +43,7 @@ export function findDemoCourseByCode(code: string): Course | undefined {
 }
 
 export function createDemoCourse(
-  input: Pick<Course, "code" | "title" | "category" | "description" | "tutorId">,
+  input: Pick<Course, "code" | "title" | "category" | "description" | "tutorId" | "faculty" | "academicYear">,
 ): Course {
   const course: Course = {
     ...input,

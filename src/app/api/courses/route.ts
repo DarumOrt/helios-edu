@@ -36,7 +36,7 @@ export async function GET(req: Request) {
   return NextResponse.json(courses.map(({ sections: _sections, ...rest }) => withCover(rest)));
 }
 
-// POST { code, title, category, description, tutorId } — создать курс (course.create). Новый курс — черновик.
+// POST { code, title, category, description, tutorId, faculty?, academicYear? } — создать курс (course.create). Новый курс — черновик.
 export async function POST(req: Request) {
   const forwarded = await backendForward(req, "/api/courses");
   if (forwarded) return auditIfOk(forwarded, "Создан курс", "через сервер");
@@ -51,6 +51,8 @@ export async function POST(req: Request) {
     category: str(body.category) ?? "",
     description: str(body.description) ?? "",
     tutorId: str(body.tutorId) ?? "",
+    faculty: str(body.faculty) || undefined,
+    academicYear: str(body.academicYear) || undefined,
   };
   const fields = validateCourse(input);
   if (!fields.tutorId && findDemoUser(input.tutorId)?.role !== "tutor")

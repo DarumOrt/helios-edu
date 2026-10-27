@@ -22,7 +22,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   return NextResponse.json(withCover(course));
 }
 
-// PATCH { title?, description?, category?, tutorId?, status? } — карточка курса (course.create).
+// PATCH { title?, description?, category?, tutorId?, status?, faculty?, academicYear? } — карточка курса (course.create).
 // Код курса не меняется: на него ссылаются журналы и расписание.
 export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
@@ -38,6 +38,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const patch: Partial<CourseInput> = {};
   for (const key of ["title", "category", "description", "tutorId"] as const)
     if (body[key] !== undefined) patch[key] = str(body[key]) ?? "";
+  // пустой факультет или год — «не указан»
+  for (const key of ["faculty", "academicYear"] as const)
+    if (body[key] !== undefined) patch[key] = str(body[key]) || undefined;
   if (body.status !== undefined) patch.status = body.status as CourseStatus;
   if (body.code !== undefined)
     return fail(400, "Код курса изменить нельзя", { code: "Код курса изменить нельзя" });

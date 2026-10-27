@@ -48,6 +48,7 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();
+app.MapCatalogEndpoints();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
