@@ -7,7 +7,7 @@ export type Activity = {
   title: string;
   durationMin?: number | null;
   completed?: boolean | null;
-  due?: string | null;
+  due?: string;
   description?: string | null;
   maxGrade?: number | null;
   src?: string | null;

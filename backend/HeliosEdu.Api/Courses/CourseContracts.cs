@@ -6,9 +6,9 @@ public record CourseSummary(
     string Category, string TutorId, int Enrolled, int? Progress, string Status, string? CoverColor,
     string? Faculty, string? AcademicYear)
 {
-    public static CourseSummary From(Course course) => new(course.Id, course.Code, course.Title,
-        course.Description, course.Cover, course.Category, course.TutorId, course.Enrolled,
-        course.Progress, course.Status, course.CoverColor, course.Faculty, course.AcademicYear);
+    public static CourseSummary From(Course course, CourseStats stats) => new(course.Id, course.Code, course.Title,
+        course.Description, course.Cover, course.Category, course.TutorId, stats.Enrolled,
+        stats.Progress, course.Status, course.CoverColor, course.Faculty, course.AcademicYear);
 }
 
 public sealed record CourseDetail(
@@ -18,9 +18,14 @@ public sealed record CourseDetail(
     : CourseSummary(Id, Code, Title, Description, Cover, Category, TutorId, Enrolled, Progress, Status, CoverColor,
         Faculty, AcademicYear)
 {
-    public static CourseDetail FromDetail(Course course) => new(
-        course.Id, course.Code, course.Title, course.Description, course.Cover,
-        course.Category, course.TutorId, course.Enrolled, course.Progress,
-        course.Sections.OrderBy(section => section.Order).ToList(), course.Status, course.CoverColor,
-        course.Faculty, course.AcademicYear);
+    public static CourseDetail FromDetail(Course course, CourseStats stats)
+    {
+        // «пройдено» — у ученика своё; преподавателю и управлению не показываем
+        foreach (var activity in course.Sections.SelectMany(section => section.Activities))
+            activity.Completed = stats.Completed?.Contains(activity.Id) == true ? true : null;
+        return new(course.Id, course.Code, course.Title, course.Description, course.Cover,
+            course.Category, course.TutorId, stats.Enrolled, stats.Progress,
+            course.Sections.OrderBy(section => section.Order).ToList(), course.Status, course.CoverColor,
+            course.Faculty, course.AcademicYear);
+    }
 }

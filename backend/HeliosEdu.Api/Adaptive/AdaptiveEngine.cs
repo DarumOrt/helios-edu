@@ -141,6 +141,9 @@ public sealed class AdaptiveEngine(LearningDbContext db)
             .Select(item => item.ActivityId!).Distinct().ToListAsync(token);
         completed.AddRange(await db.QuizAttempts.Where(item => item.UserId == userId && item.CourseId == courseId && item.SubmittedAt != null)
             .Select(item => item.ActivityId).Distinct().ToListAsync(token));
+        // сданная работа — тоже пройденный материал (как в Courses/CourseProgress.cs)
+        completed.AddRange(await db.Submissions.Where(item => item.UserId == userId && item.CourseId == courseId)
+            .Select(item => item.ActivityId).ToListAsync(token));
         return completed.ToHashSet();
     }
 

@@ -46,11 +46,13 @@ public sealed class ContentInput
         value.TryGetDecimal(out var number) && number is >= int.MinValue and <= int.MaxValue && decimal.Truncate(number) == number
             ? (int)number : null;
 
-    private string? Due()
+    private DateTimeOffset? Due()
     {
         if (Text("due") is not { } text || !DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture,
                 DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeUniversal, out var due)) return null;
-        return due.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+        // точность как у прежнего строкового срока — до миллисекунд, в UTC
+        var utc = due.ToUniversalTime();
+        return utc.AddTicks(-(utc.Ticks % TimeSpan.TicksPerMillisecond));
     }
 
     public Dictionary<string, string> Validate(string type, bool partial)

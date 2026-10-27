@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
 namespace HeliosEdu.Api.Courses;
 
 // Идентификаторы разделов и материалов уникальны только внутри курса.
@@ -16,9 +19,7 @@ public sealed class Course
     // Короткое название факультета («ИНЭК») и учебный год («2026/2027») — для поиска курсов.
     public string? Faculty { get; set; }
     public string? AcademicYear { get; set; }
-    public int Enrolled { get; set; }
-    // Пока это демонстрационный прогресс, общий для всех посетителей.
-    public int? Progress { get; set; }
+    // Участники и прогресс не хранятся: их считает CourseProgress для того, кто смотрит.
     public List<Section> Sections { get; set; } = [];
 }
 
@@ -36,8 +37,9 @@ public sealed class Activity
     public required string Type { get; set; }
     public required string Title { get; set; }
     public int? DurationMin { get; set; }
-    public bool? Completed { get; set; }
-    public string? Due { get; set; }
+    // Пройден ли материал — своё у каждого ученика (CourseProgress), в базе не хранится.
+    [NotMapped] public bool? Completed { get; set; }
+    [JsonConverter(typeof(UtcIsoDateConverter))] public DateTimeOffset? Due { get; set; }
     public string? Description { get; set; }
     public int? MaxGrade { get; set; }
     public string? Src { get; set; }

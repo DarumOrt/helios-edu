@@ -94,11 +94,10 @@ app.MapGet("/api/health/ready", async (LearningDbContext db, CancellationToken c
 app.MapGet("/api/courses", async (LearningDbContext db, HttpContext context, CancellationToken cancellationToken) =>
 {
     var courses = await AccessRules.VisibleCourses(db, context.User).AsNoTracking().OrderBy(course => EF.Property<int>(course, "Position"))
-        .Select(course => new CourseSummary(course.Id, course.Code, course.Title, course.Description,
-            course.Cover, course.Category, course.TutorId, course.Enrolled, course.Progress, course.Status, course.CoverColor,
-            course.Faculty, course.AcademicYear))
         .ToListAsync(cancellationToken);
-    return Results.Ok(courses);
+    var stats = await CourseProgress.ForViewer(db, (Account)context.Items[typeof(Account)]!,
+        courses.Select(course => course.Id).ToList(), cancellationToken);
+    return Results.Ok(courses.Select(course => CourseSummary.From(course, stats.GetValueOrDefault(course.Id, CourseStats.Empty))));
 }).RequireAuthorization().Produces<CourseSummary[]>();
 
 app.MapGet("/api/courses/{id}", async (string id, LearningDbContext db, HttpContext context, CancellationToken cancellationToken) =>
@@ -109,7 +108,8 @@ app.MapGet("/api/courses/{id}", async (string id, LearningDbContext db, HttpCont
         .SingleOrDefaultAsync(course => course.Id == id, cancellationToken);
     return course is null
         ? Results.NotFound(new { error = "not found" })
-        : Results.Ok(CourseDetail.FromDetail(course));
+        : Results.Ok(CourseDetail.FromDetail(course, (await CourseProgress.ForViewer(db,
+            (Account)context.Items[typeof(Account)]!, [course.Id], cancellationToken))[course.Id]));
 }).RequireAuthorization().Produces<CourseDetail>();
 
 app.Run();
