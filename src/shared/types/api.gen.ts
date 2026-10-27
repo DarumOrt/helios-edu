@@ -14,6 +14,15 @@ export type Activity = {
   pages?: number | null;
 };
 
+export type AnnouncementInfo = {
+  id: string;
+  courseId: string;
+  title: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
+};
+
 export type CatalogCohort = {
   id: string;
   name: string;
@@ -113,6 +122,16 @@ export type GradeRow = {
 export type LoginRequest = {
   email: string | null;
   password: string | null;
+};
+
+export type NotificationInfo = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  createdAt: string;
+  read: boolean;
+  link: string | null;
 };
 
 export type RegisterRequest = {

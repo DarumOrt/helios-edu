@@ -138,8 +138,13 @@ public static class GradesEndpoints
         submission.ReviewedBy = actor.Id;
         submission.ReviewedAt = DateTimeOffset.UtcNow;
         await SaveGrade(db, submission.CourseId, submission.ActivityId, submission.UserId, grade!.Value, actor.Id, context.RequestAborted);
+        var info = (await Describe(db, [submission], context.RequestAborted))[0] with { Grade = grade, Status = "reviewed" };
+        // ученик узнаёт об оценке в колокольчике
+        db.Notifications.Add(new Notifications.Notification { Id = $"n-{Guid.NewGuid().ToString("N")[..8]}",
+            UserId = submission.UserId, Type = "grade", Title = "Оценка выставлена",
+            Body = $"{info.AssignmentTitle}: {grade:0.#} из {max}", Link = "/gradebook", CreatedAt = DateTimeOffset.UtcNow });
         await db.SaveChangesAsync(context.RequestAborted);
-        return Results.Ok((await Describe(db, [submission], context.RequestAborted))[0]);
+        return Results.Ok(info);
     }
 
     private static async Task SaveGrade(LearningDbContext db, string courseId, string activityId, string userId,

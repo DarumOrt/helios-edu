@@ -3,13 +3,15 @@ import { NextResponse } from "next/server";
 import { addAnnouncement, listAnnouncements } from "@/mocks/announcements-store";
 import { currentUser, visibleCourses } from "@/mocks/current-user";
 import { demoCourseEditor, fail, readJson, str } from "@/mocks/management-guards";
-import { getDataSource } from "@/shared/lib/backend";
+import { backendForward } from "@/shared/lib/backend";
 
-// Объявления курса. Хранятся в моках Next в обоих режимах; видимость курса — по правилам C#.
+// Объявления курса. Сервер — C# (Notifications/NotificationsEndpoints.cs), демо — моки ниже.
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(req: Request, { params }: Ctx) {
   const { id } = await params;
+  const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}/announcements`);
+  if (forwarded) return forwarded;
   const courses = await visibleCourses();
   if (courses instanceof Response) return courses;
   if (!courses.some((c) => c.id === id)) return fail(404, "not found");
@@ -19,12 +21,12 @@ export async function GET(_req: Request, { params }: Ctx) {
 // POST { title, body } — объявление всем, кто видит курс (студентам его групп)
 export async function POST(req: Request, { params }: Ctx) {
   const { id } = await params;
-  // сервер: курс и право course.edit уже проверил proxy.ts; демо — проверяем здесь
-  if ((await getDataSource()).source === "demo") {
-    const editor = await demoCourseEditor(id);
-    if (editor instanceof NextResponse) return editor;
-  }
+  // выключатель объявлений — в настройках системы, они пока хранятся в Next: проверяем до пересылки
   if (!getSettings().announcementsEnabled) return fail(403, "Объявления отключены администратором");
+  const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}/announcements`);
+  if (forwarded) return forwarded;
+  const editor = await demoCourseEditor(id);
+  if (editor instanceof NextResponse) return editor;
   const author = await currentUser();
   if (author instanceof Response) return author;
 

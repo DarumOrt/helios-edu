@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { notifications } from "@/mocks/data";
-import { isRead, listAnnouncements } from "@/mocks/announcements-store";
+import { isRead, listAnnouncements, listPersonal } from "@/mocks/announcements-store";
 import { currentUser, visibleCourses } from "@/mocks/current-user";
 import type { Notification } from "@/shared/types/domain";
+import { backendForward } from "@/shared/lib/backend";
 
-// Уведомления: демонстрационные + объявления курсов, которые видит пользователь.
-export async function GET() {
+// Уведомления: объявления видимых курсов, личные («оценка выставлена») и демонстрационные.
+// Сервер — C# (там вместо демонстрационных — близкие сроки сдачи), демо — моки ниже.
+export async function GET(req: Request) {
+  const forwarded = await backendForward(req, "/api/notifications");
+  if (forwarded) return forwarded;
   const [user, courses] = await Promise.all([currentUser(), visibleCourses()]);
   if (user instanceof Response) return user;
   if (courses instanceof Response) return courses;
@@ -21,8 +25,10 @@ export async function GET() {
     link: `/courses/${a.courseId}`,
   }));
   return NextResponse.json(
-    [...announcements, ...notifications.map((n) => ({ ...n, read: n.read || isRead(user.id, n.id) }))].sort(
-      (a, b) => b.createdAt.localeCompare(a.createdAt),
-    ),
+    [
+      ...announcements,
+      ...listPersonal(user.id).map((n) => ({ ...n, read: isRead(user.id, n.id) })),
+      ...notifications.map((n) => ({ ...n, read: n.read || isRead(user.id, n.id) })),
+    ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   );
 }
