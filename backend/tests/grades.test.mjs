@@ -51,10 +51,10 @@ for (const [name, baseUrl] of [
 
     // своя работа: ученик видит статус и текст, преподавателю этот путь закрыт, чужой курс — 404
     const own = "/api/assignment/ma1/submission?courseId=c-dor-ai";
-    const mine = await (await get(baseUrl, own, student.cookie)).json();
-    assert.equal(mine.submission.userId, student.user.id);
-    assert.ok(["submitted", "reviewed"].includes(mine.submission.status));
-    if (submitted.status === 201) assert.equal(mine.submission.text, text);
+    const ownWork = await (await get(baseUrl, own, student.cookie)).json();
+    assert.equal(ownWork.submission.userId, student.user.id);
+    assert.ok(["submitted", "reviewed"].includes(ownWork.submission.status));
+    if (submitted.status === 201) assert.equal(ownWork.submission.text, text);
     assert.equal((await get(baseUrl, own, tutor.cookie)).status, 403);
     assert.equal(
       (await get(baseUrl, "/api/assignment/ma1/submission?courseId=no-such", student.cookie)).status,
