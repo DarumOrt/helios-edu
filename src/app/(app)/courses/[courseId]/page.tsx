@@ -2,7 +2,18 @@
 
 import { use, useState } from "react";
 import useSWR from "swr";
-import { Users, BookOpen, ListTree, BarChart3, Megaphone, Pencil, Check, Target, Route } from "lucide-react";
+import {
+  Users,
+  BookOpen,
+  ListTree,
+  BarChart3,
+  Megaphone,
+  Pencil,
+  Check,
+  Target,
+  Route,
+  Settings2,
+} from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import {
   PageHeader,
@@ -20,6 +31,7 @@ import { CoverEditor } from "@/features/courses/components/CoverEditor";
 import { can } from "@/shared/auth/permissions";
 import { canEditCourse } from "@/shared/auth/management";
 import { CourseBuilder } from "@/features/course-builder/components/CourseBuilder";
+import { CourseDialog } from "@/features/admin/components/CourseDialog";
 import { AnnouncementDialog, AnnouncementsCard } from "@/features/course-builder/components/Announcements";
 import { cn } from "@/shared/lib/utils";
 import { AdaptiveRoute } from "@/features/adaptive/components/AdaptiveRoute";
@@ -40,6 +52,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive">("content");
   const [building, setBuilding] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
+  const [editingCard, setEditingCard] = useState(false);
 
   return (
     <div>
@@ -49,6 +62,13 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             <PageHeader
               title={course.title}
               subtitle={`${course.code} · ${course.category}`}
+              actions={
+                canEdit && (
+                  <Button variant="outline" size="sm" onClick={() => setEditingCard(true)}>
+                    <Settings2 size={15} aria-hidden /> Карточка курса
+                  </Button>
+                )
+              }
               breadcrumbs={
                 <Breadcrumbs items={[{ label: "Курсы", href: "/courses" }, { label: course.title }]} />
               }
@@ -147,6 +167,17 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 </div>
               ))}
             {announcing && <AnnouncementDialog courseId={course.id} onClose={() => setAnnouncing(false)} />}
+            {editingCard && (
+              // название, описание, направление и статус; преподавателя, факультет и год — в «Администрирование → Курсы»
+              <CourseDialog
+                open
+                onClose={() => setEditingCard(false)}
+                course={course}
+                tutors={[]}
+                categories={[course.category]}
+                managed={false}
+              />
+            )}
 
             {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
             {tab === "skills" && canEdit && <SkillsEditor course={course} />}

@@ -5,6 +5,7 @@ import { findDemoCourse, updateDemoCourse } from "@/mocks/course-store";
 import { visibleDemoCourses } from "@/mocks/demo-courses";
 import { findDemoUser } from "@/mocks/users-store";
 import { demoActorWith, fail, readJson, str } from "@/mocks/management-guards";
+import { MANAGED_COURSE_FIELDS, canEditCourse } from "@/shared/auth/management";
 import { backendForward, backendJson } from "@/shared/lib/backend";
 import { validateCourse, type CourseInput } from "@/shared/lib/management-validation";
 import type { Course, CourseStatus } from "@/shared/types/domain";
@@ -22,18 +23,23 @@ export async function GET(_req: Request, { params }: Ctx) {
   return NextResponse.json(withCover(course));
 }
 
-// PATCH { title?, description?, category?, tutorId?, status?, faculty?, academicYear? } — карточка курса (course.create).
+// PATCH { title?, description?, category?, tutorId?, status?, faculty?, academicYear? } — карточка курса (course.edit).
+// Преподаватель правит только свой курс и без полей управления (MANAGED_COURSE_FIELDS).
 // Код курса не меняется: на него ссылаются журналы и расписание.
 export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}`);
   if (forwarded) return auditIfOk(forwarded, "Изменён курс", id);
 
-  const actor = await demoActorWith("course.create");
+  const actor = await demoActorWith("course.edit");
   if (actor instanceof NextResponse) return actor;
-  if (!findDemoCourse(id)) return fail(404, "not found");
+  const existing = findDemoCourse(id);
+  // как в C#: чужой курс преподавателю не виден
+  if (!existing || !canEditCourse(actor, existing)) return fail(404, "not found");
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
+  if (actor.role === "tutor" && MANAGED_COURSE_FIELDS.some((key) => body[key] !== undefined))
+    return fail(403, "Преподавателя, факультет и учебный год курса меняет организатор");
 
   const patch: Partial<CourseInput> = {};
   for (const key of ["title", "category", "description", "tutorId"] as const)

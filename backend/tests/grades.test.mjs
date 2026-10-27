@@ -118,4 +118,53 @@ for (const [name, baseUrl] of [
     // чужой курс преподавателя — не найден
     assert.equal((await get(baseUrl, "/api/gradebook?courseId=c-ai-teaching", tutor.cookie)).status, 404);
   });
+  test(`${name}: после перевода в другую группу оценки остаются в «Моих оценках»`, async () => {
+    const origin = process.env.TEST_WEB_URL ? new URL(process.env.TEST_WEB_URL).origin : undefined;
+    const send = (cookie, method, path, body) =>
+      fetch(`${baseUrl}${path}`, {
+        method,
+        headers: {
+          Cookie: cookie,
+          "Content-Type": "application/json",
+          "X-Helios-Client": "web",
+          ...(origin && { Origin: origin }),
+        },
+        body: JSON.stringify(body),
+      });
+    const organizer = await login(baseUrl, "organizer@pspu.ru");
+    const created = await send(organizer.cookie, "POST", "/api/users", {
+      name: "Перевод Студент",
+      email: `transfer-${Date.now()}@example.ru`,
+      role: "student",
+      group: "М1227",
+    });
+    assert.equal(created.status, 201);
+    const { user, temporaryPassword } = await created.json();
+    try {
+      const student = await login(baseUrl, user.email, temporaryPassword);
+      const submitted = await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
+        courseId: "c-dor-ai",
+        text: "Работа до перевода",
+      });
+      assert.equal(submitted.status, 201);
+      const myCourses = async () =>
+        (await (await get(baseUrl, "/api/gradebook/me", student.cookie)).json()).courses.map(
+          (c) => c.courseId,
+        );
+      assert.ok((await myCourses()).includes("c-dor-ai"));
+
+      // курс пропадает из списка курсов, а оценки по нему — нет
+      assert.equal(
+        (await send(organizer.cookie, "PATCH", `/api/users/${user.id}`, { group: null })).status,
+        200,
+      );
+      assert.ok(
+        !(await (await get(baseUrl, "/api/courses", student.cookie)).json()).some((c) => c.id === "c-dor-ai"),
+      );
+      assert.ok((await myCourses()).includes("c-dor-ai"), "курс со сданной работой остался в оценках");
+    } finally {
+      // учётная запись остаётся без группы — на состав М1227 и число участников курса не влияет
+      await send(organizer.cookie, "PATCH", `/api/users/${user.id}`, { group: null, status: "blocked" });
+    }
+  });
 }

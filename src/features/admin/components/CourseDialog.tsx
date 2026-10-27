@@ -18,18 +18,21 @@ const statusHint: Record<CourseStatus, string> = {
 };
 
 // Создание курса и правка его карточки. Содержание (модули, материалы) — в конструкторе курса.
+// managed={false} — карточка своего курса у преподавателя: без преподавателя, факультета и года (MANAGED_COURSE_FIELDS).
 export function CourseDialog({
   open,
   onClose,
   course,
   tutors,
   categories,
+  managed = true,
 }: {
   open: boolean;
   onClose: () => void;
   course?: Course;
   tutors: User[];
   categories: string[];
+  managed?: boolean;
 }) {
   const router = useRouter();
   const editing = Boolean(course);
@@ -49,8 +52,9 @@ export function CourseDialog({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const { code, status, ...meta } = values;
-    const payload: CoursePayload = editing ? { ...meta, status } : { ...meta, code: code.toUpperCase() };
+    const { code, status, tutorId, faculty, academicYear, ...meta } = values;
+    const card = managed ? { ...meta, tutorId, faculty, academicYear } : meta;
+    const payload: CoursePayload = editing ? { ...card, status } : { ...card, code: code.toUpperCase() };
     const clientErrors = validateCourse(payload, editing);
     if (Object.keys(clientErrors).length) {
       setFields(clientErrors);
@@ -131,53 +135,62 @@ export function CourseDialog({
               ))}
             </datalist>
           </Field>
-          <Field id="course-tutor" label="Преподаватель" error={fields.tutorId}>
-            <Select
-              id="course-tutor"
-              className="w-full"
-              value={values.tutorId}
-              onChange={(e) => set("tutorId", e.target.value)}
-              disabled={pending}
-              {...describedBy("course-tutor", fields.tutorId)}
-            >
-              {tutors.length === 0 && <option value="">Преподавателей пока нет</option>}
-              {tutors.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          {managed && (
+            <Field id="course-tutor" label="Преподаватель" error={fields.tutorId}>
+              <Select
+                id="course-tutor"
+                className="w-full"
+                value={values.tutorId}
+                onChange={(e) => set("tutorId", e.target.value)}
+                disabled={pending}
+                {...describedBy("course-tutor", fields.tutorId)}
+              >
+                {tutors.length === 0 && <option value="">Преподавателей пока нет</option>}
+                {tutors.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="course-faculty" label="Факультет" error={fields.faculty}>
-            <Select
-              id="course-faculty"
-              className="w-full"
-              value={values.faculty}
-              onChange={(e) => set("faculty", e.target.value)}
-              disabled={pending}
-              {...describedBy("course-faculty", fields.faculty)}
-            >
-              {FACULTIES.map((f) => (
-                <option key={f.code} value={f.code}>
-                  {f.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field id="course-year" label="Учебный год" error={fields.academicYear} hint="Например, 2026/2027">
-            <Input
+        {managed && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="course-faculty" label="Факультет" error={fields.faculty}>
+              <Select
+                id="course-faculty"
+                className="w-full"
+                value={values.faculty}
+                onChange={(e) => set("faculty", e.target.value)}
+                disabled={pending}
+                {...describedBy("course-faculty", fields.faculty)}
+              >
+                {FACULTIES.map((f) => (
+                  <option key={f.code} value={f.code}>
+                    {f.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field
               id="course-year"
-              value={values.academicYear}
-              onChange={(e) => set("academicYear", e.target.value)}
-              disabled={pending}
-              maxLength={9}
-              inputMode="numeric"
-              {...describedBy("course-year", fields.academicYear, true)}
-            />
-          </Field>
-        </div>
+              label="Учебный год"
+              error={fields.academicYear}
+              hint="Например, 2026/2027"
+            >
+              <Input
+                id="course-year"
+                value={values.academicYear}
+                onChange={(e) => set("academicYear", e.target.value)}
+                disabled={pending}
+                maxLength={9}
+                inputMode="numeric"
+                {...describedBy("course-year", fields.academicYear, true)}
+              />
+            </Field>
+          </div>
+        )}
         <Field
           id="course-description"
           label="Описание"

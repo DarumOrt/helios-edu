@@ -79,7 +79,6 @@ app.MapGet("/api/health/ready", async (LearningDbContext db, CancellationToken c
         await db.Courses.AnyAsync(cancellationToken);
         await db.Accounts.AnyAsync(cancellationToken);
         await db.LoginSessions.AnyAsync(cancellationToken);
-        await db.Enrollments.AnyAsync(cancellationToken);
         await db.Cohorts.AnyAsync(cancellationToken);
         await db.CohortCourses.AnyAsync(cancellationToken);
         return Results.Ok(new { status = "ok" });

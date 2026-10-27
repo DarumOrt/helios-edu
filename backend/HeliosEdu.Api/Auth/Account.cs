@@ -22,12 +22,6 @@ public sealed class LoginSession
     public DateTimeOffset ExpiresAt { get; set; }
 }
 
-public sealed class Enrollment
-{
-    public string AccountId { get; set; } = "";
-    public string CourseId { get; set; } = "";
-}
-
 public sealed record UserInfo(string Id, string Name, string Email, string Role,
     string TenantId, string? Faculty, string? Group, string Status)
 {

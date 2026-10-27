@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Auth;
 using System.Text.Json;
 using HeliosEdu.Api.Data;
 using HeliosEdu.Api.Management;
@@ -9,8 +10,7 @@ namespace HeliosEdu.Api.Adaptive;
 public static partial class AdaptiveEndpoints
 {
     private static async Task<bool> StudentExists(string userId, HttpContext http, LearningDbContext db) =>
-        await db.Enrollments.AnyAsync(item => item.CourseId == Current(http).Id && item.AccountId == userId &&
-            db.Accounts.Any(account => account.Id == userId && account.Role == "student"), http.RequestAborted);
+        await AccessRules.CourseStudents(db, Current(http).Id).AnyAsync(account => account.Id == userId, http.RequestAborted);
 
     private static Dictionary<string, string> ReasonErrors(ManagementInput input) => input.Text("reason").Length is < 3 or > 500
         ? new() { ["reason"] = "Укажите причину — от 3 до 500 символов" } : new();
@@ -19,7 +19,7 @@ public static partial class AdaptiveEndpoints
     {
         var course = Current(http); var token = http.RequestAborted;
         var skills = await engine.EnsureSkills(course, token);
-        var accounts = await db.Accounts.Where(account => account.Role == "student" && db.Enrollments.Any(item => item.CourseId == course.Id && item.AccountId == account.Id))
+        var accounts = await AccessRules.CourseStudents(db, course.Id)
             .OrderBy(account => account.Name).ThenBy(account => account.Id).ToListAsync(token);
         var students = new List<object>();
         foreach (var account in accounts)

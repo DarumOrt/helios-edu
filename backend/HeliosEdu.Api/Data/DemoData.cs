@@ -62,16 +62,11 @@ public static class DemoData
             ?? throw new InvalidOperationException("Не удалось прочитать демонстрационных пользователей.");
         var hasher = new PasswordHasher<Account>();
         var existingAccounts = await db.Accounts.Select(account => account.Id).ToListAsync(cancellationToken);
-        var existingEnrollments = await db.Enrollments.ToListAsync(cancellationToken);
         foreach (var account in accounts.Where(account => !existingAccounts.Contains(account.Id)))
         {
             account.NormalizedEmail = account.Email.Trim().ToUpperInvariant();
             account.PasswordHash = hasher.HashPassword(account, password);
             db.Accounts.Add(account);
-            if (account.Role != "student") continue;
-            foreach (var course in courses)
-                if (!existingEnrollments.Any(enrollment => enrollment.AccountId == account.Id && enrollment.CourseId == course.Id))
-                    db.Enrollments.Add(new Enrollment { AccountId = account.Id, CourseId = course.Id });
         }
         await db.SaveChangesAsync(cancellationToken);
         await HeliosEdu.Api.Adaptive.AdaptiveSeed.SeedAsync(db, cancellationToken);

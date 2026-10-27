@@ -99,10 +99,23 @@ test("P5: навыки, BKT, попытки, рекомендации и руч�
   t.after(async () => expect(await send("PATCH", root, { status: "draft" }, organizer), 200));
   const me = `/api/me/courses/${course.id}`;
   await expect(await send("PATCH", root, { status: "published" }, organizer), 200);
-  // P1 пока не предоставляет API зачислений. В фикстуре используем строго Enrollments, не моки/группы.
-  await sql(
-    `INSERT INTO "Enrollments" ("AccountId", "CourseId") VALUES (${literal(student.user.id)}, ${literal(course.id)}), (${literal(other.user.id)}, ${literal(course.id)})`,
+  // Ученики курса — студенты групп, которым он назначен: своя группа из двух учеников, outsider в ней нет.
+  const cohort = await expect(await send("POST", "/api/cohorts", { name: `А-${unique}` }, organizer), 201);
+  await expect(
+    await send(
+      "PUT",
+      `/api/cohorts/${cohort.id}/members`,
+      { memberIds: [student.user.id, other.user.id] },
+      organizer,
+    ),
+    200,
   );
+  await expect(await send("PATCH", `/api/cohorts/${cohort.id}`, { courseIds: [course.id] }, organizer), 200);
+  t.after(async () => {
+    await expect(await send("PUT", `/api/cohorts/${cohort.id}/members`, { memberIds: [] }, organizer), 200);
+    await expect(await send("PATCH", `/api/cohorts/${cohort.id}`, { courseIds: [] }, organizer), 200);
+    assert.equal((await send("DELETE", `/api/cohorts/${cohort.id}`, undefined, organizer)).status, 204);
+  });
   const section = await expect(await send("POST", `${root}/sections`, { title: "Основной модуль" }), 201);
   const autoSection = await expect(
     await send("POST", `${root}/sections`, { title: "Модуль без навыков" }),

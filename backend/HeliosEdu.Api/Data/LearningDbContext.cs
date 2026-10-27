@@ -30,7 +30,6 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
-    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Cohort> Cohorts => Set<Cohort>();
     public DbSet<CohortCourse> CohortCourses => Set<CohortCourse>();
     public DbSet<Skill> Skills => Set<Skill>();
@@ -83,9 +82,6 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<LoginSession>().HasIndex(session => session.ExpiresAt);
         modelBuilder.Entity<LoginSession>().HasOne(session => session.Account).WithMany()
             .HasForeignKey(session => session.AccountId).OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Enrollment>().HasKey(enrollment => new { enrollment.AccountId, enrollment.CourseId });
-        modelBuilder.Entity<Enrollment>().HasOne<Account>().WithMany().HasForeignKey(enrollment => enrollment.AccountId);
-        modelBuilder.Entity<Enrollment>().HasOne<Course>().WithMany().HasForeignKey(enrollment => enrollment.CourseId);
         var courses = modelBuilder.Entity<Course>();
         courses.Property(course => course.Id).HasMaxLength(100);
         courses.Property(course => course.Status).HasDefaultValue("published");

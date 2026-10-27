@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignableRoles, canEditCourse, canManageUser, isSelf } from "./management";
+import { MANAGED_COURSE_FIELDS, assignableRoles, canEditCourse, canManageUser, isSelf } from "./management";
 
 describe("правила управления (зеркало AccessRules.cs)", () => {
   it("организатор не назначает администратора", () => {
@@ -21,6 +21,10 @@ describe("правила управления (зеркало AccessRules.cs)", 
     expect(canEditCourse({ id: "u-tutor-2", role: "tutor" }, course)).toBe(false);
     expect(canEditCourse({ id: "u-org", role: "organizer" }, course)).toBe(true);
     expect(canEditCourse({ id: "u-stud-1", role: "student" }, course)).toBe(false);
+  });
+
+  it("преподаватель не меняет преподавателя, факультет и год курса (CourseEndpoints.ManagedCourseFields)", () => {
+    expect([...MANAGED_COURSE_FIELDS]).toEqual(["tutorId", "faculty", "academicYear"]);
   });
 
   it("isSelf сравнивает по id", () => {

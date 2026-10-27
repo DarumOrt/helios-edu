@@ -14,8 +14,13 @@ public static partial class ManagementEndpoints
         var courses = app.MapGroup("/api/courses").RequireAuthorization(AccessRules.ManageCourses)
             .AddEndpointFilter<ManagementWriteFilter>();
         courses.MapPost("", CreateCourseAsync);
-        courses.MapPatch("/{id}", UpdateCourseAsync);
+        // карточку правит и преподаватель — только своего курса и без полей управления (ManagedCourseFields)
+        app.MapGroup("/api/courses").RequireAuthorization(AccessRules.EditCourse)
+            .AddEndpointFilter<ManagementWriteFilter>().MapPatch("/{id}", UpdateCourseAsync);
     }
+
+    /// <summary>Поля карточки, которые меняет только управление: преподавателя курса, факультет и учебный год.</summary>
+    private static readonly string[] ManagedCourseFields = ["tutorId", "faculty", "academicYear"];
 
     private static async Task ValidateTutor(ManagementInput input, bool partial, HttpContext context, LearningDbContext db,
         Dictionary<string, string> fields)
@@ -48,10 +53,15 @@ public static partial class ManagementEndpoints
 
     private static async Task<IResult> UpdateCourseAsync(string id, HttpContext context, LearningDbContext db)
     {
-        var course = await db.Courses.SingleOrDefaultAsync(course => course.Id == id, context.RequestAborted);
-        if (course is null) return Fail(404, "not found");
+        var actor = Actor(context);
+        // чужой курс преподавателю не виден — 404, как у GET
+        var course = await AccessRules.VisibleCourses(db, context.User)
+            .SingleOrDefaultAsync(course => course.Id == id, context.RequestAborted);
+        if (course is null || !AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");
+        if (actor.Role == "tutor" && ManagedCourseFields.Any(input.Has))
+            return Fail(403, "Преподавателя, факультет и учебный год курса меняет организатор");
         if (input.Has("code")) return Fail(400, "Код курса изменить нельзя", new() { ["code"] = "Код курса изменить нельзя" });
         var fields = ManagementValidation.Course(input, true);
         await ValidateTutor(input, true, context, db, fields);
@@ -65,6 +75,6 @@ public static partial class ManagementEndpoints
         if (input.Has("status")) course.Status = input.Choice("status");
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(CourseSummary.From(course, (await CourseProgress.ForViewer(db,
-            (Account)context.Items[typeof(Account)]!, [course.Id], context.RequestAborted))[course.Id]));
+            actor, [course.Id], context.RequestAborted))[course.Id]));
     }
 }

@@ -45,7 +45,7 @@ public sealed class AdaptiveScopeFilter : IEndpointFilter
             .AsSplitQuery().SingleAsync(item => item.Id == courseId, token);
         if (actor.Role == "student")
         {
-            var enrolled = await AccessRules.IsAdaptiveStudent(db, actor, course.Id, token);
+            var enrolled = await AccessRules.IsCourseStudent(db, actor, course.Id, token);
             if (!enrolled) return http.Request.Path.StartsWithSegments("/api/me") || http.Request.Path.StartsWithSegments("/api/attempts")
                 ? Fail(403, "Вы не записаны на этот курс") : Fail(404, "Курс не найден");
             if (course.Status != "published") return Fail(404, "Курс не найден");
