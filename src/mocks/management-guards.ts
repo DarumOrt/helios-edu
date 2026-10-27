@@ -27,6 +27,21 @@ export async function demoActorWith(action: Action): Promise<User | NextResponse
 
 export const str = (v: unknown) => (typeof v === "string" ? v.trim() : undefined);
 
+/**
+ * Демо: оценки и проверка работ курса — как в C# (GradesEndpoints): право у администратора и преподавателя,
+ * преподаватель — только своего курса (чужой — 404, как невидимый).
+ */
+export async function demoCourseReviewer(
+  action: "grade.edit" | "submission.review" | "analytics.view",
+  courseId: string,
+): Promise<{ actor: User; course: Course } | NextResponse> {
+  const actor = await getDemoActor();
+  if (!can(actor.role, action)) return fail(403, "Недостаточно прав");
+  const course = findDemoCourse(courseId);
+  if (!course || (actor.role === "tutor" && course.tutorId !== actor.id)) return fail(404, "not found");
+  return { actor, course };
+}
+
 /** Демо: актор может править содержимое курса. Курс не найден — 404, нет прав — 403 */
 export async function demoCourseEditor(
   courseId: string,

@@ -39,7 +39,8 @@ function checkedByApi(path: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
-  // В демо-режиме данные — моки, серверной сессии нет; права показывает только интерфейс.
+  // В демо-режиме данные — моки, серверной сессии нет: права проверяют сами моковые маршруты
+  // (управление, конструктор, оценки и сдача работ — по демо-актору), остальное — интерфейс.
   if (resolveDataSource(request.cookies.get(DATA_SOURCE_COOKIE)?.value).source === "demo")
     return NextResponse.next();
   const path = request.nextUrl.pathname;

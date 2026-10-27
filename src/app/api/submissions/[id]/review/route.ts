@@ -4,6 +4,7 @@ import { getSubmission, reviewSubmission } from "@/mocks/submissions-store";
 import { backendForward } from "@/shared/lib/backend";
 import { addPersonal } from "@/mocks/announcements-store";
 import { setGrade } from "@/mocks/gradebook-store";
+import { demoCourseReviewer } from "@/mocks/management-guards";
 
 // POST { grade, feedback } — оценка работы. Сервер — C# (права и курс проверяет он), демо — моки ниже.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,6 +13,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (forwarded) return auditIfOk(forwarded, "Проверена работа", id);
   const submission = getSubmission(id);
   if (!submission) return NextResponse.json({ error: "not found" }, { status: 404 });
+  const access = await demoCourseReviewer("submission.review", submission.courseId);
+  if (access instanceof NextResponse) return access;
 
   let body: { grade?: unknown; feedback?: unknown };
   try {
