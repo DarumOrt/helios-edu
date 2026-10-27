@@ -124,6 +124,10 @@ export type LoginRequest = {
   password: string | null;
 };
 
+export type MySubmission = {
+  submission: SubmissionInfo | null;
+};
+
 export type NotificationInfo = {
   id: string;
   type: string;

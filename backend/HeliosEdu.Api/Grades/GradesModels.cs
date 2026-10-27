@@ -35,6 +35,7 @@ public sealed record SubmissionInfo(string Id, string AssignmentId, string Cours
 
 public sealed record SubmissionList(IReadOnlyList<SubmissionInfo> Items);
 public sealed record SubmitResult(string Id, string Status);
+public sealed record MySubmission(SubmissionInfo? Submission);
 public sealed record GradeItem(string ItemId, string ItemTitle, double? Grade, int Max);
 public sealed record GradeRow(string UserId, string UserName, IReadOnlyList<GradeItem> Items, double Total);
 public sealed record StudentCourseGrades(string CourseId, string CourseTitle, string CourseCode,

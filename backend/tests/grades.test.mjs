@@ -49,6 +49,18 @@ for (const [name, baseUrl] of [
     });
     assert.ok([201, 409].includes(submitted.status), `сдача: ${submitted.status}`);
 
+    // своя работа: ученик видит статус и текст, преподавателю этот путь закрыт, чужой курс — 404
+    const own = "/api/assignment/ma1/submission?courseId=c-dor-ai";
+    const mine = await (await get(baseUrl, own, student.cookie)).json();
+    assert.equal(mine.submission.userId, student.user.id);
+    assert.ok(["submitted", "reviewed"].includes(mine.submission.status));
+    if (submitted.status === 201) assert.equal(mine.submission.text, text);
+    assert.equal((await get(baseUrl, own, tutor.cookie)).status, 403);
+    assert.equal(
+      (await get(baseUrl, "/api/assignment/ma1/submission?courseId=no-such", student.cookie)).status,
+      404,
+    );
+
     // проверка: ученику список закрыт, оценка вне шкалы не сохраняется
     assert.equal((await get(baseUrl, "/api/submissions", student.cookie)).status, 403);
     const { items } = await (await get(baseUrl, "/api/submissions", tutor.cookie)).json();
@@ -142,6 +154,8 @@ for (const [name, baseUrl] of [
     const { user, temporaryPassword } = await created.json();
     try {
       const student = await login(baseUrl, user.email, temporaryPassword);
+      const own = "/api/assignment/ma1/submission?courseId=c-dor-ai";
+      assert.deepEqual(await (await get(baseUrl, own, student.cookie)).json(), {}, "ещё не сдавал");
       const submitted = await send(student.cookie, "POST", "/api/assignment/ma1/submit", {
         courseId: "c-dor-ai",
         text: "Работа до перевода",

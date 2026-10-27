@@ -20,6 +20,7 @@ public static class GradesEndpoints
     {
         var group = app.MapGroup("/api").RequireAuthorization().AddEndpointFilter<ManagementWriteFilter>();
         group.MapPost("/assignment/{activityId}/submit", SubmitAsync).Produces<SubmitResult>(201);
+        group.MapGet("/assignment/{activityId}/submission", MySubmissionAsync).Produces<MySubmission>();
         group.MapGet("/submissions", ListAsync).Produces<SubmissionList>();
         group.MapPost("/submissions/{id}/review", ReviewAsync).Produces<SubmissionInfo>();
         group.MapGet("/gradebook", CourseGradesAsync).Produces<GradeRow[]>();
@@ -74,6 +75,20 @@ public static class GradesEndpoints
         submission.SubmittedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Json(new SubmitResult(submission.Id, submission.Status), statusCode: 201);
+    }
+
+    /// <summary>Своя работа по заданию — статус, текст, оценка и комментарий. Не сдавал — пустой ответ.</summary>
+    private static async Task<IResult> MySubmissionAsync(string activityId, string? courseId, HttpContext context,
+        LearningDbContext db)
+    {
+        var actor = Actor(context);
+        if (actor.Role != "student") return Fail(403, "Недостаточно прав");
+        var course = string.IsNullOrEmpty(courseId) ? null : await VisibleCourse(db, context.User, courseId, context.RequestAborted);
+        if (course is null || Material(course, activityId)?.Type != "assignment") return Fail(404, "not found");
+        var submission = await db.Submissions.AsNoTracking().SingleOrDefaultAsync(item => item.CourseId == course.Id &&
+            item.ActivityId == activityId && item.UserId == actor.Id, context.RequestAborted);
+        return Results.Ok(new MySubmission(submission is null ? null
+            : (await Describe(db, [submission], context.RequestAborted))[0]));
     }
 
     // ---- проверка работ ----

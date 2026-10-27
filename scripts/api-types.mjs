@@ -25,6 +25,13 @@ else {
 function toType(schema) {
   if (!schema) return "unknown";
   if (schema.$ref) return schema.$ref.split("/").at(-1);
+  // необязательный объект .NET описывает как oneOf: [{ type: "null" }, { $ref }]
+  if (schema.oneOf) {
+    const members = schema.oneOf
+      .filter((member) => member.type !== "null")
+      .map((member) => wrap(toType(member)));
+    return members.join(" | ") + (members.length < schema.oneOf.length ? " | null" : "");
+  }
   const types = [schema.type ?? []].flat();
   const nullable = types.includes("null") ? " | null" : "";
   if (types.includes("integer") || types.includes("number")) return `number${nullable}`;

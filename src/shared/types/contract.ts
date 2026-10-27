@@ -16,6 +16,7 @@ import type {
   Skill,
   StudentCourseGrades,
   SubmissionFull,
+  MySubmission,
   User,
 } from "./domain";
 
@@ -64,6 +65,7 @@ export type ApiContract = [
   Assert<SameFields<Api.GradeItem, GradeRow["items"][number]>>,
   Assert<SameFields<Api.StudentCourseGrades, StudentCourseGrades>>,
   Assert<SameFields<Api.SubmitResult, Pick<SubmissionFull, "id" | "status">>>,
+  Assert<SameFields<Api.MySubmission, MySubmission>>,
   Assert<SameFields<Api.AnnouncementInfo, Announcement>>,
   Assert<SameFields<Api.NotificationInfo, Notification>>,
 ];

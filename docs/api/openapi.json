@@ -877,6 +877,40 @@
         }
       }
     },
+    "/api/assignment/{activityId}/submission": {
+      "get": {
+        "tags": ["GradesEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubmission"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/submissions": {
       "get": {
         "tags": ["GradesEndpoints"],
@@ -1520,6 +1554,22 @@
           },
           "password": {
             "type": ["null", "string"]
+          }
+        }
+      },
+      "MySubmission": {
+        "required": ["submission"],
+        "type": "object",
+        "properties": {
+          "submission": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SubmissionInfo"
+              }
+            ]
           }
         }
       },

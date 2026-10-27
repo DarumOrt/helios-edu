@@ -134,6 +134,22 @@ function enrich(s: Submission): SubmissionFull {
   };
 }
 
+const sameWork = (x: Submission, courseId: string, assignmentId: string, userId: string) =>
+  x.userId === userId &&
+  x.assignmentId === assignmentId &&
+  (x.courseId ?? ASSIGNMENTS[x.assignmentId]?.courseId) === courseId;
+
+/** Своя работа ученика по заданию (GET /api/assignment/{id}/submission) */
+export function findOwnSubmission(
+  courseId: string,
+  assignmentId: string,
+  userId: string,
+): SubmissionFull | null {
+  seed();
+  const found = Array.from(store.items.values()).find((x) => sameWork(x, courseId, assignmentId, userId));
+  return found ? enrich(found) : null;
+}
+
 /** Сдача задания студентом. Повторная сдача до проверки заменяет прежнюю. */
 export function submitAssignment(input: {
   courseId: string;
@@ -143,11 +159,8 @@ export function submitAssignment(input: {
   fileName?: string;
 }): SubmissionFull {
   seed();
-  const previous = Array.from(store.items.values()).find(
-    (x) =>
-      x.userId === input.userId &&
-      x.assignmentId === input.assignmentId &&
-      (x.courseId ?? ASSIGNMENTS[x.assignmentId]?.courseId) === input.courseId,
+  const previous = Array.from(store.items.values()).find((x) =>
+    sameWork(x, input.courseId, input.assignmentId, input.userId),
   );
   if (previous?.status === "reviewed") throw new Error("reviewed");
   const item: Submission = {

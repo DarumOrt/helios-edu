@@ -134,6 +134,11 @@ export interface SubmissionFull extends Submission {
   maxGrade: number;
 }
 
+/** Своя работа ученика: GET /api/assignment/{id}/submission?courseId=… (не сдавал — пустой объект) */
+export interface MySubmission {
+  submission?: SubmissionFull;
+}
+
 /** Оценки ученика по курсу: GET /api/gradebook/me → { courses } */
 export interface StudentCourseGrades {
   courseId: string;
