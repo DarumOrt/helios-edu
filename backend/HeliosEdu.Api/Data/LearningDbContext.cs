@@ -4,6 +4,7 @@ using HeliosEdu.Api.Management;
 using Microsoft.EntityFrameworkCore;
 using HeliosEdu.Api.Adaptive;
 using HeliosEdu.Api.Grades;
+using HeliosEdu.Api.Notifications;
 
 namespace HeliosEdu.Api.Data;
 
@@ -44,6 +45,9 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<StudentPin> StudentPins => Set<StudentPin>();
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Grade> Grades => Set<Grade>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,6 +59,13 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<Submission>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Grade>().HasKey(item => new { item.CourseId, item.ActivityId, item.UserId });
+        modelBuilder.Entity<Announcement>().HasIndex(item => new { item.CourseId, item.CreatedAt });
+        modelBuilder.Entity<Announcement>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Notification>().HasIndex(item => item.UserId);
+        modelBuilder.Entity<Notification>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<NotificationRead>().HasKey(item => new { item.UserId, item.NotificationId });
         modelBuilder.Entity<Grade>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Grade>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)

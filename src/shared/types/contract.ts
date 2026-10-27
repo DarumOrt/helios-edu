@@ -5,11 +5,13 @@
 import type * as Api from "./api.gen";
 import type {
   Activity,
+  Announcement,
   CatalogCohort,
   CatalogCourse,
   Cohort,
   Course,
   GradeRow,
+  Notification,
   Section,
   Skill,
   StudentCourseGrades,
@@ -62,4 +64,6 @@ export type ApiContract = [
   Assert<SameFields<Api.GradeItem, GradeRow["items"][number]>>,
   Assert<SameFields<Api.StudentCourseGrades, StudentCourseGrades>>,
   Assert<SameFields<Api.SubmitResult, Pick<SubmissionFull, "id" | "status">>>,
+  Assert<SameFields<Api.AnnouncementInfo, Announcement>>,
+  Assert<SameFields<Api.NotificationInfo, Notification>>,
 ];
