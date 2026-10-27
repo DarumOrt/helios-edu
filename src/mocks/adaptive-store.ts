@@ -1,5 +1,5 @@
 import "server-only";
-import { quizQuestions } from "@/mocks/data";
+import { quizQuestions, users } from "@/mocks/data";
 import { findDemoCourse } from "@/mocks/course-store";
 import type {
   Activity,
@@ -305,6 +305,26 @@ function seed(): State {
     "Ученик должен узнать, что получилось и что нужно исправить.",
     "Это два слова: первое — «обратная».",
   );
+  // освоение у одногруппников — чтобы панели преподавателя было что показать (текущий ученик начинает с нуля)
+  const base = [0.97, 0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42, 0.36];
+  users
+    .filter((u) => u.role === "student" && u.group === "М1227" && u.id !== "u-stud-2")
+    .forEach((u, n) =>
+      ids.forEach((skillId, i) => {
+        const p = Math.max(0.3, Math.min(0.99, base[n % base.length] - i * 0.12));
+        s.mastery.set(`${u.id}/${skillId}`, {
+          userId: u.id,
+          skillId,
+          pKnown: Math.round(p * 10000) / 10000,
+          attempts: 3 + i,
+          correct: Math.round((3 + i) * p),
+          status: p >= 0.95 ? "mastered" : "learning",
+          unlockedByTeacher: false,
+          masteredAt: p >= 0.95 ? new Date().toISOString() : undefined,
+          updatedAt: new Date().toISOString(),
+        });
+      }),
+    );
   // тест «основные понятия ИИ» — без подсказок и навыков: работает авто-навык модуля
   (quizQuestions.a3 ?? []).forEach((x, i) =>
     s.questions.push({

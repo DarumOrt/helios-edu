@@ -3,12 +3,12 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Plus, Trash2, X } from "lucide-react";
+import { Lightbulb, Plus, Trash2, X } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { Button, DataState, Dialog, Input, Select, Textarea } from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import { validateQuestions } from "@/shared/lib/content-validation";
-import type { Activity, QuizQuestion } from "@/shared/types/domain";
+import type { Activity, QuizQuestion, Skill } from "@/shared/types/domain";
 import { builderApi, refreshCourse } from "../api";
 
 const typeLabel: Record<QuizQuestion["type"], string> = {
@@ -45,6 +45,8 @@ export function QuestionsDialog({
   } = useSWR<QuizQuestion[]>(`/api/courses/${courseId}/quizzes/${quiz.id}/questions`, fetcher, {
     revalidateOnFocus: false,
   });
+  // навыки курса — для привязки вопроса (P5); без привязки вопрос проверяет навыки материала или модуля
+  const { data: skills } = useSWR<Skill[]>(`/api/courses/${courseId}/skills`, fetcher);
   // null — пока не начали править, показываем загруженные вопросы
   const [draft, setDraft] = useState<QuizQuestion[] | null>(null);
   const questions = draft ?? data ?? [];
@@ -59,7 +61,11 @@ export function QuestionsDialog({
     const problem = validateQuestions(questions).questions;
     setClientError(problem ?? "");
     if (problem) return;
-    const saved = await run(() => builderApi.saveQuestions(courseId, quiz.id, questions));
+    const clean = questions.map((q) => ({
+      ...q,
+      hints: (q.hints ?? []).map((h) => h.trim()).filter(Boolean),
+    }));
+    const saved = await run(() => builderApi.saveQuestions(courseId, quiz.id, clean));
     if (!saved) return;
     await refreshCourse(courseId);
     toast.success("Вопросы сохранены", { description: `${quiz.title} · ${saved.length} вопросов` });
@@ -72,7 +78,7 @@ export function QuestionsDialog({
       onClose={onClose}
       className="max-w-2xl"
       title={`Вопросы: ${quiz.title}`}
-      description="Студенты видят вопросы без правильных ответов и подсказок. Ответ проверяется сразу и меняет освоение навыков."
+      description="Студенты видят вопросы без правильных ответов. Ответ проверяется сразу и меняет освоение навыка; подсказки студент берёт сам, но ответ с подсказкой не повышает освоение."
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={pending}>
@@ -202,6 +208,61 @@ export function QuestionsDialog({
                   onChange={(e) => update(i, { correct: e.target.value })}
                 />
               )}
+
+              <div className="mt-3 grid gap-3 border-t border-border/60 pt-3">
+                <label className="grid gap-1 text-xs text-muted-foreground">
+                  Навык, который проверяет вопрос
+                  <Select
+                    className="h-8 w-full text-sm text-foreground"
+                    value={q.skillId ?? ""}
+                    onChange={(e) => update(i, { skillId: e.target.value || null })}
+                  >
+                    <option value="">Как у материала или модуля</option>
+                    {skills?.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.code ? `${s.code} ` : ""}
+                        {s.title}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+                <fieldset className="space-y-2">
+                  <legend className="mb-1 text-xs text-muted-foreground">
+                    Подсказки — от намёка к почти готовому решению
+                  </legend>
+                  {(q.hints ?? []).map((h, k) => (
+                    <div key={k} className="flex items-center gap-2">
+                      <Lightbulb size={15} className="shrink-0 text-warning" aria-hidden />
+                      <Input
+                        aria-label={`Подсказка ${k + 1} к вопросу ${i + 1}`}
+                        placeholder={`Подсказка ${k + 1}`}
+                        value={h}
+                        maxLength={500}
+                        onChange={(e) =>
+                          update(i, { hints: q.hints!.map((x, m) => (m === k ? e.target.value : x)) })
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => update(i, { hints: q.hints!.filter((_, m) => m !== k) })}
+                        aria-label={`Убрать подсказку ${k + 1}`}
+                      >
+                        <X size={15} aria-hidden />
+                      </Button>
+                    </div>
+                  ))}
+                  {(q.hints?.length ?? 0) < 3 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => update(i, { hints: [...(q.hints ?? []), ""] })}
+                    >
+                      <Plus size={14} aria-hidden /> Подсказка
+                    </Button>
+                  )}
+                </fieldset>
+              </div>
             </li>
           ))}
         </ol>
