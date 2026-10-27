@@ -22,7 +22,8 @@ ESLint 9 (flat config) · Prettier 3.
 ```bash
 npm ci              # установка строго по lock-файлу (не npm install!)
 npm run dev         # http://localhost:3000
-npm run check       # typecheck + lint + format:check — то же, что в CI
+npm run check       # typecheck + lint + format:check + test — то же, что в CI
+npm test            # модульные тесты (Vitest): права, валидация, формулы — рядом с кодом, *.test.ts
 npm run lint:fix    # автоисправление ESLint
 npm run format      # Prettier на весь проект
 npm run build       # production-сборка
@@ -80,6 +81,8 @@ backend/tests/          проверки API на настоящем PostgreSQL
   - не вызывать `setState` синхронно в `useEffect` для «синхронизации с пропсами» — сбрасывать форму через `key`;
   - нечистые вызовы (`Date.now()`, `Math.random()`) — не в рендере (lazy `useState(() => …)` или эффект).
 - `eslint-disable` — только точечно и с комментарием «почему».
+- Правила (права, валидация, формулы) — с тестом рядом: `permissions.ts` → `permissions.test.ts`. Тексты ошибок в тестах
+  совпадают с C#: меняя текст, меняйте и тест, и C#.
 - Новые зависимости — только при реальной необходимости, с точной версией (`npm i -E`). Lock-файл не править руками.
 
 ## Git-процесс (работаем вдвоём + агенты)
