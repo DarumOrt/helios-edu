@@ -226,6 +226,8 @@ public sealed class AdaptiveEngine(LearningDbContext db)
             db.Recommendations.Add(last);
             Event(userId, userId, course.Id, "recommendation.shown", new { recommendationId = last.Id, reason }, activityId, skillId);
         }
+        // та же рекомендация, но объяснение — по текущему освоению (иначе «освоен на 81%» при 95% в карточке навыка)
+        else { last.ReasonCode = code; last.ReasonText = reason; last.SkillId = skillId; }
         await db.SaveChangesAsync(token);
         return new { recommendation = new { last.Id, last.ActivityId, last.SkillId, last.ReasonCode, last.ReasonText }, personal };
     }
