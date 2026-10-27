@@ -19,7 +19,7 @@ export function HeroChip({
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
-        tone === "sun" ? "bg-sun text-foreground" : "bg-card/85 text-foreground ring-1 ring-black/5",
+        tone === "sun" ? "bg-sun text-sky-ink" : "bg-card/85 text-foreground ring-1 ring-black/5",
       )}
     >
       {Icon && <Icon size={15} aria-hidden />}
@@ -49,19 +49,19 @@ export function RoleHero({
 
   return (
     <section
-      className={cn("relative overflow-hidden rounded-2xl border", night ? "text-white" : "text-foreground")}
+      className={cn("relative overflow-hidden rounded-2xl border", night ? "text-white" : "text-sky-ink")}
       style={{ background: sky[part] }}
     >
       <SkyScene part={part} progress={day?.sunProgress ?? 0.5} />
       <div className="relative max-w-xl px-7 pt-7 pb-9 md:px-9">
-        <div className={cn("font-mono text-xs", night ? "text-white/75" : "text-muted-foreground")}>
+        <div className={cn("font-mono text-xs", night ? "text-white/75" : "text-sky-ink/70")}>
           {day?.dateLabel ?? " "}
         </div>
         <h1 className="mt-2 animate-enter text-3xl font-bold tracking-tight text-balance md:text-4xl">
           {heading}
         </h1>
         {subtitle && (
-          <p className={cn("mt-2 max-w-lg text-base", night ? "text-white/85" : "text-foreground/75")}>
+          <p className={cn("mt-2 max-w-lg text-base", night ? "text-white/85" : "text-sky-ink/75")}>
             {subtitle}
           </p>
         )}

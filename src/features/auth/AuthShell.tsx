@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { BrandMark } from "@/shared/ui";
 import { SkyScene, sky } from "@/shared/ui/SkyScene";
 import { DataSourceToggle } from "@/shared/layout/DataSourceToggle";
+import { ThemeToggle } from "@/shared/layout/ThemeToggle";
 import { useDayPart } from "@/shared/lib/use-day-part";
 import { cn } from "@/shared/lib/utils";
 import type { DataSourceState } from "@/shared/lib/data-source";
@@ -29,7 +30,7 @@ export function AuthShell({
       <aside
         className={cn(
           "relative flex min-h-52 flex-col overflow-hidden px-6 pt-6 pb-10 sm:px-10 lg:min-h-screen lg:pt-10 lg:pb-64",
-          night ? "text-white" : "text-foreground",
+          night ? "text-white" : "text-sky-ink",
         )}
         style={{ background: sky[part] }}
       >
@@ -37,22 +38,20 @@ export function AuthShell({
           <BrandMark size={30} />
           <span>
             <span className="block text-lg leading-tight font-bold tracking-tight">HeliosEDU</span>
-            <span
-              className={cn("block font-mono text-xs", night ? "text-white/75" : "text-muted-foreground")}
-            >
+            <span className={cn("block font-mono text-xs", night ? "text-white/75" : "text-sky-ink/70")}>
               ПГГПУ · ИНЭК
             </span>
           </span>
         </Link>
 
         <div className="relative mt-8 max-w-md lg:mt-auto">
-          <p className={cn("font-mono text-xs", night ? "text-white/75" : "text-muted-foreground")}>
+          <p className={cn("font-mono text-xs", night ? "text-white/75" : "text-sky-ink/70")}>
             {day?.dateLabel ?? " "}
           </p>
           <h2 className="mt-2 animate-enter text-3xl font-bold tracking-tight text-balance lg:text-4xl">
             {day?.greeting ?? "Здравствуйте"}
           </h2>
-          <p className={cn("mt-3 hidden text-base lg:block", night ? "text-white/85" : "text-foreground/75")}>
+          <p className={cn("mt-3 hidden text-base lg:block", night ? "text-white/85" : "text-sky-ink/75")}>
             Курсы, задания и оценки в одном месте. Сразу видно, что уже сделано и с чего продолжить.
           </p>
         </div>
@@ -63,7 +62,8 @@ export function AuthShell({
       </aside>
 
       <main className="flex flex-col bg-background px-5 py-6 sm:px-10">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-1">
+          <ThemeToggle />
           <DataSourceToggle state={dataSource} />
         </div>
         <div className="flex flex-1 items-center justify-center py-10">
