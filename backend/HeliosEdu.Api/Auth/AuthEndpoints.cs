@@ -83,7 +83,7 @@ public static class AuthEndpoints
         }).RequireRateLimiting("login");
 
         auth.MapGet("/me", (HttpContext context) =>
-            Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!))).RequireAuthorization();
+            Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!))).RequireAuthorization().Produces<UserInfo>();
 
         auth.MapPost("/logout", async (HttpContext context, LearningDbContext db, IConfiguration configuration) =>
         {
@@ -104,13 +104,13 @@ public static class AuthEndpoints
                 user.TenantId == account.TenantId && user.Group == group && user.Role == "student")
                 .OrderBy(user => user.Name).ToListAsync(cancellationToken);
             return Results.Ok(classmates.Select(UserInfo.From));
-        }).RequireAuthorization();
+        }).RequireAuthorization().Produces<UserInfo[]>();
 
         app.MapGet("/api/users", async (LearningDbContext db, CancellationToken cancellationToken) =>
         {
             var accounts = await db.Accounts.AsNoTracking().OrderBy(account => account.Name).ToListAsync(cancellationToken);
             return Results.Ok(accounts.Select(UserInfo.From));
-        }).RequireAuthorization(AccessRules.ManageUsers);
+        }).RequireAuthorization(AccessRules.ManageUsers).Produces<UserInfo[]>();
     }
 
     private static IResult EmailTaken() => Results.Json(new

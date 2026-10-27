@@ -15,6 +15,8 @@ var connectionString = builder.Configuration.GetConnectionString("Database")
 
 builder.Services.AddDbContext<LearningDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<AdaptiveEngine>();
+// Описание API для генерации типов фронтенда (npm run api:types, docs/api/openapi.json).
+builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
 builder.Services.AddProblemDetails();
@@ -52,6 +54,7 @@ app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();
 app.MapCatalogEndpoints();
 app.MapAdaptiveEndpoints();
+app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
@@ -92,7 +95,7 @@ app.MapGet("/api/courses", async (LearningDbContext db, HttpContext context, Can
             course.Faculty, course.AcademicYear))
         .ToListAsync(cancellationToken);
     return Results.Ok(courses);
-}).RequireAuthorization();
+}).RequireAuthorization().Produces<CourseSummary[]>();
 
 app.MapGet("/api/courses/{id}", async (string id, LearningDbContext db, HttpContext context, CancellationToken cancellationToken) =>
 {
@@ -103,6 +106,6 @@ app.MapGet("/api/courses/{id}", async (string id, LearningDbContext db, HttpCont
     return course is null
         ? Results.NotFound(new { error = "not found" })
         : Results.Ok(CourseDetail.FromDetail(course));
-}).RequireAuthorization();
+}).RequireAuthorization().Produces<CourseDetail>();
 
 app.Run();

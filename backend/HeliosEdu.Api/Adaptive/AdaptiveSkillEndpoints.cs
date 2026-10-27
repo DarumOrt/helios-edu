@@ -18,7 +18,8 @@ public static partial class AdaptiveEndpoints
     public static void MapAdaptiveEndpoints(this WebApplication app)
     {
         var course = app.MapGroup("/api/courses/{id}").RequireAuthorization().AddEndpointFilter<AdaptiveScopeFilter>();
-        course.MapGet("/skills", async (HttpContext http, AdaptiveEngine engine) => Results.Ok(await engine.SkillInfos(Current(http), http.RequestAborted)));
+        course.MapGet("/skills", async (HttpContext http, AdaptiveEngine engine) => Results.Ok(await engine.SkillInfos(Current(http), http.RequestAborted)))
+            .Produces<SkillInfo[]>();
         course.MapPost("/skills", AddSkill).WithMetadata(new AdaptiveTeacherOnly());
         course.MapPatch("/skills/{skillId}", PatchSkill).WithMetadata(new AdaptiveTeacherOnly());
         course.MapDelete("/skills/{skillId}", DeleteSkill).WithMetadata(new AdaptiveTeacherOnly());

@@ -1,0 +1,48 @@
+// Сверка контракта Next ↔ C#: типы интерфейса (domain.ts) против типов из описания C# API (api.gen.ts).
+// Проверяет `npm run typecheck`: если в C# переименовали, добавили или убрали поле, сменили его вид
+// (строка/число/массив) — здесь будет ошибка компиляции с именем поля.
+// Как обновить api.gen.ts — scripts/api-types.mjs (npm run api:types).
+import type * as Api from "./api.gen";
+import type { Activity, CatalogCohort, CatalogCourse, Cohort, Course, Section, Skill, User } from "./domain";
+
+type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T];
+
+// Вид значения без null/undefined: строковые союзы ("draft" | "published") — тоже «string».
+type Kind<T> = T extends string
+  ? "string"
+  : T extends number
+    ? "number"
+    : T extends boolean
+      ? "boolean"
+      : T extends readonly unknown[]
+        ? "array"
+        : "object";
+
+type KindMismatch<A, U> = {
+  [K in keyof A & keyof U]: Kind<NonNullable<A[K]>> extends Kind<NonNullable<U[K]>> ? never : K;
+}[keyof A & keyof U];
+
+/** true — поля совпадают; иначе объект с именами расходящихся полей (он и попадёт в текст ошибки) */
+type SameFields<A, U> = [Exclude<keyof A, keyof U>] extends [never]
+  ? [Exclude<RequiredKeys<U>, keyof A>] extends [never]
+    ? [KindMismatch<A, U>] extends [never]
+      ? true
+      : { fieldKindDiffers: KindMismatch<A, U> }
+    : { missingInApi: Exclude<RequiredKeys<U>, keyof A> }
+  : { unknownInInterface: Exclude<keyof A, keyof U> };
+
+type Assert<T extends true> = T;
+
+export type ApiContract = [
+  Assert<SameFields<Api.CourseSummary, Course>>,
+  Assert<SameFields<Api.CourseDetail, Course>>,
+  Assert<SameFields<Api.Section, Section>>,
+  Assert<SameFields<Api.Activity, Activity>>,
+  Assert<SameFields<Api.CatalogCourse, CatalogCourse>>,
+  Assert<SameFields<Api.CatalogCohort, CatalogCohort>>,
+  Assert<SameFields<Api.CatalogTutor, CatalogCourse["tutor"]>>,
+  Assert<SameFields<Api.CatalogSection, CatalogCourse["sections"][number]>>,
+  Assert<SameFields<Api.CohortInfo, Cohort>>,
+  Assert<SameFields<Api.SkillInfo, Skill>>,
+  Assert<SameFields<Api.UserInfo, User>>,
+];

@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "typecheck": "next typegen && tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "api:types": "node scripts/api-types.mjs"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",
