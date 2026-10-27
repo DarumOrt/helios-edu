@@ -60,7 +60,7 @@
 | --- | --- | --- |
 | `video` | `title`, `src`, `durationMin` | `src` |
 | `pdf`, `presentation` | `title`, `pages`, `src` | `pages` |
-| `quiz` | `title`, `due`, `durationMin` | — |
+| `quiz` | `title`, `due`, `durationMin`, `maxAttempts` | `maxAttempts` — 1…20 или пусто (без ограничения): «Попыток — от 1 до 20 или без ограничения» |
 | `assignment` | `title`, `due`, `description`, `maxGrade` | — (`maxGrade` по умолчанию 100) |
 
 Создавать можно только эти 5 типов (`type` иначе → `400 fields.type = "Выберите тип материала"`).

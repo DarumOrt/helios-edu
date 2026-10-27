@@ -221,7 +221,8 @@ progress       = round(100 · (0.7·skillsShare + 0.3·materialsShare))
 
 | Метод и путь | Тело | Ответ |
 | --- | --- | --- |
-| `POST /api/courses/{id}/quizzes/{activityId}/attempts` | — | `201 { attemptId, questions }` (вопросы как для ученика). Есть незавершённая попытка этого теста — вернуть её, `200` |
+| `POST /api/courses/{id}/quizzes/{activityId}/attempts` | — | `201 { attemptId, questions }` (вопросы как для ученика). Есть незавершённая попытка этого теста — вернуть её, `200`. Завершено `maxAttempts` попыток — `409 { error: "Попытки закончились" }` |
+| `GET /api/courses/{id}/quizzes/{activityId}/attempts` | — | `200 AttemptsSummary { maxAttempts?, used, open, bestPercent? }` — свои попытки (только ученик), попытку не начинает |
 | `POST /api/attempts/{attemptId}/answers` | `{ questionId, given }` | `200 { isCorrect, correct, skills: [{ skillId, before, after, status }] }`. Повторный ответ → `409`; попытка завершена → `409` |
 | `POST /api/attempts/{attemptId}/hint` | `{ questionId }` | `200 { level, text, hintsLeft }`; подсказок больше нет → `409 { error: "Подсказок больше нет" }` |
 | `POST /api/attempts/{attemptId}/submit` | — | `200 { score, max, percent }`; вопросы без ответа считаются неверными, но BKT по ним **не** пересчитывается |

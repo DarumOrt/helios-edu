@@ -28,6 +28,7 @@ public static partial class AdaptiveEndpoints
         course.MapGet("/quizzes/{activityId}/questions", GetQuestions);
         course.MapPut("/quizzes/{activityId}/questions", PutQuestions).WithMetadata(new AdaptiveTeacherOnly());
         course.MapPost("/quizzes/{activityId}/attempts", StartAttempt).WithMetadata(new AdaptiveStudentOnly());
+        course.MapGet("/quizzes/{activityId}/attempts", Attempts).WithMetadata(new AdaptiveStudentOnly()).Produces<AttemptsSummary>();
         course.MapGet("/adaptive", Dashboard).WithMetadata(new AdaptiveTeacherOnly());
         course.MapPatch("/adaptive", ToggleAdaptive).WithMetadata(new AdaptiveTeacherOnly());
         course.MapPut("/adaptive/students/{userId}/skills/{skillId}", OverrideSkill).WithMetadata(new AdaptiveTeacherOnly());

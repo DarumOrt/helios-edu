@@ -45,6 +45,9 @@ public sealed class QuizQuestion
     public int Order { get; set; }
 }
 
+/// <summary>Попытки ученика по тесту: лимит (null — без ограничения), завершено, есть ли начатая, лучший процент.</summary>
+public sealed record AttemptsSummary(int? MaxAttempts, int Used, bool Open, int? BestPercent);
+
 public sealed class QuizAttempt
 {
     public string Id { get; set; } = "";

@@ -662,6 +662,31 @@
             "description": "OK"
           }
         }
+      },
+      "get": {
+        "tags": ["AdaptiveEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptsSummary"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/courses/{id}/adaptive": {
@@ -1157,6 +1182,11 @@
             "type": ["null", "integer", "string"],
             "format": "int32"
           },
+          "maxAttempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
           "src": {
             "type": ["null", "string"]
           },
@@ -1189,6 +1219,30 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AttemptsSummary": {
+        "required": ["maxAttempts", "used", "open", "bestPercent"],
+        "type": "object",
+        "properties": {
+          "maxAttempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "used": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "bestPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
           }
         }
       },

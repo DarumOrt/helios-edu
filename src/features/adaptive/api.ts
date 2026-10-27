@@ -7,6 +7,8 @@ const c = (courseId: string) => encodeURIComponent(courseId);
 export const adaptiveKeys = {
   progress: (courseId: string) => `/api/me/courses/${c(courseId)}/progress`,
   next: (courseId: string) => `/api/me/courses/${c(courseId)}/next`,
+  attempts: (courseId: string, activityId: string) =>
+    `/api/courses/${c(courseId)}/quizzes/${encodeURIComponent(activityId)}/attempts`,
 };
 
 export const adaptiveApi = {

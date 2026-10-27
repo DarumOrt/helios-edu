@@ -25,7 +25,7 @@ import {
   type StoredQuestion,
   type StoredSkill,
 } from "@/mocks/adaptive-store";
-import type { AdaptiveQuestion, Course, User } from "@/shared/types/domain";
+import type { AdaptiveQuestion, AttemptsSummary, Course, User } from "@/shared/types/domain";
 
 // Маршруты адаптивного обучения (P5). В серверном режиме запрос целиком уходит в C# API
 // (Adaptive/*Endpoints.cs), в демо — сюда: те же пути, права, ответы и тексты ошибок.
@@ -170,6 +170,7 @@ export async function demoAdaptive(req: Request, url: URL): Promise<Response> {
     const notQuiz = quizActivity(s.course, activityId);
     if (notQuiz) return notQuiz;
     if (m[2] === "attempts" && method === "POST") return startAttempt(s, activityId);
+    if (m[2] === "attempts" && method === "GET") return attemptsSummary(s, activityId);
     const list = state.questions
       .filter((q) => q.courseId === courseId && q.activityId === activityId)
       .sort((a, b) => a.order - b.order);
@@ -232,12 +233,35 @@ async function recordEvent(req: Request, s: Scope) {
 
 // ---- попытки ----
 
-function startAttempt(s: Scope, activityId: string) {
-  const open = state.attempts.find(
-    (a) =>
-      a.courseId === s.course.id && a.activityId === activityId && a.userId === s.actor.id && !a.submittedAt,
+const myAttempts = (s: Scope, activityId: string) =>
+  state.attempts.filter(
+    (a) => a.courseId === s.course.id && a.activityId === activityId && a.userId === s.actor.id,
   );
+const maxAttemptsOf = (s: Scope, activityId: string) =>
+  materials(s.course).find((a) => a.id === activityId)?.maxAttempts;
+
+/** Свои попытки теста — как Attempts в AdaptiveQuizEndpoints.cs */
+function attemptsSummary(s: Scope, activityId: string) {
+  const mine = myAttempts(s, activityId);
+  const done = mine.filter((a) => a.submittedAt && a.max > 0);
+  const summary: AttemptsSummary = {
+    maxAttempts: maxAttemptsOf(s, activityId),
+    used: done.length,
+    open: mine.some((a) => !a.submittedAt),
+    bestPercent: done.length
+      ? Math.max(...done.map((a) => Math.round((100 * (a.score ?? 0)) / a.max)))
+      : undefined,
+  };
+  return ok(summary);
+}
+
+function startAttempt(s: Scope, activityId: string) {
+  const mine = myAttempts(s, activityId);
+  const open = mine.find((a) => !a.submittedAt);
   if (open) return ok({ attemptId: open.id, questions: open.questions.map((x) => studentView(x.question)) });
+  const limit = maxAttemptsOf(s, activityId);
+  if (limit != null && mine.filter((a) => a.submittedAt).length >= limit)
+    return fail(409, "Попытки закончились");
   const questions = state.questions
     .filter((q) => q.courseId === s.course.id && q.activityId === activityId)
     .sort((a, b) => a.order - b.order);

@@ -10,6 +10,7 @@ export type Activity = {
   due?: string;
   description?: string | null;
   maxGrade?: number | null;
+  maxAttempts?: number | null;
   src?: string | null;
   pages?: number | null;
 };
@@ -21,6 +22,13 @@ export type AnnouncementInfo = {
   body: string;
   authorName: string;
   createdAt: string;
+};
+
+export type AttemptsSummary = {
+  maxAttempts: number | null;
+  used: number;
+  open: boolean;
+  bestPercent: number | null;
 };
 
 export type CatalogCohort = {

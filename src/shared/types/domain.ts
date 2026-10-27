@@ -42,6 +42,8 @@ export interface Activity {
   description?: string;
   /** задание: максимальная оценка (по умолчанию 100) */
   maxGrade?: number;
+  /** тест: сколько попыток можно завершить (нет — без ограничения) */
+  maxAttempts?: number;
 }
 
 /** Типы материалов, которые можно создать в конструкторе курса */
@@ -261,6 +263,18 @@ export interface AdaptiveQuestion {
   hintsCount?: number;
   skillId?: string | null;
   order: number;
+}
+
+/** Свои попытки теста: GET /api/courses/{id}/quizzes/{activityId}/attempts */
+export interface AttemptsSummary {
+  /** нет — без ограничения */
+  maxAttempts?: number;
+  /** сколько попыток завершено */
+  used: number;
+  /** есть начатая попытка — её можно продолжить */
+  open: boolean;
+  /** лучший результат в процентах; нет — ещё не завершал */
+  bestPercent?: number;
 }
 
 export interface AttemptStart {
