@@ -80,10 +80,11 @@ jobs:
           curl -fsS http://127.0.0.1:8080/api/health/ready
       - run: node --test backend/tests/grades.test.mjs
       - run: node --test backend/tests/notifications.test.mjs
+      - run: node --test backend/tests/files.test.mjs
       - run: node --test backend/tests/api.test.mjs
       - name: Backend logs
         if: failure()
-        run: docker compose --profile backend logs db api
+        run: docker compose --profile backend logs db storage api
       - name: Next.js logs
         if: failure()
         run: cat next.log
