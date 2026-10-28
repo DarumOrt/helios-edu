@@ -76,11 +76,21 @@ export function ReviewPanel({ submission }: { submission: SubmissionFull | null 
           <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm whitespace-pre-wrap">
             {submission.text || "—"}
           </div>
-          {submission.fileName && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-primary">
-              <FileText size={13} /> {submission.fileName}
-            </div>
-          )}
+          {submission.fileName &&
+            (submission.fileId ? (
+              <a
+                href={`/api/files/${submission.fileId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex w-fit items-center gap-2 text-xs text-primary underline-offset-4 hover:underline"
+              >
+                <FileText size={13} /> {submission.fileName}
+              </a>
+            ) : (
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <FileText size={13} /> {submission.fileName}
+              </div>
+            ))}
         </div>
 
         <div className="grid grid-cols-[120px_1fr] items-start gap-3">
