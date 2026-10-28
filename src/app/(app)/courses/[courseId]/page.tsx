@@ -13,6 +13,7 @@ import {
   Target,
   Route,
   Settings2,
+  Trash2,
 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import {
@@ -32,6 +33,8 @@ import { can } from "@/shared/auth/permissions";
 import { canEditCourse } from "@/shared/auth/management";
 import { CourseBuilder } from "@/features/course-builder/components/CourseBuilder";
 import { CourseDialog } from "@/features/admin/components/CourseDialog";
+import { DeleteCourseDialog } from "@/features/courses/components/DeleteCourseDialog";
+import { CourseTrashPanel } from "@/features/course-builder/components/CourseTrashPanel";
 import { AnnouncementDialog, AnnouncementsCard } from "@/features/course-builder/components/Announcements";
 import { cn } from "@/shared/lib/utils";
 import { AdaptiveRoute } from "@/features/adaptive/components/AdaptiveRoute";
@@ -49,10 +52,11 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const learner = can(role, "quiz.take");
   // преподаватель правит только свой курс; администратор и организатор — любой
   const canEdit = course ? canEditCourse(user, course) : false;
-  const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive">("content");
+  const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive" | "trash">("content");
   const [building, setBuilding] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [editingCard, setEditingCard] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <div>
@@ -64,9 +68,19 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               subtitle={`${course.code} · ${course.category}`}
               actions={
                 canEdit && (
-                  <Button variant="outline" size="sm" onClick={() => setEditingCard(true)}>
-                    <Settings2 size={15} aria-hidden /> Карточка курса
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setEditingCard(true)}>
+                      <Settings2 size={15} aria-hidden /> Карточка курса
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-danger"
+                      onClick={() => setDeleting(true)}
+                    >
+                      <Trash2 size={15} aria-hidden /> Удалить курс
+                    </Button>
+                  </div>
                 )
               }
               breadcrumbs={
@@ -130,6 +144,9 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                   <Tab active={tab === "adaptive"} onClick={() => setTab("adaptive")} icon={Route}>
                     Адаптация
                   </Tab>
+                  <Tab active={tab === "trash"} onClick={() => setTab("trash")} icon={Trash2}>
+                    Корзина
+                  </Tab>
                 </>
               )}
               {canEdit && tab === "content" && (
@@ -182,6 +199,8 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
             {tab === "skills" && canEdit && <SkillsEditor course={course} />}
             {tab === "adaptive" && canEdit && <AdaptivePanel course={course} />}
+            {tab === "trash" && canEdit && <CourseTrashPanel course={course} />}
+            {deleting && <DeleteCourseDialog course={course} onClose={() => setDeleting(false)} />}
           </>
         )}
       </DataState>

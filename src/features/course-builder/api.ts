@@ -27,6 +27,9 @@ export const builderApi = {
     api.put<Activity[]>(`${c(courseId)}/sections/${sectionId}/activities/order`, { activityIds }),
   saveQuestions: (courseId: string, activityId: string, questions: QuizQuestion[]) =>
     api.put<QuizQuestion[]>(`${c(courseId)}/quizzes/${activityId}/questions`, { questions }),
+  /** вернуть модуль или материал из корзины курса (режим «Сервер») */
+  restoreTrashItem: (courseId: string, itemId: string) =>
+    api.post<unknown>(`${c(courseId)}/trash/${itemId}/restore`, {}),
   announce: (courseId: string, title: string, body: string) =>
     api.post<Announcement>(`${c(courseId)}/announcements`, { title, body }),
 };

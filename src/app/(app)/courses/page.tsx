@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, DataState, Button, Input } from "@/shared/ui";
+import { PageHeader, DataState, Button, Input, buttonVariants } from "@/shared/ui";
 import { CourseCard } from "@/features/courses/components/CourseCard";
 import { CourseDialog } from "@/features/admin/components/CourseDialog";
 import { useSession } from "@/shared/auth/session";
@@ -33,12 +34,20 @@ export default function CoursesPage() {
         title="Мои курсы"
         subtitle="Все доступные вам курсы"
         actions={
-          canCreate && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus size={16} aria-hidden />
-              Создать курс
-            </Button>
-          )
+          <div className="flex flex-wrap gap-2">
+            {/* удалённые курсы 7 дней можно вернуть: преподаватель — свои, управление — все */}
+            {can(role, "course.edit") && (
+              <Link href="/courses/trash" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                <Trash2 size={15} aria-hidden /> Корзина курсов
+              </Link>
+            )}
+            {canCreate && (
+              <Button onClick={() => setCreating(true)}>
+                <Plus size={16} aria-hidden />
+                Создать курс
+              </Button>
+            )}
+          </div>
         }
       />
 

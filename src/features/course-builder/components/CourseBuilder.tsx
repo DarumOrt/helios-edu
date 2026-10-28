@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { useSession } from "@/shared/auth/session";
 import { ArrowDown, ArrowUp, ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, Card, Dialog, EmptyState, Field, Input, describedBy } from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
@@ -30,6 +31,8 @@ const swap = <T,>(list: T[], i: number, j: number) => {
 // Конструктор курса: модули и материалы. Изменения сохраняются сразу, по одному действию.
 export function CourseBuilder({ course }: { course: Course }) {
   const sections = course.sections ?? [];
+  // на сервере удалённое уходит в корзину курса, в демо — сразу
+  const server = useSession((s) => s.dataSource.source === "server");
   const [modal, setModal] = useState<Modal | null>(null);
   const [busy, setBusy] = useState(false);
   const close = () => setModal(null);
@@ -248,7 +251,7 @@ export function CourseBuilder({ course }: { course: Course }) {
                       modal.kind === "delete-section"
                         ? builderApi.deleteSection(course.id, modal.section.id)
                         : builderApi.deleteActivity(course.id, modal.activity.id),
-                    modal.kind === "delete-section" ? "Модуль удалён" : "Материал удалён",
+                    `${modal.kind === "delete-section" ? "Модуль" : "Материал"} удалён${server ? " — 7 дней его можно вернуть из вкладки «Корзина»" : ""}`,
                   );
                   if (ok) close();
                 }}
@@ -262,6 +265,7 @@ export function CourseBuilder({ course }: { course: Course }) {
             {modal.kind === "delete-section"
               ? "Модуль пустой — ничего, кроме него, не удалится."
               : "Прогресс студентов по этому материалу перестанет учитываться."}
+            {server && " Удалённое 7 дней лежит в корзине курса — его можно восстановить."}
           </p>
         </Dialog>
       )}
