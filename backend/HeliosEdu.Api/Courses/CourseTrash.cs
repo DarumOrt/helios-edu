@@ -235,7 +235,9 @@ public static class CourseTrash
             .Select(course => course.Id).ToListAsync(token);
         foreach (var id in courses)
         {
-            await using var transaction = await db.Database.BeginTransactionAsync(token);
+            // своя транзакция — если её не открыл вызывающий (POST /api/files/cleanup идёт в транзакции запроса)
+            await using var transaction = db.Database.CurrentTransaction is null
+                ? await db.Database.BeginTransactionAsync(token) : null;
             // связи без каскада (адаптивное обучение, группы) — сначала; остальное база удалит вместе с курсом
             var attempts = db.QuizAttempts.Where(row => row.CourseId == id).Select(row => row.Id);
             await db.AttemptAnswers.Where(row => attempts.Contains(row.AttemptId)).ExecuteDeleteAsync(token);
@@ -252,7 +254,7 @@ public static class CourseTrash
             await db.TrashItems.Where(row => row.CourseId == id).ExecuteDeleteAsync(token);
             // модули и материалы (отдельные таблицы курса), оценки, объявления, файлы, прогресс — каскадом в базе
             await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"Courses\" WHERE \"Id\" = {id}", token);
-            await transaction.CommitAsync(token);
+            if (transaction is not null) await transaction.CommitAsync(token);
         }
         return new TrashPurgeResult(courses.Count, items.Count);
     }
