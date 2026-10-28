@@ -11,6 +11,7 @@ using HeliosEdu.Api.Adaptive;
 using HeliosEdu.Api.Grades;
 using HeliosEdu.Api.Notifications;
 using HeliosEdu.Api.Files;
+using HeliosEdu.Api.Audit;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -34,6 +35,7 @@ builder.Services.AddAuthorization(options =>
         options.AddPolicy(permission, policy => policy.RequireRole("admin", "organizer"));
     options.AddPolicy(AccessRules.ReadCohorts, policy => policy.RequireRole("admin", "organizer", "tutor"));
     options.AddPolicy(AccessRules.EditCourse, policy => policy.RequireRole("admin", "organizer", "tutor"));
+    options.AddPolicy(AccessRules.ManageSystem, policy => policy.RequireRole("admin"));
 });
 builder.Services.AddRateLimiter(options =>
 {
@@ -62,6 +64,7 @@ app.MapAdaptiveEndpoints();
 app.MapGradesEndpoints();
 app.MapNotificationsEndpoints();
 app.MapFilesEndpoints();
+app.MapAuditEndpoints();
 app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.

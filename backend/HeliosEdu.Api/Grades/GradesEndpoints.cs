@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using System.Security.Claims;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Courses;
@@ -157,12 +158,19 @@ public static class GradesEndpoints
         if (input.Text("feedback").Length > 2000) fields["feedback"] = "Комментарий — до 2000 символов";
         if (fields.Count > 0) return Invalid(fields);
 
+        var previous = await db.Grades.AsNoTracking().Where(row => row.CourseId == submission.CourseId &&
+                row.ActivityId == submission.ActivityId && row.UserId == submission.UserId)
+            .Select(row => (double?)row.Value).SingleOrDefaultAsync(context.RequestAborted);
         submission.Status = "reviewed";
         submission.Feedback = input.Text("feedback");
         submission.ReviewedBy = actor.Id;
         submission.ReviewedAt = DateTimeOffset.UtcNow;
         await SaveGrade(db, submission.CourseId, submission.ActivityId, submission.UserId, grade!.Value, actor.Id, context.RequestAborted);
         var info = (await Describe(db, [submission], context.RequestAborted))[0] with { Grade = grade, Status = "reviewed" };
+        AuditLog.Write(db, context, "submission.reviewed", "submission", submission.Id,
+            $"{info.UserName} · {course.Code} · {info.AssignmentTitle}",
+            AuditLog.Diff(("Оценка", previous?.ToString("0.#"), $"{grade:0.#} из {max}"),
+                ("Комментарий", null, submission.Feedback)));
         // ученик узнаёт об оценке в колокольчике
         db.Notifications.Add(new Notifications.Notification { Id = $"n-{Guid.NewGuid().ToString("N")[..8]}",
             UserId = submission.UserId, Type = "grade", Title = "Оценка выставлена",
@@ -253,6 +261,11 @@ public static class GradesEndpoints
             (grade is not { } value || value < 0 || value > MaxOf(activity)))
             return Invalid(new() { ["grade"] = $"Оценка — число от 0 до {MaxOf(activity)}" });
 
+        var previous = await db.Grades.AsNoTracking().Where(row => row.CourseId == course.Id && row.ActivityId == activity.Id &&
+                row.UserId == student.Id).Select(row => (double?)row.Value).SingleOrDefaultAsync(context.RequestAborted);
+        AuditLog.Write(db, context, "grade.updated", "grade", $"{course.Id}/{activity.Id}/{student.Id}",
+            $"{student.Name} · {course.Code} · {activity.Title}",
+            AuditLog.Diff(("Оценка", previous?.ToString("0.#"), grade?.ToString("0.#"))));
         if (grade is { } set) await SaveGrade(db, course.Id, activity.Id, student.Id, set, actor.Id, context.RequestAborted);
         else
             // пустая оценка — снять поставленную вручную (для теста вернётся лучшая попытка)

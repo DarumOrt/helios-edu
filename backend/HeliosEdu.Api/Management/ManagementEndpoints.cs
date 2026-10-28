@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using System.Security.Cryptography;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Data;
@@ -63,6 +64,9 @@ public static partial class ManagementEndpoints
         };
         account.PasswordHash = hasher.HashPassword(account, password);
         db.Accounts.Add(account);
+        AuditLog.Write(db, context, "user.created", "user", account.Id, $"{account.Name} · {account.Email}",
+            AuditLog.Diff(("Роль", null, AuditLog.Role(account.Role)), ("Группа", null, account.Group),
+                ("Факультет", null, account.Faculty)));
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Json(new { user = UserInfo.From(account), temporaryPassword = password }, statusCode: 201);
     }
@@ -93,6 +97,7 @@ public static partial class ManagementEndpoints
             if (group is null) fields["group"] = "Такой группы нет";
         }
         if (fields.Count > 0) return Invalid(fields);
+        var before = (account.Name, account.Email, account.Role, account.Group, account.Faculty, account.Status);
         if (input.Has("email"))
         {
             var normalized = input.Text("email").ToUpperInvariant();
@@ -108,6 +113,15 @@ public static partial class ManagementEndpoints
         account.Group = role == "student" ? group?.Name : null;
         if (account.Status == "blocked")
             await db.LoginSessions.Where(session => session.AccountId == id).ExecuteDeleteAsync(context.RequestAborted);
+        var changes = AuditLog.Diff(("Имя", before.Name, account.Name), ("Почта", before.Email, account.Email),
+            ("Роль", AuditLog.Role(before.Role), AuditLog.Role(account.Role)), ("Группа", before.Group, account.Group),
+            ("Факультет", before.Faculty, account.Faculty),
+            ("Статус", AuditLog.Status(before.Status), AuditLog.Status(account.Status)));
+        if (changes.Count > 0)
+            AuditLog.Write(db, context, before.Status != account.Status
+                    ? account.Status == "blocked" ? "user.blocked" : "user.unblocked"
+                    : "user.updated",
+                "user", account.Id, $"{account.Name} · {account.Email}", changes);
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(UserInfo.From(account));
     }

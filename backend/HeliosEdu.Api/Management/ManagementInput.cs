@@ -10,6 +10,8 @@ namespace HeliosEdu.Api.Management;
 public sealed class ManagementInput(JsonElement body)
 {
     public bool Has(string name) => body.TryGetProperty(name, out _);
+    /// <summary>Имена полей запроса — чтобы отклонить неизвестные (настройки системы).</summary>
+    public IEnumerable<string> Keys => body.EnumerateObject().Select(property => property.Name);
     public JsonElement? Value(string name) => body.TryGetProperty(name, out var value) ? value : null;
     public string Text(string name) => Value(name) is { ValueKind: JsonValueKind.String } value
         ? value.GetString()!.Trim() : "";

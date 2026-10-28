@@ -31,6 +31,31 @@ export type AttemptsSummary = {
   bestPercent: number | null;
 };
 
+export type AuditChange = {
+  field: string;
+  before: string | null;
+  after: string | null;
+};
+
+export type AuditEntryInfo = {
+  id: number;
+  at: string;
+  actorName: string;
+  actorRole: string;
+  action: string;
+  actionText: string;
+  category: string;
+  targetType: string;
+  targetId: string | null;
+  target: string;
+  changes: AuditChange[] | null;
+};
+
+export type AuditPage = {
+  items: AuditEntryInfo[];
+  nextCursor: number | null;
+};
+
 export type CatalogCohort = {
   id: string;
   name: string;
@@ -172,6 +197,11 @@ export type Section = {
   title: string;
   order?: number;
   activities?: Activity[];
+};
+
+export type SettingsInfo = {
+  allowRegistration: boolean;
+  announcementsEnabled: boolean;
 };
 
 export type SkillInfo = {

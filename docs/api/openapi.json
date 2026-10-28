@@ -150,6 +150,110 @@
         }
       }
     },
+    "/api/settings": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["AuditEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "tags": ["AuditEndpoints"],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": ["HeliosEdu.Api"],
@@ -1351,6 +1455,95 @@
           }
         }
       },
+      "AuditChange": {
+        "required": ["field", "before", "after"],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "before": {
+            "type": ["null", "string"]
+          },
+          "after": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "AuditEntryInfo": {
+        "required": [
+          "id",
+          "at",
+          "actorName",
+          "actorRole",
+          "action",
+          "actionText",
+          "category",
+          "targetType",
+          "targetId",
+          "target",
+          "changes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "actorRole": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actionText": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": ["null", "string"]
+          },
+          "target": {
+            "type": "string"
+          },
+          "changes": {
+            "type": ["null", "array"],
+            "items": {
+              "$ref": "#/components/schemas/AuditChange"
+            }
+          }
+        }
+      },
+      "AuditPage": {
+        "required": ["items", "nextCursor"],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryInfo"
+            }
+          },
+          "nextCursor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int64"
+          }
+        }
+      },
       "CatalogCohort": {
         "required": ["id", "name", "year", "level", "directionCode", "direction", "profile"],
         "type": "object",
@@ -1847,6 +2040,18 @@
           }
         }
       },
+      "SettingsInfo": {
+        "required": ["allowRegistration", "announcementsEnabled"],
+        "type": "object",
+        "properties": {
+          "allowRegistration": {
+            "type": "boolean"
+          },
+          "announcementsEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "SkillInfo": {
         "required": [
           "id",
@@ -2150,6 +2355,9 @@
     },
     {
       "name": "ManagementEndpoints"
+    },
+    {
+      "name": "AuditEndpoints"
     },
     {
       "name": "CourseBuilderEndpoints"

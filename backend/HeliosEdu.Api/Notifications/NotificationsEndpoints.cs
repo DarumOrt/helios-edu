@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using System.Globalization;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Courses;
@@ -39,10 +40,13 @@ public static class NotificationsEndpoints
     }
 
     // Объявление пишет тот, кто правит курс: преподаватель своего курса, организатор, администратор.
-    // Выключатель «объявления» в настройках системы пока хранится в Next и проверяется им до пересылки.
-    private static async Task<IResult> CreateAnnouncementAsync(string id, HttpContext context, LearningDbContext db)
+    private static async Task<IResult> CreateAnnouncementAsync(string id, HttpContext context, LearningDbContext db,
+        IConfiguration configuration)
     {
         var actor = Actor(context);
+        // выключатель — в настройках системы (администратор)
+        if (!(await AuditEndpoints.SettingsAsync(db, actor.TenantId, configuration, context.RequestAborted)).AnnouncementsEnabled)
+            return Fail(403, "Объявления отключены администратором");
         var course = await AccessRules.VisibleCourses(db, context.User)
             .SingleOrDefaultAsync(course => course.Id == id, context.RequestAborted);
         if (course is null) return Fail(404, "not found");
@@ -59,6 +63,7 @@ public static class NotificationsEndpoints
         var announcement = new Announcement { Id = $"an-{Guid.NewGuid().ToString("N")[..8]}", CourseId = id,
             Title = title, Body = body, AuthorId = actor.Id, AuthorName = actor.Name, CreatedAt = DateTimeOffset.UtcNow };
         db.Announcements.Add(announcement);
+        AuditLog.Write(db, context, "announcement.created", "announcement", announcement.Id, $"{course.Code} · {title}");
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Json(Info(announcement), statusCode: 201);
     }
