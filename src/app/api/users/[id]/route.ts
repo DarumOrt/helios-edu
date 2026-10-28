@@ -1,6 +1,6 @@
 import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
-import { backendForward } from "@/shared/lib/backend";
+import { serverOnly, backendForward } from "@/shared/lib/backend";
 import { findDemoUser, findDemoUserByEmail, updateDemoUser } from "@/mocks/users-store";
 import { findCohortByName } from "@/mocks/cohorts-store";
 import { demoActorWith, fail, readJson, str } from "@/mocks/management-guards";
@@ -67,4 +67,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     `${user!.name} · ${user!.email}`,
   );
   return NextResponse.json(user);
+}
+
+// DELETE — удалить пользователя: с данными — обезличить, без данных — полностью. Только сервер.
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const forwarded = await backendForward(req, `/api/users/${encodeURIComponent(id)}`);
+  return forwarded ?? serverOnly();
 }

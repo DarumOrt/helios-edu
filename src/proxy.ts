@@ -23,6 +23,8 @@ function checkedByApi(path: string): boolean {
     /^\/api\/courses\/[^/]+\/announcements$/.test(path) ||
     /^\/api\/courses\/[^/]+\/(skills|quizzes|adaptive|events)(\/|$)/.test(path) ||
     /^\/api\/courses\/[^/]+\/activities\/[^/]+\/skills$/.test(path) ||
+    /^\/api\/courses\/[^/]+\/(impact|restore|trash)(\/|$)/.test(path) ||
+    /^\/api\/users\/[^/]+\/password-reset$/.test(path) ||
     /^\/api\/(attempts|me)\//.test(path) ||
     path === "/api/settings" ||
     path === "/api/audit"

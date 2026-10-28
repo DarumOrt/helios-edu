@@ -1,6 +1,14 @@
 import { mutate } from "swr";
 import { api } from "@/shared/lib/api-client";
-import type { Cohort, Course, CourseStatus, Role, User, UserStatus } from "@/shared/types/domain";
+import type {
+  Cohort,
+  Course,
+  CourseStatus,
+  Role,
+  User,
+  UserStatus,
+  PasswordResetResult,
+} from "@/shared/types/domain";
 
 // Контракт управления — один для моков Next и C# API (docs/backend/p1-management.md).
 export interface UserPayload {
@@ -26,6 +34,10 @@ export interface CoursePayload {
 export const adminApi = {
   /** сервер возвращает временный пароль один раз; в демо его нет */
   createUser: (p: UserPayload) => api.post<{ user: User; temporaryPassword?: string }>("/api/users", p),
+  /** новый временный пароль (показывается один раз), сессии пользователя закрываются */
+  resetPassword: (id: string) => api.post<PasswordResetResult>(`/api/users/${id}/password-reset`, {}),
+  /** с данными — обезличить, без данных — удалить полностью */
+  deleteUser: (id: string) => api.del<void>(`/api/users/${id}`),
   updateUser: (id: string, p: UserPayload) => api.patch<User>(`/api/users/${id}`, p),
   createCohort: (p: { name: string; faculty?: string }) => api.post<Cohort>("/api/cohorts", p),
   updateCohort: (id: string, p: { name?: string; faculty?: string | null; courseIds?: string[] }) =>
