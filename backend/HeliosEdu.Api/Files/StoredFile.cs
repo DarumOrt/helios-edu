@@ -85,4 +85,5 @@ public sealed record StoredFileInfo(string Id, string Kind, string CourseId, str
 }
 
 /// <summary>Итог ручной очистки: POST /api/files/cleanup (администратор).</summary>
-public sealed record CleanupResult(int Abandoned, int Trashed, int Restored, int Deleted, int Orphans);
+public sealed record CleanupResult(int Abandoned, int Trashed, int Restored, int Deleted, int Orphans,
+    int Courses = 0, int CourseItems = 0);

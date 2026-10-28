@@ -6,7 +6,7 @@ import { visibleDemoCourses } from "@/mocks/demo-courses";
 import { findDemoUser } from "@/mocks/users-store";
 import { demoActorWith, fail, readJson, str } from "@/mocks/management-guards";
 import { MANAGED_COURSE_FIELDS, canEditCourse } from "@/shared/auth/management";
-import { backendForward, backendJson } from "@/shared/lib/backend";
+import { serverOnly, backendForward, backendJson } from "@/shared/lib/backend";
 import { validateCourse, type CourseInput } from "@/shared/lib/management-validation";
 import type { Course, CourseStatus } from "@/shared/types/domain";
 
@@ -66,4 +66,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
     ),
   );
   return NextResponse.json(withCover(course));
+}
+
+// DELETE — курс в корзину на 7 дней (оценки пока сохраняются у учеников). Только сервер.
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}`);
+  return forwarded ?? serverOnly();
 }

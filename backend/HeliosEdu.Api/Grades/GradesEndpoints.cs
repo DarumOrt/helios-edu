@@ -283,7 +283,8 @@ public static class GradesEndpoints
         if (actor.Role != "student") return Fail(403, "Недостаточно прав");
         // Оценки принадлежат ученику, а не группе: курс, где он сдавал работы и тесты, остаётся в списке
         // и после перевода в другую группу, и после архивации курса (черновик ученик не видит).
-        var visible = AccessRules.VisibleCourses(db, context.User).Select(course => course.Id);
+        // курс в корзине остаётся в оценках до окончательного удаления — рейтинг не меняется
+        var visible = AccessRules.VisibleCourses(db, context.User, withTrash: true).Select(course => course.Id);
         var mine = db.Grades.Where(grade => grade.UserId == actor.Id).Select(grade => grade.CourseId)
             .Union(db.Submissions.Where(item => item.UserId == actor.Id).Select(item => item.CourseId))
             .Union(db.QuizAttempts.Where(item => item.UserId == actor.Id && item.SubmittedAt != null).Select(item => item.CourseId));

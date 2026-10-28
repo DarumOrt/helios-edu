@@ -19,6 +19,9 @@ public sealed class Course
     // Короткое название факультета («ИНЭК») и учебный год («2026/2027») — для поиска курсов.
     public string? Faculty { get; set; }
     public string? AcademicYear { get; set; }
+    // В корзине курсов (CourseTrash): не виден в списках и ученикам, оценки по нему пока остаются в «Моих оценках».
+    public DateTimeOffset? DeletedAt { get; set; }
+    public string? DeletedByName { get; set; }
     // Участники и прогресс не хранятся: их считает CourseProgress для того, кто смотрит.
     public List<Section> Sections { get; set; } = [];
 }

@@ -16,6 +16,8 @@ export interface User {
   group?: string;
   /** нет поля — активен (старые ответы C# API его не содержат) */
   status?: UserStatus;
+  /** вошёл по временному паролю (создание, сброс) — попросить сменить на свой */
+  mustChangePassword?: boolean;
 }
 
 export interface Tenant {
@@ -136,6 +138,45 @@ export interface SubmissionFull extends Submission {
   courseId: string;
   courseTitle: string;
   maxGrade: number;
+}
+
+/** Сброс пароля: POST /api/users/{id}/password-reset — временный пароль показывается один раз */
+export interface PasswordResetResult {
+  user: User;
+  temporaryPassword: string;
+}
+
+/** Что потеряется с курсом — для подтверждения удаления: GET /api/courses/{id}/impact */
+export interface CourseImpact {
+  students: number;
+  submissions: number;
+  grades: number;
+  attempts: number;
+}
+
+/** Курс в корзине курсов: GET /api/courses/trash (7 дней до окончательного удаления) */
+export interface DeletedCourse {
+  id: string;
+  code: string;
+  title: string;
+  tutorId: string;
+  deletedAt: string;
+  deletedByName: string;
+  purgeAt: string;
+  impact: CourseImpact;
+}
+
+/** Модуль или материал в корзине курса: GET /api/courses/{id}/trash */
+export interface CourseTrashItem {
+  id: string;
+  kind: "section" | "activity";
+  title: string;
+  /** у материала — его тип */
+  type?: ActivityType;
+  sectionTitle?: string;
+  deletedAt: string;
+  deletedByName: string;
+  purgeAt: string;
 }
 
 /** Настройки системы: GET/PUT /api/settings (менять — администратор) */

@@ -48,6 +48,9 @@ public sealed class FileJanitor(IServiceScopeFactory scopes, FileStorage storage
             {
                 await using var scope = scopes.CreateAsyncScope();
                 var db = scope.ServiceProvider.GetRequiredService<LearningDbContext>();
+                // сначала корзины курсов: удалённое окончательно оставляет файлы без ссылок
+                var purged = await Courses.CourseTrash.PurgeAsync(db, DateTimeOffset.UtcNow, stoppingToken);
+                if (purged != new Courses.TrashPurgeResult(0, 0)) logger.LogInformation("Корзины курсов: {Result}", purged);
                 var result = await RunOnceAsync(db, storage, DateTimeOffset.UtcNow, stoppingToken);
                 if (result != new CleanupResult(0, 0, 0, 0, 0)) logger.LogInformation("Очистка файлов: {Result}", result);
             }
@@ -109,8 +112,14 @@ public sealed class FileJanitor(IServiceScopeFactory scopes, FileStorage storage
     {
         var courses = await db.Courses.AsNoTracking().AsSplitQuery()
             .Include(course => course.Sections).ThenInclude(section => section.Activities).ToListAsync(token);
+        var trashed = (await db.TrashItems.AsNoTracking().Where(item => item.Kind == "activity").Select(item => item.Snapshot)
+                .ToListAsync(token))
+            .Select(snapshot => snapshot.TryGetProperty("activity", out var activity) && activity.TryGetProperty("src", out var src) &&
+                src.ValueKind == System.Text.Json.JsonValueKind.String ? src.GetString() : null);
+        // материал в корзине курса ещё может вернуться — его файл не трогаем
         var urls = courses.Select(course => course.Cover)
-            .Concat(courses.SelectMany(course => course.Sections).SelectMany(section => section.Activities).Select(activity => activity.Src));
+            .Concat(courses.SelectMany(course => course.Sections).SelectMany(section => section.Activities).Select(activity => activity.Src))
+            .Concat(trashed);
         var ids = urls.Where(url => url?.StartsWith(FilesEndpoints.UrlPrefix, StringComparison.Ordinal) == true)
             .Select(url => url![FilesEndpoints.UrlPrefix.Length..]).ToHashSet();
         ids.UnionWith(await db.Submissions.Where(item => item.FileId != null).Select(item => item.FileId!).ToListAsync(token));

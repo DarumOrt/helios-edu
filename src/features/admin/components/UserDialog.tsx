@@ -2,7 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { useSession } from "@/shared/auth/session";
+import { apiErrorInfo } from "@/shared/lib/api-client";
 import { Button, Dialog, Field, Input, Select, describedBy } from "@/shared/ui";
 import { assignableRoles, isSelf } from "@/shared/auth/management";
 import { validateUser } from "@/shared/lib/management-validation";
@@ -37,7 +39,36 @@ export function UserDialog({
     blocked: user?.status === "blocked",
   });
   const [password, setPassword] = useState<string | null>(null);
+  // сброс пароля и удаление — после подтверждения; только в режиме «Сервер» (в демо паролей нет)
+  const [confirm, setConfirm] = useState<"reset" | "delete" | null>(null);
+  const [busy, setBusy] = useState(false);
+  const server = useSession((s) => s.dataSource.source === "server");
   const { pending, fields, error, run, setFields } = useFormSubmit();
+
+  async function dangerous() {
+    if (!user || !confirm) return;
+    setBusy(true);
+    try {
+      if (confirm === "reset") {
+        const result = await adminApi.resetPassword(user.id);
+        setPassword(result.temporaryPassword);
+      } else {
+        await adminApi.deleteUser(user.id);
+        toast.success("Пользователь удалён", {
+          description: "Если у него были оценки и работы — они сохранены без имени",
+        });
+        await refreshManagement();
+        onClose();
+      }
+    } catch (failure) {
+      toast.error(confirm === "reset" ? "Пароль не сброшен" : "Пользователь не удалён", {
+        description: apiErrorInfo(failure).error,
+      });
+    } finally {
+      setBusy(false);
+      setConfirm(null);
+    }
+  }
 
   // своя роль не меняется; иначе — только назначаемые актором
   const roles = self ? [values.role] : assignableRoles(actor.role);
@@ -83,8 +114,8 @@ export function UserDialog({
       <Dialog
         open={open}
         onClose={onClose}
-        title="Пользователь добавлен"
-        description="Передайте временный пароль лично. Он показывается один раз — после закрытия окна посмотреть его будет нельзя."
+        title={editing ? "Пароль сброшен" : "Пользователь добавлен"}
+        description="Передайте временный пароль лично. Он показывается один раз — после закрытия окна посмотреть его будет нельзя. При входе система попросит сменить его на свой."
         footer={<Button onClick={onClose}>Готово</Button>}
       >
         <TemporaryPassword value={password} />
@@ -197,6 +228,57 @@ export function UserDialog({
               </span>
             </span>
           </label>
+        )}
+        {editing && !self && (
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!server || pending || busy}
+                onClick={() => setConfirm("reset")}
+              >
+                <KeyRound size={14} aria-hidden /> Сбросить пароль
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-danger"
+                disabled={!server || pending || busy}
+                onClick={() => setConfirm("delete")}
+              >
+                <Trash2 size={14} aria-hidden /> Удалить пользователя
+              </Button>
+            </div>
+            {!server && (
+              <p className="text-xs text-muted-foreground">Сброс пароля и удаление — в режиме «Сервер»</p>
+            )}
+            {confirm && (
+              <div role="alert" className="rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
+                <p>
+                  {confirm === "reset"
+                    ? "Выдать новый временный пароль? Пользователь выйдет со всех устройств."
+                    : "Удалить пользователя? Если у него есть оценки и работы, они останутся без имени — как «Удалённый пользователь». Отменить нельзя."}
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <Button type="button" size="sm" onClick={dangerous} disabled={busy}>
+                    {busy ? "Подождите…" : confirm === "reset" ? "Да, сбросить" : "Да, удалить"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setConfirm(null)}
+                    disabled={busy}
+                  >
+                    Отмена
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
         <FormError message={error} />
       </form>

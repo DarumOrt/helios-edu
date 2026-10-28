@@ -295,9 +295,10 @@ public static class TrackingEndpoints
         var slots = await db.ScheduleSlots.AsNoTracking().Where(slot => slot.TenantId == actor.TenantId && slot.Group == group)
             .OrderBy(slot => slot.Weekday).ThenBy(slot => slot.Pair).ToListAsync(context.RequestAborted);
         var courseIds = slots.Select(slot => slot.CourseId).Distinct().ToList();
-        var courses = await db.Courses.AsNoTracking().Where(course => courseIds.Contains(course.Id))
+        var courses = await db.Courses.AsNoTracking().Where(course => courseIds.Contains(course.Id) && course.DeletedAt == null)
             .ToDictionaryAsync(course => course.Id, context.RequestAborted);
-        return Results.Ok(new ScheduleInfo(group, Pairs, slots.Select(slot => new ScheduleSlotInfo(slot.Id, slot.CourseId,
+        // пары курса из корзины не показываем
+        return Results.Ok(new ScheduleInfo(group, Pairs, slots.Where(slot => courses.ContainsKey(slot.CourseId)).Select(slot => new ScheduleSlotInfo(slot.Id, slot.CourseId,
             slot.Weekday, slot.Pair, slot.Kind, slot.Room,
             courses.TryGetValue(slot.CourseId, out var course)
                 ? new ScheduleCourse(course.Id, course.Code, course.Title, course.CoverColor) : null)).ToList()));

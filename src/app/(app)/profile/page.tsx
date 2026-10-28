@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import { Mail, Building2, UsersRound, Shield, BookOpen, Trophy } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
+import { ChangePassword } from "@/features/auth/ChangePassword";
 import { PageHeader, Card, CardBody, CardHeader, Avatar, Badge, Progress } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
 import { roleMeta } from "@/shared/auth/role-meta";
@@ -28,32 +29,35 @@ export default function ProfilePage() {
       <PageHeader title="Профиль" subtitle="Учётная запись и информация" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* карточка пользователя */}
-        <Card className="overflow-hidden">
-          <CardBody>
-            <Avatar name={user.name} size={64} />
-            <h2 className="mt-3 text-lg font-semibold">{user.name}</h2>
-            <Badge tone={meta.badgeTone}>{meta.label}</Badge>
-            <ul className="mt-4 space-y-2.5 text-sm">
-              <li className="flex items-center gap-2.5 text-muted-foreground">
-                <Mail size={15} /> {user.email}
-              </li>
-              {user.faculty && (
+        {/* карточка пользователя и пароль */}
+        <div className="space-y-4">
+          <Card className="overflow-hidden">
+            <CardBody>
+              <Avatar name={user.name} size={64} />
+              <h2 className="mt-3 text-lg font-semibold">{user.name}</h2>
+              <Badge tone={meta.badgeTone}>{meta.label}</Badge>
+              <ul className="mt-4 space-y-2.5 text-sm">
                 <li className="flex items-center gap-2.5 text-muted-foreground">
-                  <Building2 size={15} /> Факультет {user.faculty}
+                  <Mail size={15} /> {user.email}
                 </li>
-              )}
-              {user.group && (
+                {user.faculty && (
+                  <li className="flex items-center gap-2.5 text-muted-foreground">
+                    <Building2 size={15} /> Факультет {user.faculty}
+                  </li>
+                )}
+                {user.group && (
+                  <li className="flex items-center gap-2.5 text-muted-foreground">
+                    <UsersRound size={15} /> Группа {user.group}
+                  </li>
+                )}
                 <li className="flex items-center gap-2.5 text-muted-foreground">
-                  <UsersRound size={15} /> Группа {user.group}
+                  <Shield size={15} /> {meta.workspace}
                 </li>
-              )}
-              <li className="flex items-center gap-2.5 text-muted-foreground">
-                <Shield size={15} /> {meta.workspace}
-              </li>
-            </ul>
-          </CardBody>
-        </Card>
+              </ul>
+            </CardBody>
+          </Card>
+          <ChangePassword />
+        </div>
 
         {/* контекст роли */}
         <div className="space-y-4 lg:col-span-2">

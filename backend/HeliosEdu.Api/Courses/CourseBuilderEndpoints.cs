@@ -23,6 +23,11 @@ public static class CourseBuilderEndpoints
         course.MapPatch("/activities/{activityId}", UpdateActivityAsync);
         course.MapDelete("/activities/{activityId}", DeleteActivityAsync);
         course.MapPut("/cover", UpdateCoverAsync).Produces<CourseSummary>();
+        // корзина курса: удалённые модули и материалы — 7 дней, потом окончательно
+        course.MapGet("/trash", (HttpContext context, LearningDbContext db) => CourseTrash.ListItemsAsync(context, db, Current(context)))
+            .Produces<TrashItemInfo[]>();
+        course.MapPost("/trash/{itemId}/restore", (string itemId, HttpContext context, LearningDbContext db) =>
+            CourseTrash.RestoreItemAsync(itemId, context, db, Current(context), section => Positions(db, section)));
     }
 
     /// <summary>Загруженный файл материала — этого курса и нужного вида (видео — video, PDF и презентация — document).</summary>
@@ -139,6 +144,7 @@ public static class CourseBuilderEndpoints
         if (await db.SkillMastery.AnyAsync(item => skillIds.Contains(item.SkillId), context.RequestAborted))
             return Fail(409, "По навыкам модуля уже есть результаты учеников");
         db.Skills.RemoveRange(skills);
+        CourseTrash.TrashSection(db, context, course, section);
         course.Sections.Remove(section);
         Renumber(course);
         AuditLog.Write(db, context, "section.deleted", "section", section.Id, Name(course, section.Title));
@@ -255,6 +261,8 @@ public static class CourseBuilderEndpoints
         if (section is null || activity is null) return Fail(404, "not found");
         if (await db.Submissions.AnyAsync(item => item.CourseId == course.Id && item.ActivityId == activityId, context.RequestAborted))
             return Fail(409, "По заданию уже есть сданные работы — удалить его нельзя, чтобы не потерять оценки");
+        // В корзину курса — со снимком вопросов и навыков (восстановление вернёт всё на место).
+        await CourseTrash.TrashActivityAsync(db, context, course, section, activity, context.RequestAborted);
         // История попыток остаётся в снимках, текущие привязки удалённого материала очищаются.
         db.ActivitySkills.RemoveRange(await db.ActivitySkills.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));
         db.QuizQuestions.RemoveRange(await db.QuizQuestions.Where(item => item.CourseId == course.Id && item.ActivityId == activityId).ToListAsync(context.RequestAborted));
@@ -282,7 +290,7 @@ public sealed class CourseEditorFilter : IEndpointFilter
             .ThenInclude(section => section.Activities.OrderBy(activity => EF.Property<int>(activity, "Position")))
             .AsSplitQuery().SingleAsync(course => course.Id == lockedId, http.RequestAborted);
         var actor = (Account)http.Items[typeof(Account)]!;
-        if (!AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
+        if (course.DeletedAt is not null || !AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
         http.Items[typeof(Course)] = course;
         return await next(context);
     }

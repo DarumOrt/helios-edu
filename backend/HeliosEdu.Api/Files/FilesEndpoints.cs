@@ -131,7 +131,9 @@ public static class FilesEndpoints
     private static async Task<IResult> CleanupAsync(HttpContext context, LearningDbContext db, FileStorage storage)
     {
         if (!storage.IsConfigured) return Unavailable();
-        var result = await FileJanitor.RunOnceAsync(db, storage, DateTimeOffset.UtcNow, context.RequestAborted);
+        var purged = await Courses.CourseTrash.PurgeAsync(db, DateTimeOffset.UtcNow, context.RequestAborted);
+        var result = await FileJanitor.RunOnceAsync(db, storage, DateTimeOffset.UtcNow, context.RequestAborted) with
+            { Courses = purged.Courses, CourseItems = purged.Items };
         AuditLog.Write(db, context, "file.cleanup", "storage", null, "Хранилище файлов",
             AuditLog.Diff(("Брошенные загрузки", null, result.Abandoned.ToString()), ("В корзину", null, result.Trashed.ToString()),
                 ("Удалено", null, result.Deleted.ToString()), ("Без записи", null, result.Orphans.ToString())));

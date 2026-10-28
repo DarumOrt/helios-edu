@@ -8,4 +8,7 @@ export const coursesApi = {
   /** cover: data URL своей картинки или null, чтобы вернуть шаблон */
   updateCover: (id: string, patch: { coverColor?: CoverColor; cover?: string | null }) =>
     api.put<Course>(`/api/courses/${id}/cover`, patch),
+  /** в корзину курсов на 7 дней (режим «Сервер») */
+  remove: (id: string) => api.del<void>(`/api/courses/${id}`),
+  restore: (id: string) => api.post<Course>(`/api/courses/${id}/restore`, {}),
 };

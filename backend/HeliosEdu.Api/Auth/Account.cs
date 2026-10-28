@@ -12,6 +12,8 @@ public sealed class Account
     public string TenantId { get; set; } = "pspu";
     public string? Faculty { get; set; }
     public string? Group { get; set; }
+    /// <summary>после выдачи временного пароля (создание, сброс) — при входе попросить сменить его на свой</summary>
+    public bool MustChangePassword { get; set; }
 }
 
 public sealed class LoginSession
@@ -25,9 +27,13 @@ public sealed class LoginSession
 /// <summary>Одногруппник: без почты и роли — контакты видит только управление (/api/users).</summary>
 public sealed record ClassmateInfo(string Id, string Name, string? Group);
 
+/// <summary>Сброс пароля: POST /api/users/{id}/password-reset — временный пароль показывается один раз.</summary>
+public sealed record PasswordResetResult(UserInfo User, string TemporaryPassword);
+
 public sealed record UserInfo(string Id, string Name, string Email, string Role,
-    string TenantId, string? Faculty, string? Group, string Status)
+    string TenantId, string? Faculty, string? Group, string Status, bool? MustChangePassword)
 {
     public static UserInfo From(Account account) => new(account.Id, account.Name, account.Email,
-        account.Role, account.TenantId, account.Faculty, account.Group, account.Status);
+        account.Role, account.TenantId, account.Faculty, account.Group, account.Status,
+        account.MustChangePassword ? true : null);
 }

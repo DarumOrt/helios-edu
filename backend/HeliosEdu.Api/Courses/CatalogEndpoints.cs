@@ -25,7 +25,7 @@ public static class CatalogEndpoints
             var tenant = await db.Accounts.Where(account => account.Id == accountId)
                 .Select(account => account.TenantId).SingleAsync(token);
             var courses = await db.Courses.AsNoTracking().AsSplitQuery()
-                .Where(course => course.Status == "published")
+                .Where(course => course.Status == "published" && course.DeletedAt == null)
                 .Include(course => course.Sections.OrderBy(section => section.Order))
                 .ThenInclude(section => section.Activities)
                 .OrderBy(course => EF.Property<int>(course, "Position"))

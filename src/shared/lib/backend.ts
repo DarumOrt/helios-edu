@@ -90,6 +90,10 @@ export async function backendForward(request: Request, path: string): Promise<Re
   return response;
 }
 
+/** Ответ демо-режима для того, что работает только с сервером (удаление, корзины, пароли) */
+export const serverOnly = () =>
+  Response.json({ error: "Доступно в режиме «Сервер»", notImplemented: true }, { status: 501 });
+
 /** 501 от backendForward: эндпоинта в C# ещё нет */
 export async function isNotImplemented(response: Response): Promise<boolean> {
   if (response.status !== 501) return false;
