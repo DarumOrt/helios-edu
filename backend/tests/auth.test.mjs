@@ -198,7 +198,8 @@ if (process.env.TEST_WEB_URL)
       headers: { Cookie: cookie, "Content-Type": "application/json", Origin: new URL(baseUrl).origin },
       body: JSON.stringify({ userId: "u-stud-1", activityId: "mv1" }),
     });
-    assert.equal(response.status, 403);
+    // трекинг проверяет C#: без курса — 404; чужой userId он не использует (см. tracking.test.mjs)
+    assert.equal(response.status, 404);
   });
 
 if (process.env.TEST_WEB_URL) {
