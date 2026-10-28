@@ -28,8 +28,8 @@ npm run api:types   # типы из описания C# API (нужен запу
 npm run lint:fix    # автоисправление ESLint
 npm run format      # Prettier на весь проект
 npm run build       # production-сборка
-docker compose up --build
-docker compose --profile backend up -d --build db api
+docker compose --profile backend up -d --build db storage api   # сервер: база, хранилище файлов, C# API
+docker compose --profile web up --build                         # собранный сайт в Docker (только демо, по желанию)
 node --test backend/tests/auth.test.mjs
 ```
 
@@ -58,9 +58,10 @@ backend/tests/          проверки API на настоящем PostgreSQL
   Текущий берётся только через `getDataSource()` из `shared/lib/backend.ts` (в `proxy.ts` — `resolveDataSource`),
   не через прямую проверку `process.env.BACKEND_API_URL`. Переключатель — cookie `helios-data-source`
   (`/api/data-source`). Без `BACKEND_API_URL` доступно только демо; `DEMO_MODE=off` запрещает демо.
-  Упор разработки — на «Сервер»: новое делаем в C# и PostgreSQL. Демо — витрина: то, что без сервера
-  невозможно (например, загрузка файлов), показывает понятную заглушку «доступно в режиме „Сервер“», но
-  не ломается. `backendRequest` возвращает `null` в демо.
+  Приоритет новых возможностей — режим «Сервер»: их делаем в C# и PostgreSQL. Демо остаётся — в нём быстро
+  смотреть интерфейс и дизайн без запуска сервера; то, что без сервера невозможно (например, загрузка файлов),
+  показывает понятную заглушку «доступно в режиме „Сервер“», но не ломается. Полный переход на «Сервер» —
+  когда сервис будет готов. `backendRequest` возвращает `null` в демо.
 - Решения по архитектуре (что выбрали и почему) — в `docs/adr/`.
 - Управление (пользователи, группы, курсы): один контракт для моков и C# — `features/admin/api.ts`,
   правила ролей — `shared/auth/management.ts`, поля — `shared/lib/management-validation.ts`.

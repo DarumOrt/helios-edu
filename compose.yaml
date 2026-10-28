@@ -1,8 +1,13 @@
-# docker compose up --build  →  http://localhost:3000
+# Для разработки сайт запускается без Docker: npm run dev → http://localhost:3000.
+# Сервер (база, хранилище файлов, C# API): docker compose --profile backend up -d --build db storage api
+# Сайт в Docker (собранный) — отдельно и по желанию: docker compose --profile web up --build (демо);
+# с сервером — добавить -f compose.backend.yaml (см. backend/README.md).
 services:
   web:
     build: .
     image: helios-edu:local
+    # свой профиль: команды с --profile backend сайт в Docker не поднимают
+    profiles: [web]
     ports:
       - "3000:3000"
     restart: unless-stopped

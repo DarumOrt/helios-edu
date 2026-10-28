@@ -26,7 +26,7 @@ ASP.NET Core (.NET 10), EF Core и PostgreSQL. Курсы доступны по�
 Нужен Docker Desktop с Linux-контейнерами. Из корня репозитория:
 
 ```bash
-docker compose --profile backend up -d --build db api
+docker compose --profile backend up -d --build db storage api
 ```
 
 API доступен на `http://127.0.0.1:8080`. PostgreSQL не публикует порт на хост,
@@ -175,16 +175,16 @@ Next.js передаёт запросы в C#. Переменная сервер
 Без переменной работают прежние моки. При включённом API сбой соединения или
 таймаут возвращает `503`, а не моковые данные; HTTP-ошибки API передаются клиенту.
 
-Все три сервиса в Docker, с подключённым C# API:
+Сайт тоже в Docker (собранный, без `npm run dev`), с подключённым C# API — по желанию:
 
 ```bash
-docker compose -f compose.yaml -f compose.backend.yaml --profile backend up -d --build
+docker compose -f compose.yaml -f compose.backend.yaml --profile backend --profile web up -d --build
 ```
 
 Остановка без удаления данных:
 
 ```bash
-docker compose --profile backend stop api db
+docker compose --profile backend stop api storage db
 ```
 
 ## Проверка
