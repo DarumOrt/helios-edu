@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Data;
 using HeliosEdu.Api.Management;
@@ -23,7 +24,7 @@ public static class FilesEndpoints
         group.MapPost("", CreateAsync).Produces<UploadTicket>(201);
         group.MapPost("/{id}/complete", CompleteAsync).Produces<StoredFileInfo>();
         group.MapGet("/{id}", OpenAsync);
-        group.MapPost("/cleanup", CleanupAsync).RequireAuthorization(AccessRules.ManageUsers).Produces<CleanupResult>();
+        group.MapPost("/cleanup", CleanupAsync).RequireAuthorization(AccessRules.ManageSystem).Produces<CleanupResult>();
     }
 
     /// <summary>POST { kind, courseId, fileName, size } — проверить права и файл, выдать ссылку на загрузку.</summary>
@@ -89,6 +90,14 @@ public static class FilesEndpoints
         }
         file.Status = "ready";
         file.ReadyAt = DateTimeOffset.UtcNow;
+        // файлы курса — в журнал; файлы работ — часть учёбы (видны в работе студента)
+        if (file.Kind != FileKinds.Submission.Name)
+        {
+            var code = await db.Courses.Where(course => course.Id == file.CourseId).Select(course => course.Code)
+                .SingleAsync(context.RequestAborted);
+            AuditLog.Write(db, context, "file.uploaded", "file", file.Id, $"{code} · {file.FileName}",
+                AuditLog.Diff(("Вид", null, file.Kind), ("Размер", null, $"{file.Size / 1024d / 1024d:0.##} МБ")));
+        }
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(StoredFileInfo.From(file));
     }
@@ -119,8 +128,16 @@ public static class FilesEndpoints
         return file.OwnerId == actor.Id || actor.Role is "admin" or "tutor" && visible;
     }
 
-    private static async Task<IResult> CleanupAsync(LearningDbContext db, FileStorage storage, CancellationToken token) =>
-        storage.IsConfigured ? Results.Ok(await FileJanitor.RunOnceAsync(db, storage, DateTimeOffset.UtcNow, token)) : Unavailable();
+    private static async Task<IResult> CleanupAsync(HttpContext context, LearningDbContext db, FileStorage storage)
+    {
+        if (!storage.IsConfigured) return Unavailable();
+        var result = await FileJanitor.RunOnceAsync(db, storage, DateTimeOffset.UtcNow, context.RequestAborted);
+        AuditLog.Write(db, context, "file.cleanup", "storage", null, "Хранилище файлов",
+            AuditLog.Diff(("Брошенные загрузки", null, result.Abandoned.ToString()), ("В корзину", null, result.Trashed.ToString()),
+                ("Удалено", null, result.Deleted.ToString()), ("Без записи", null, result.Orphans.ToString())));
+        await db.SaveChangesAsync(context.RequestAborted);
+        return Results.Ok(result);
+    }
 
     /// <summary>
     /// Проверка ссылки на загруженный файл (материал, обложка, работа): свой курс, нужный вид, загружен.

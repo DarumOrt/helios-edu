@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using HeliosEdu.Api.Audit;
 using HeliosEdu.Api.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,12 +39,23 @@ public static class AuthEndpoints
                 context.RequestAborted);
             var verification = hasher.VerifyHashedPassword(account ?? DummyAccount,
                 account?.PasswordHash ?? DummyHash, input.Password);
-            if (account is null || verification == PasswordVerificationResult.Failed)
-                return Results.Json(new { error = "Неверная почта или пароль." }, statusCode: 401);
-            if (account.Status == "blocked")
-                return Results.Json(new { error = "Учётная запись заблокирована. Обратитесь к организатору." }, statusCode: 403);
+            if (account is null || verification == PasswordVerificationResult.Failed || account.Status == "blocked")
+            {
+                // неудачная попытка — в журнал с введённой почтой (без пароля и адреса), как в Moodle
+                var email = input.Email.Trim();
+                AuditLog.Write(db, null, "auth.login_failed", "account", account?.Id, email,
+                    account?.Status == "blocked" && verification != PasswordVerificationResult.Failed
+                        ? [new AuditChange("Причина", null, "учётная запись заблокирована")]
+                        : [new AuditChange("Причина", null, "неверная почта или пароль")],
+                    actorName: email);
+                await db.SaveChangesAsync(context.RequestAborted);
+                return account is null || verification == PasswordVerificationResult.Failed
+                    ? Results.Json(new { error = "Неверная почта или пароль." }, statusCode: 401)
+                    : Results.Json(new { error = "Учётная запись заблокирована. Обратитесь к организатору." }, statusCode: 403);
+            }
             if (verification == PasswordVerificationResult.SuccessRehashNeeded)
                 account.PasswordHash = hasher.HashPassword(account, input.Password);
+            AuditLog.Write(db, account, "auth.login", "account", account.Id, account.Name);
 
             await StartSessionAsync(db, account, context, configuration);
             return Results.Ok(UserInfo.From(account));
@@ -52,8 +64,9 @@ public static class AuthEndpoints
         auth.MapPost("/register", async (RegisterRequest input, LearningDbContext db,
             IPasswordHasher<Account> hasher, HttpContext context, IConfiguration configuration) =>
         {
-            if (!configuration.GetValue("Auth:AllowRegistration", true))
-                return Results.NotFound(new { error = "Регистрация отключена." });
+            // выключатель — в настройках системы (администратор), начальное значение — Auth:AllowRegistration
+            if (!(await AuditEndpoints.SettingsAsync(db, "pspu", configuration, context.RequestAborted)).AllowRegistration)
+                return Results.Json(new { error = "Регистрация закрыта. Учётную запись создаст организатор." }, statusCode: 403);
             var fields = ValidateRegistration(input);
             if (fields.Count > 0) return Results.BadRequest(new { error = "Проверьте поля формы.", fields });
 
@@ -69,6 +82,7 @@ public static class AuthEndpoints
             };
             account.PasswordHash = hasher.HashPassword(account, input.Password!);
             db.Accounts.Add(account);
+            AuditLog.Write(db, account, "auth.registered", "account", account.Id, $"{account.Name} · {account.Email}");
             try
             {
                 await db.SaveChangesAsync(context.RequestAborted);
@@ -88,8 +102,17 @@ public static class AuthEndpoints
         auth.MapPost("/logout", async (HttpContext context, LearningDbContext db, IConfiguration configuration) =>
         {
             if (context.Request.Cookies.TryGetValue(SessionAuthentication.CookieName, out var token))
-                await db.LoginSessions.Where(session => session.TokenHash == SessionAuthentication.Hash(token))
-                    .ExecuteDeleteAsync(context.RequestAborted);
+            {
+                var hash = SessionAuthentication.Hash(token);
+                var session = await db.LoginSessions.Include(item => item.Account)
+                    .SingleOrDefaultAsync(item => item.TokenHash == hash, context.RequestAborted);
+                if (session is not null)
+                {
+                    AuditLog.Write(db, session.Account, "auth.logout", "account", session.Account.Id, session.Account.Name);
+                    db.LoginSessions.Remove(session);
+                    await db.SaveChangesAsync(context.RequestAborted);
+                }
+            }
             context.Response.Cookies.Delete(SessionAuthentication.CookieName, SessionAuthentication.Cookie(configuration));
             return Results.NoContent();
         });

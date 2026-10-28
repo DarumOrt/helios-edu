@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using System.Text.RegularExpressions;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Courses;
@@ -91,6 +92,7 @@ public static partial class AdaptiveEndpoints
         ApplySkill(skill, input);
         db.Skills.Add(skill);
         foreach (var required in prerequisites) db.SkillPrerequisites.Add(new SkillPrerequisite { SkillId = skill.Id, RequiresSkillId = required });
+        AuditLog.Write(db, http, "skill.created", "skill", skill.Id, $"{course.Code} · {skill.Title}");
         await TeacherCourseChange(http, db, engine, "skill.create", token);
         await db.SaveChangesAsync(token);
         return Results.Json((await engine.SkillInfos(course, token, ensureAuto: false)).Single(item => item.Id == skill.Id), statusCode: 201);
@@ -113,6 +115,7 @@ public static partial class AdaptiveEndpoints
             foreach (var required in prerequisites.Where(id => old.All(item => item.RequiresSkillId != id)))
                 db.SkillPrerequisites.Add(new SkillPrerequisite { SkillId = skillId, RequiresSkillId = required });
         }
+        AuditLog.Write(db, http, "skill.updated", "skill", skill.Id, $"{course.Code} · {skill.Title}");
         await TeacherCourseChange(http, db, engine, "skill.update", token);
         await db.SaveChangesAsync(token);
         return Results.Ok((await engine.SkillInfos(course, token, ensureAuto: false)).Single(item => item.Id == skill.Id));
@@ -125,6 +128,7 @@ public static partial class AdaptiveEndpoints
         if (skill is null) return Fail(404, "Навык не найден");
         if (await db.SkillMastery.AnyAsync(item => item.SkillId == skillId, token)) return Fail(409, "По навыку уже есть результаты учеников");
         db.Skills.Remove(skill);
+        AuditLog.Write(db, http, "skill.deleted", "skill", skill.Id, $"{course.Code} · {skill.Title}");
         await TeacherCourseChange(http, db, engine, "skill.delete", token);
         return Results.NoContent();
     }
@@ -155,6 +159,8 @@ public static partial class AdaptiveEndpoints
             var skill = new Skill { Id = AdaptiveEngine.Id("sk"), CourseId = course.Id, Order = ++order };
             ApplySkill(skill, item); ids.Add(skill.Id); db.Skills.Add(skill);
         }
+        AuditLog.Write(db, http, "skill.imported", "course", course.Id, $"{course.Code} · {course.Title}",
+            AuditLog.Diff(("Добавлено навыков", null, ids.Count.ToString())));
         await TeacherCourseChange(http, db, engine, "skill.import", token);
         await db.SaveChangesAsync(token);
         return Results.Json((await engine.SkillInfos(course, token, ensureAuto: false)).Where(item => ids.Contains(item.Id)), statusCode: 201);
@@ -172,6 +178,11 @@ public static partial class AdaptiveEndpoints
         db.ActivitySkills.RemoveRange(old.Where(item => !ids.Contains(item.SkillId)));
         foreach (var id in ids.Where(id => old.All(item => item.SkillId != id)))
             db.ActivitySkills.Add(new ActivitySkill { CourseId = course.Id, ActivityId = activityId, SkillId = id });
+        var titles = await db.Skills.Where(skill => skill.CourseId == course.Id).ToDictionaryAsync(skill => skill.Id, skill => skill.Title, token);
+        string Titles(IEnumerable<string> skillIds) => string.Join(", ", skillIds.Select(id => titles.GetValueOrDefault(id, id)).Order());
+        var activityTitle = AdaptiveEngine.Materials(course).First(item => item.Activity.Id == activityId).Activity.Title;
+        var changes = AuditLog.Diff(("Навыки", Titles(old.Select(item => item.SkillId)), Titles(ids)));
+        if (changes.Count > 0) AuditLog.Write(db, http, "activity.skills", "activity", activityId, $"{course.Code} · {activityTitle}", changes);
         await TeacherCourseChange(http, db, engine, "activity.skills", token);
         return Results.Ok(new { activityId, skillIds = ids });
     }

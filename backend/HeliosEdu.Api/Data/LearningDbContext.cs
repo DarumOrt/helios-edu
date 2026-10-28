@@ -14,6 +14,8 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     {
         if (ChangeTracker.Entries<LearningEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Журнал обучения допускает только добавление событий.");
+        if (ChangeTracker.Entries<Audit.AuditEntry>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Журнал действий допускает только добавление записей.");
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -27,6 +29,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         ProtectLearningEvents();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
+    private static readonly System.Text.Json.JsonSerializerOptions AuditJson = new(System.Text.Json.JsonSerializerDefaults.Web);
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
@@ -48,6 +51,8 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
     public DbSet<Files.StoredFile> Files => Set<Files.StoredFile>();
+    public DbSet<Audit.SystemSettings> Settings => Set<Audit.SystemSettings>();
+    public DbSet<Audit.AuditEntry> AuditLog => Set<Audit.AuditEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +64,19 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<Submission>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Grade>().HasKey(item => new { item.CourseId, item.ActivityId, item.UserId });
+        modelBuilder.Entity<Audit.SystemSettings>().ToTable("Settings").HasKey(item => item.TenantId);
+        var audit = modelBuilder.Entity<Audit.AuditEntry>();
+        audit.ToTable("AuditLog");
+        audit.Property(item => item.Id).UseIdentityAlwaysColumn();
+        audit.HasIndex(item => new { item.TenantId, item.Id });
+        audit.HasIndex(item => new { item.TenantId, item.At });
+        audit.Property(item => item.Changes).HasColumnType("jsonb").HasConversion(
+            value => value == null ? null : System.Text.Json.JsonSerializer.Serialize(value, AuditJson),
+            value => value == null ? null : System.Text.Json.JsonSerializer.Deserialize<List<Audit.AuditChange>>(value, AuditJson),
+            new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<Audit.AuditChange>?>(
+                (left, right) => (left == null && right == null) || (left != null && right != null && left.SequenceEqual(right)),
+                value => value == null ? 0 : value.Count,
+                value => value == null ? null : value.ToList()));
         var files = modelBuilder.Entity<Files.StoredFile>();
         files.ToTable("Files");
         files.Ignore(file => file.Url);

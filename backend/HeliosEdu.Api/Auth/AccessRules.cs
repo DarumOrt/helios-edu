@@ -23,6 +23,8 @@ public static class AccessRules
     public const string ReadCohorts = "cohort.read";
     public const string ManageCourses = "course.manage";
     public const string EditCourse = "course.edit";
+    /// <summary>настройки системы и журнал действий — только администратор</summary>
+    public const string ManageSystem = "system.manage";
 
     public static bool CanEditCourse(Account actor, Course course) =>
         actor.Role is "admin" or "organizer" || actor.Role == "tutor" && course.TutorId == actor.Id;

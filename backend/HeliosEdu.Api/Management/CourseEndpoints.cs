@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using System.Security.Cryptography;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Courses;
@@ -30,6 +31,9 @@ public static partial class ManagementEndpoints
                 context.RequestAborted)) fields["tutorId"] = "Выберите преподавателя";
     }
 
+    private static async Task<string?> TutorName(LearningDbContext db, string? tutorId, CancellationToken token) =>
+        await db.Accounts.Where(user => user.Id == tutorId).Select(user => user.Name).SingleOrDefaultAsync(token);
+
     private static async Task<IResult> CreateCourseAsync(HttpContext context, LearningDbContext db)
     {
         var input = await ManagementInput.ReadAsync(context.Request);
@@ -47,6 +51,8 @@ public static partial class ManagementEndpoints
         var position = await db.Courses.MaxAsync(item => (int?)EF.Property<int>(item, "Position"), context.RequestAborted) ?? -1;
         db.Courses.Add(course);
         db.Entry(course).Property("Position").CurrentValue = position + 1;
+        AuditLog.Write(db, context, "course.created", "course", course.Id, $"{course.Code} · {course.Title}",
+            AuditLog.Diff(("Преподаватель", null, await TutorName(db, course.TutorId, context.RequestAborted))));
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Json(CourseSummary.From(course, CourseStats.Empty), statusCode: 201);
     }
@@ -66,6 +72,8 @@ public static partial class ManagementEndpoints
         var fields = ManagementValidation.Course(input, true);
         await ValidateTutor(input, true, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
+        var before = (course.Title, course.Category, course.Description, course.Faculty, course.AcademicYear, course.Status,
+            Tutor: await TutorName(db, course.TutorId, context.RequestAborted));
         if (input.Has("title")) course.Title = input.Text("title");
         if (input.Has("category")) course.Category = input.Text("category");
         if (input.Has("description")) course.Description = input.Text("description");
@@ -73,6 +81,13 @@ public static partial class ManagementEndpoints
         if (input.Has("faculty")) course.Faculty = input.OptionalText("faculty");
         if (input.Has("academicYear")) course.AcademicYear = input.OptionalText("academicYear");
         if (input.Has("status")) course.Status = input.Choice("status");
+        var changes = AuditLog.Diff(("Название", before.Title, course.Title), ("Направление", before.Category, course.Category),
+            ("Описание", before.Description, course.Description),
+            ("Преподаватель", before.Tutor, await TutorName(db, course.TutorId, context.RequestAborted)),
+            ("Факультет", before.Faculty, course.Faculty), ("Учебный год", before.AcademicYear, course.AcademicYear),
+            ("Статус", AuditLog.Status(before.Status), AuditLog.Status(course.Status)));
+        if (changes.Count > 0)
+            AuditLog.Write(db, context, "course.updated", "course", course.Id, $"{course.Code} · {course.Title}", changes);
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(CourseSummary.From(course, (await CourseProgress.ForViewer(db,
             actor, [course.Id], context.RequestAborted))[course.Id]));

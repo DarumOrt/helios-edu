@@ -21,10 +21,10 @@ export async function GET(req: Request, { params }: Ctx) {
 // POST { title, body } — объявление всем, кто видит курс (студентам его групп)
 export async function POST(req: Request, { params }: Ctx) {
   const { id } = await params;
-  // выключатель объявлений — в настройках системы, они пока хранятся в Next: проверяем до пересылки
-  if (!getSettings().announcementsEnabled) return fail(403, "Объявления отключены администратором");
+  // на сервере выключатель объявлений проверяет C# (настройки системы в базе)
   const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}/announcements`);
   if (forwarded) return forwarded;
+  if (!getSettings().announcementsEnabled) return fail(403, "Объявления отключены администратором");
   const editor = await demoCourseEditor(id);
   if (editor instanceof NextResponse) return editor;
   const author = await currentUser();

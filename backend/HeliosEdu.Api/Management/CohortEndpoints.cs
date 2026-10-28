@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Data;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,7 @@ public static partial class ManagementEndpoints
                     context.RequestAborted))
                 return Fail(409, "В группе есть студенты — сначала уберите их из группы");
             db.Cohorts.Remove(group);
+            AuditLog.Write(db, context, "cohort.deleted", "cohort", group.Id, group.Name);
             await db.SaveChangesAsync(context.RequestAborted);
             return Results.NoContent();
         }).RequireAuthorization(AccessRules.ManageCohorts);
@@ -43,6 +45,12 @@ public static partial class ManagementEndpoints
         (locked
             ? db.Cohorts.FromSqlInterpolated($"SELECT * FROM \"Cohorts\" WHERE \"Id\" = {id} AND \"TenantId\" = {tenant} FOR UPDATE")
             : db.Cohorts.Where(group => group.Id == id && group.TenantId == tenant)).SingleOrDefaultAsync(token);
+
+    /// <summary>Коды курсов группы через запятую — для журнала («было → стало»).</summary>
+    private static async Task<string> CourseCodes(LearningDbContext db, string cohortId, CancellationToken token) =>
+        string.Join(", ", await db.CohortCourses.Where(link => link.CohortId == cohortId)
+            .Join(db.Courses, link => link.CourseId, course => course.Id, (_, course) => course.Code)
+            .OrderBy(code => code).ToListAsync(token));
 
     private static async Task<CohortInfo> CohortResult(LearningDbContext db, Cohort group, CancellationToken token) => new(
         group.Id, group.Name, group.Faculty,
@@ -66,6 +74,8 @@ public static partial class ManagementEndpoints
         var group = new Cohort { Id = $"co-{Guid.NewGuid():N}", Name = name, NormalizedName = normalized,
             TenantId = tenant, Faculty = input.OptionalText("faculty") };
         db.Cohorts.Add(group);
+        AuditLog.Write(db, context, "cohort.created", "cohort", group.Id, group.Name,
+            AuditLog.Diff(("Факультет", null, group.Faculty)));
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Json(await CohortResult(db, group, context.RequestAborted), statusCode: 201);
     }
@@ -82,6 +92,7 @@ public static partial class ManagementEndpoints
                 await db.Courses.CountAsync(course => courseIds.Contains(course.Id), context.RequestAborted) != courseIds.Length))
             fields["courseIds"] = "Есть неизвестные курсы";
         if (fields.Count > 0) return Invalid(fields);
+        var before = (group.Name, group.Faculty, Courses: await CourseCodes(db, id, context.RequestAborted));
         if (input.Has("name"))
         {
             var name = input.Text("name");
@@ -100,6 +111,12 @@ public static partial class ManagementEndpoints
             db.CohortCourses.AddRange(courseIds.Select((courseId, position) => new CohortCourse
                 { CohortId = id, CourseId = courseId, Position = position }));
         }
+        var after = courseIds is null ? before.Courses : string.Join(", ", await db.Courses
+            .Where(course => courseIds.Contains(course.Id)).Select(course => course.Code).OrderBy(code => code)
+            .ToListAsync(context.RequestAborted));
+        var changes = AuditLog.Diff(("Название", before.Name, group.Name), ("Факультет", before.Faculty, group.Faculty),
+            ("Курсы", before.Courses, after));
+        if (changes.Count > 0) AuditLog.Write(db, context, "cohort.updated", "cohort", group.Id, group.Name, changes);
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(await CohortResult(db, group, context.RequestAborted));
     }
@@ -115,9 +132,16 @@ public static partial class ManagementEndpoints
             .ToListAsync(context.RequestAborted);
         if (members.Count != ids.Length)
             return Fail(400, "В группу можно добавить только студентов", new() { ["memberIds"] = "В группу можно добавить только студентов" });
+        var current = await db.Accounts.Where(user => user.TenantId == group.TenantId && user.Role == "student" && user.Group == group.Name)
+            .Select(user => new { user.Id, user.Name }).ToListAsync(context.RequestAborted);
+        var added = members.Where(member => current.All(user => user.Id != member.Id)).Select(member => member.Name).Order().ToList();
+        var removed = current.Where(user => !ids.Contains(user.Id)).Select(user => user.Name).Order().ToList();
         await db.Accounts.Where(user => user.TenantId == group.TenantId && user.Role == "student" && user.Group == group.Name && !ids.Contains(user.Id))
             .ExecuteUpdateAsync(setters => setters.SetProperty(user => user.Group, (string?)null), context.RequestAborted);
         foreach (var member in members) member.Group = group.Name;
+        if (added.Count + removed.Count > 0)
+            AuditLog.Write(db, context, "cohort.members", "cohort", group.Id, group.Name,
+                AuditLog.Diff(("Добавлены", null, string.Join(", ", added)), ("Убраны", null, string.Join(", ", removed))));
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(await CohortResult(db, group, context.RequestAborted));
     }

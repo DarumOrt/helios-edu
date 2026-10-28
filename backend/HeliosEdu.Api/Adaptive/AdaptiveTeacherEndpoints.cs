@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using HeliosEdu.Api.Auth;
 using System.Text.Json;
 using HeliosEdu.Api.Data;
@@ -11,6 +12,9 @@ public static partial class AdaptiveEndpoints
 {
     private static async Task<bool> StudentExists(string userId, HttpContext http, LearningDbContext db) =>
         await AccessRules.CourseStudents(db, Current(http).Id).AnyAsync(account => account.Id == userId, http.RequestAborted);
+
+    private static Task<string> StudentName(LearningDbContext db, string userId, CancellationToken token) =>
+        db.Accounts.Where(account => account.Id == userId).Select(account => account.Name).SingleAsync(token);
 
     private static Dictionary<string, string> ReasonErrors(ManagementInput input) => input.Text("reason").Length is < 3 or > 500
         ? new() { ["reason"] = "Укажите причину — от 3 до 500 символов" } : new();
@@ -38,7 +42,10 @@ public static partial class AdaptiveEndpoints
         var input = await ManagementInput.ReadAsync(http.Request);
         if (input?.Value("enabled") is not { ValueKind: JsonValueKind.True or JsonValueKind.False } enabled)
             return Invalid(new() { ["enabled"] = "Укажите, включена ли адаптация" });
-        Current(http).AdaptiveEnabled = enabled.GetBoolean();
+        var course = Current(http);
+        var changes = AuditLog.Diff(("Адаптация", AuditLog.YesNo(course.AdaptiveEnabled), AuditLog.YesNo(enabled.GetBoolean())));
+        course.AdaptiveEnabled = enabled.GetBoolean();
+        if (changes.Count > 0) AuditLog.Write(db, http, "adaptive.toggled", "course", course.Id, $"{course.Code} · {course.Title}", changes);
         await TeacherCourseChange(http, db, engine, "adaptive.enabled", http.RequestAborted);
         return Results.Ok(new { enabled = enabled.GetBoolean() });
     }
@@ -66,6 +73,9 @@ public static partial class AdaptiveEndpoints
             case "unlock": row.UnlockedByTeacher = true; if (row.Status != "mastered") row.Status = "learning"; break;
         }
         row.UpdatedAt = DateTimeOffset.UtcNow;
+        AuditLog.Write(db, http, "adaptive.override", "skill", skillId, $"{await StudentName(db, userId, token)} · {course.Code} · {skill.Title}",
+            AuditLog.Diff(("Решение", null, action switch { "master" => "засчитать освоенным", "reset" => "начать заново", _ => "открыть" }),
+                ("Причина", null, input.Text("reason"))));
         await db.SaveChangesAsync(token);
         // Пересчитываются и зависимые статусы, освоенные навыки не понижаются.
         await engine.Masteries(userId, skills, token);
@@ -96,6 +106,9 @@ public static partial class AdaptiveEndpoints
             if (pin is null) { pin = new StudentPin { UserId = userId, CourseId = course.Id }; db.StudentPins.Add(pin); }
             pin.ActivityId = activityId; pin.Reason = input.Text("reason"); pin.CreatedBy = Actor(http).Id; pin.CreatedAt = DateTimeOffset.UtcNow;
         }
+        var pinned = activityId is null ? null : AdaptiveEngine.Materials(course).First(item => item.Activity.Id == activityId).Activity.Title;
+        AuditLog.Write(db, http, "adaptive.pin", "account", userId, $"{await StudentName(db, userId, token)} · {course.Code}",
+            AuditLog.Diff(("Задание", null, pinned ?? "закрепление снято"), ("Причина", null, input.Text("reason"))));
         await engine.Override(userId, Actor(http).Id, course.Id, activityId is null ? "unpin" : "pin", input.Text("reason"), token, activityId: activityId);
         return activityId is null ? Results.NoContent() : Results.Ok(pin);
     }

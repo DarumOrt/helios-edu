@@ -59,10 +59,6 @@ export function actionForMockApi(path: string, method: string): Action | null {
     return method === "GET" ? "course.view" : "course.edit";
   if (/^\/api\/courses\/[^/]+\/(sections|activities)(\/|$)/.test(path)) return "course.edit";
   if (path === "/api/gradebook/grade") return "grade.edit";
-  // настройки системы и журнал действий — только администратор
-  // настройки читают все (форма регистрации, объявления), меняет и смотрит журнал — администратор
-  if (path === "/api/settings") return method === "GET" ? "course.view" : "system.manage";
-  if (path === "/api/audit") return "system.manage";
   if (path === "/api/gradebook" || path.startsWith("/api/analytics/")) return "analytics.view";
   if (path.startsWith("/api/submissions")) return "submission.review";
   // GET групп — для аналитики; изменения — управление группами (C# проверяет ещё раз)

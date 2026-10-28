@@ -1,3 +1,4 @@
+using HeliosEdu.Api.Audit;
 using System.Text.Json;
 using HeliosEdu.Api.Data;
 using HeliosEdu.Api.Management;
@@ -87,6 +88,9 @@ public static partial class AdaptiveEndpoints
             if (old is null) db.QuizQuestions.Add(question);
             else db.Entry(old).CurrentValues.SetValues(question);
         }
+        var quizTitle = AdaptiveEngine.Materials(course).First(item => item.Activity.Id == activityId).Activity.Title;
+        AuditLog.Write(db, http, "quiz.questions", "activity", activityId, $"{course.Code} · {quizTitle}",
+            AuditLog.Diff(("Вопросов", existing.Count.ToString(), parsed.Count.ToString())));
         await TeacherCourseChange(http, db, engine, "quiz.questions", token);
         return Results.Ok(parsed);
     }

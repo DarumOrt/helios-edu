@@ -1,4 +1,4 @@
-import { audit, auditIfOk } from "@/mocks/audit-store";
+import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward } from "@/shared/lib/backend";
 import { findCohort, setCohortMembers } from "@/mocks/cohorts-store";
@@ -10,7 +10,7 @@ import { demoActorWith, fail, readJson } from "@/mocks/management-guards";
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/cohorts/${encodeURIComponent(id)}/members`);
-  if (forwarded) return auditIfOk(forwarded, "Изменён состав группы", id);
+  if (forwarded) return forwarded;
 
   const actor = await demoActorWith("cohort.manage");
   if (actor instanceof NextResponse) return actor;
@@ -24,6 +24,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       memberIds: "В группу можно добавить только студентов",
     });
   const cohort = setCohortMembers(id, ids as string[])!;
-  await audit("Изменён состав группы", `${cohort.name} · ${cohort.memberIds.length} студентов`);
+  await audit("cohort.members", cohort.name, [
+    { field: "Студентов", after: String(cohort.memberIds.length) },
+  ]);
   return NextResponse.json(cohort);
 }

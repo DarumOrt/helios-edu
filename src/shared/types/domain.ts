@@ -138,6 +138,48 @@ export interface SubmissionFull extends Submission {
   maxGrade: number;
 }
 
+/** Настройки системы: GET/PUT /api/settings (менять — администратор) */
+export interface SystemSettings {
+  /** студенты могут сами создать учётную запись на /register */
+  allowRegistration: boolean;
+  /** преподаватели могут отправлять объявления курсу */
+  announcementsEnabled: boolean;
+}
+
+/** Разделы журнала действий — фильтр «Действие» (подписи — shared/lib/audit-labels.ts) */
+export type AuditCategory =
+  "auth" | "users" | "cohorts" | "courses" | "content" | "adaptive" | "grades" | "files" | "settings";
+
+/** Что изменилось: подпись поля, было и стало (уже в читаемом виде) */
+export interface AuditChange {
+  field: string;
+  before?: string;
+  after?: string;
+}
+
+/** Запись журнала действий: GET /api/audit (администратор) */
+export interface AuditEntry {
+  id: number;
+  at: string;
+  actorName: string;
+  actorRole: string;
+  /** код действия: user.updated, auth.login … */
+  action: string;
+  actionText: string;
+  category: string;
+  targetType: string;
+  targetId?: string;
+  /** название объекта на момент действия */
+  target: string;
+  changes?: AuditChange[];
+}
+
+/** Страница журнала: новее → старее; nextCursor — для «Показать ещё» (нет — конец) */
+export interface AuditPage {
+  items: AuditEntry[];
+  nextCursor?: number;
+}
+
 /** Вид загружаемого файла — лимиты и форматы в shared/lib/file-rules.ts (зеркало Files/StoredFile.cs) */
 export type FileKind = "video" | "document" | "cover" | "submission";
 
