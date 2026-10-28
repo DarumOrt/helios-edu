@@ -4,6 +4,12 @@
 // Как обновить api.gen.ts — scripts/api-types.mjs (npm run api:types).
 import type * as Api from "./api.gen";
 import type {
+  ActivityProgress,
+  LeaderboardEntry,
+  LessonStatRow,
+  TrackingEvent,
+} from "@/shared/lib/tracking/types";
+import type {
   Activity,
   Announcement,
   CatalogCohort,
@@ -20,6 +26,7 @@ import type {
   Classmate,
   UploadTicket,
   SystemSettings,
+  PairTime,
   AuditEntry,
   AuditChange,
   AuditPage,
@@ -77,6 +84,11 @@ export type ApiContract = [
   Assert<SameFields<Api.ClassmateInfo, Classmate>>,
   Assert<SameFields<Api.UploadTicket, UploadTicket>>,
   Assert<SameFields<Api.SettingsInfo, SystemSettings>>,
+  Assert<SameFields<Api.ProgressInfo, ActivityProgress>>,
+  Assert<SameFields<Api.TrackingEventInfo, TrackingEvent>>,
+  Assert<SameFields<Api.LessonStatRow, LessonStatRow>>,
+  Assert<SameFields<Api.LeaderboardEntry, LeaderboardEntry>>,
+  Assert<SameFields<Api.PairTimeInfo, PairTime>>,
   Assert<SameFields<Api.AuditEntryInfo, AuditEntry>>,
   Assert<SameFields<Api.AuditChange, AuditChange>>,
   Assert<SameFields<Api.AuditPage, AuditPage>>,

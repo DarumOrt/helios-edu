@@ -119,6 +119,21 @@ export type CohortInfo = {
   profile: string | null;
 };
 
+export type CourseActivityStat = {
+  activityId: string;
+  title: string;
+  type: string;
+  started: number;
+  completed: number;
+  total: number;
+  avgCoverage: number;
+  avgTimeSec: number;
+};
+
+export type CourseActivityStats = {
+  activities: CourseActivityStat[];
+};
+
 export type CourseDetail = {
   sections: Section[];
   id: string;
@@ -166,6 +181,46 @@ export type GradeRow = {
   total: number;
 };
 
+export type JsonElement = unknown;
+
+export type Leaderboard = {
+  courseId: string;
+  entries: LeaderboardEntry[];
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  userId: string;
+  userName: string;
+  group: string;
+  score: number;
+  materialsCompleted: number;
+  materialsTotal: number;
+  avgCoverage: number;
+  quizAvg: number | null;
+  streak: number;
+  isCurrentUser: boolean | null;
+};
+
+export type LessonStatRow = {
+  userId: string;
+  userName: string;
+  group: string | null;
+  coverage: number;
+  activeTimeSec: number;
+  completed: boolean;
+  seeks: number | null;
+  pagesViewed: number | null;
+  totalPages: number | null;
+  lastAt: number | null;
+  status: string;
+};
+
+export type LessonStats = {
+  rows: LessonStatRow[];
+  events: TrackingEventInfo[] | null;
+};
+
 export type LoginRequest = {
   email: string | null;
   password: string | null;
@@ -185,11 +240,63 @@ export type NotificationInfo = {
   link: string | null;
 };
 
+export type PairTimeInfo = {
+  n: number;
+  start: string;
+  end: string;
+};
+
+export type ProgressInfo = {
+  sessionId: string;
+  userId: string;
+  activityId: string;
+  activityType: string;
+  coverage: number;
+  activeTimeSec: number;
+  completed: boolean;
+  seeks: number | null;
+  pauses: number | null;
+  maxRate: number | null;
+  pagesViewed: number | null;
+  totalPages: number | null;
+  durationSec: number | null;
+  position: number | null;
+  ts: number;
+  userName: string;
+  group: string | null;
+  firstAt: number;
+  lastAt: number;
+  sessions: number;
+};
+
 export type RegisterRequest = {
   name: string | null;
   email: string | null;
   password: string | null;
   consent: boolean | null;
+};
+
+export type ScheduleCourse = {
+  id: string;
+  code: string;
+  title: string;
+  coverColor: string | null;
+};
+
+export type ScheduleInfo = {
+  group: string;
+  pairs: PairTimeInfo[];
+  slots: ScheduleSlotInfo[];
+};
+
+export type ScheduleSlotInfo = {
+  id: string;
+  courseId: string;
+  weekday: number;
+  pair: number;
+  kind: string;
+  room: string;
+  course: ScheduleCourse | null;
 };
 
 export type Section = {
@@ -269,6 +376,23 @@ export type SubmissionList = {
 export type SubmitResult = {
   id: string;
   status: string;
+};
+
+export type TrackingAccepted = {
+  ok: boolean;
+  accepted: number;
+};
+
+export type TrackingEventInfo = {
+  id: string;
+  sessionId: string;
+  userId: string;
+  activityId: string;
+  activityType: string;
+  verb: string;
+  position: number | null;
+  payload: JsonElement | null;
+  ts: number;
 };
 
 export type UploadTicket = {

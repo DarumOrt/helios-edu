@@ -874,6 +874,163 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("NotificationReads");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Tracking.ActivityProgress", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CourseId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ActivityId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ActiveTimeSec")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Coverage")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("DurationSec")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("FirstAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastSessionId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("MaxRate")
+                        .HasColumnType("double precision");
+
+                    b.Property<int?>("PagesViewed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Pauses")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Seeks")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Sessions")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalPages")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "CourseId", "ActivityId");
+
+                    b.HasIndex("CourseId", "ActivityId");
+
+                    b.ToTable("ActivityProgress");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Tracking.ScheduleSlot", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Pair")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Room")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Weekday")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("TenantId", "Group");
+
+                    b.ToTable("ScheduleSlots");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Tracking.TrackingEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActivityId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<JsonElement?>("Payload")
+                        .HasColumnType("jsonb");
+
+                    b.Property<double?>("Position")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Verb")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CourseId", "UserId", "At");
+
+                    b.HasIndex("CourseId", "ActivityId", "UserId", "At");
+
+                    b.ToTable("TrackingEvents");
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Adaptive.ActivitySkill", b =>
                 {
                     b.HasOne("HeliosEdu.Api.Adaptive.Skill", null)
@@ -1159,6 +1316,45 @@ namespace HeliosEdu.Api.Migrations
 
             modelBuilder.Entity("HeliosEdu.Api.Notifications.Notification", b =>
                 {
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Tracking.ActivityProgress", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Tracking.ScheduleSlot", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Tracking.TrackingEvent", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("HeliosEdu.Api.Auth.Account", null)
                         .WithMany()
                         .HasForeignKey("UserId")

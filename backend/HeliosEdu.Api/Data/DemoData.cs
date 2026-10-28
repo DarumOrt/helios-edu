@@ -71,5 +71,6 @@ public static class DemoData
         await db.SaveChangesAsync(cancellationToken);
         await HeliosEdu.Api.Adaptive.AdaptiveSeed.SeedAsync(db, cancellationToken);
         await HeliosEdu.Api.Grades.GradesSeed.SeedAsync(db, cancellationToken);
+        await HeliosEdu.Api.Tracking.TrackingSeed.SeedAsync(db, cancellationToken);
     }
 }

@@ -144,6 +144,9 @@ public sealed class AdaptiveEngine(LearningDbContext db)
         // сданная работа — тоже пройденный материал (как в Courses/CourseProgress.cs)
         completed.AddRange(await db.Submissions.Where(item => item.UserId == userId && item.CourseId == courseId)
             .Select(item => item.ActivityId).ToListAsync(token));
+        // и материал, засчитанный трекингом (просмотрено до порога, Tracking/ActivityProgress)
+        completed.AddRange(await db.ActivityProgress.Where(item => item.UserId == userId && item.CourseId == courseId && item.Completed)
+            .Select(item => item.ActivityId).ToListAsync(token));
         return completed.ToHashSet();
     }
 
