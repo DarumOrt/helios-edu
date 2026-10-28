@@ -109,6 +109,7 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          courseId,
           sessionId: newSessionId(),
           userId: user.id,
           activityId,

@@ -56,7 +56,9 @@ export function NextStep() {
   const next = courses ? pickNext(courses) : null;
   const tracked = next && TRACKED.includes(next.activity.type);
   const { data: progress } = useSWR<ActivityProgress | null>(
-    tracked ? `/api/tracking/progress?userId=${user.id}&activityId=${next.activity.id}` : null,
+    tracked
+      ? `/api/tracking/progress?courseId=${encodeURIComponent(next.course.id)}&activityId=${next.activity.id}&userId=${user.id}`
+      : null,
     fetcher,
   );
 

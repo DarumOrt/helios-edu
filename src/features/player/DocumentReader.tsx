@@ -15,12 +15,15 @@ const PROGRESS_EVERY_MS = 4000;
 // ЗАГЛУШКА рендеринга: в проде здесь PDF.js (canvas) / сконвертированные слайды.
 // Сейчас показываем плейсхолдеры страниц, но трекинг просмотра — настоящий.
 export function DocumentReader({
+  courseId,
   activityId,
   kind,
   totalPages,
   pageTitles,
   onComplete,
 }: {
+  /** курс материала — id материалов уникальны только внутри курса */
+  courseId: string;
   activityId: string;
   /** вызывается один раз, когда материал засчитан */
   onComplete?: (coverage: number) => void;
@@ -52,6 +55,7 @@ export function DocumentReader({
   function sendProgress(useBeacon = false) {
     tracker.progress(
       {
+        courseId,
         sessionId: sessionRef.current,
         userId: user.id,
         activityId,
@@ -70,6 +74,7 @@ export function DocumentReader({
   useEffect(() => {
     const sessionId = sessionRef.current;
     tracker.event({
+      courseId,
       sessionId,
       userId: user.id,
       activityId,
@@ -79,6 +84,7 @@ export function DocumentReader({
     return () => {
       sendProgress(true);
       tracker.event({
+        courseId,
         sessionId,
         userId: user.id,
         activityId,
@@ -99,6 +105,7 @@ export function DocumentReader({
         completedRef.current = true;
         setCompleted(true);
         tracker.event({
+          courseId,
           sessionId: sessionRef.current,
           userId: user.id,
           activityId,
@@ -126,6 +133,7 @@ export function DocumentReader({
       viewed.current.add(p);
       setViewedPages(new Set(viewed.current));
       tracker.event({
+        courseId,
         sessionId: sessionRef.current,
         userId: user.id,
         activityId,

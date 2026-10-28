@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { courses, pairTimes, schedule } from "@/mocks/data";
 import { withCover } from "@/mocks/course-cover-store";
+import { backendForward } from "@/shared/lib/backend";
 
 // GET ?group=М1227 — пары группы на неделю, с данными курса для отображения.
-// Без группы — 400 в обоих режимах (на сервере proxy.ts ещё проверяет, что студент смотрит свою группу).
+// Сервер — C# (студент — только своя группа), демо — моки; без группы — 400 в обоих режимах.
 export async function GET(req: Request) {
+  const forwarded = await backendForward(req, `/api/schedule${new URL(req.url).search}`);
+  if (forwarded) return forwarded;
   const group = new URL(req.url).searchParams.get("group")?.trim() ?? "";
   if (!group) return NextResponse.json({ error: "Укажите группу" }, { status: 400 });
   const slots = (schedule[group] ?? []).map((s) => {
