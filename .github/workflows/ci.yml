@@ -81,6 +81,17 @@ jobs:
       - run: node --test backend/tests/grades.test.mjs
       - run: node --test backend/tests/notifications.test.mjs
       - run: node --test backend/tests/files.test.mjs
+      # настройки и журнал снова много раз входят под разными ролями — ещё раз обнуляем счётчик входов
+      - name: Reset login rate limit again
+        run: |
+          docker compose --profile backend restart api
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8080/api/health/ready && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/api/health/ready
+      - run: node --test backend/tests/settings.test.mjs
+      - run: node --test backend/tests/audit.test.mjs
       - run: node --test backend/tests/api.test.mjs
       - name: Backend logs
         if: failure()
