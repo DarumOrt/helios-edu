@@ -15,3 +15,4 @@ export { BrandMark } from "./BrandMark";
 export { CourseCover } from "./CourseCover";
 export { Field, describedBy } from "./Field";
 export { Dialog } from "./Dialog";
+export { FileUpload } from "./FileUpload";
