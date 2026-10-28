@@ -1,6 +1,6 @@
 import { getSettings } from "@/mocks/settings-store";
 import { NextResponse } from "next/server";
-import { backendRequest, isSameOrigin } from "@/shared/lib/backend";
+import { backendRequest, getDataSource, isSameOrigin } from "@/shared/lib/backend";
 import { validateRegistration, type RegistrationInput } from "@/shared/lib/registration";
 import { findDemoUserByEmail, registerDemoUser } from "@/mocks/users-store";
 
@@ -10,7 +10,8 @@ export async function POST(request: Request) {
   if (!isSameOrigin(request))
     return NextResponse.json({ error: "Недопустимый источник запроса" }, { status: 403 });
 
-  if (!getSettings().allowRegistration)
+  // на сервере запрет регистрации проверяет C# (настройки системы в базе)
+  if ((await getDataSource()).source === "demo" && !getSettings().allowRegistration)
     return NextResponse.json(
       { error: "Регистрация закрыта. Учётную запись создаст организатор." },
       { status: 403 },

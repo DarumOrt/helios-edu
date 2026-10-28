@@ -1,4 +1,4 @@
-import { audit, auditIfOk } from "@/mocks/audit-store";
+import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { setGrade } from "@/mocks/gradebook-store";
 import { backendForward } from "@/shared/lib/backend";
@@ -7,7 +7,7 @@ import { demoCourseReviewer, readJson } from "@/mocks/management-guards";
 // POST { courseId, userId, itemId, grade } — оценка в журнале (grade: null — снять). Сервер — C#.
 export async function POST(req: Request) {
   const forwarded = await backendForward(req, "/api/gradebook/grade");
-  if (forwarded) return auditIfOk(forwarded, "Изменена оценка", "через сервер");
+  if (forwarded) return forwarded;
   const body = (await readJson(req)) as {
     courseId?: unknown;
     userId?: unknown;
@@ -32,6 +32,8 @@ export async function POST(req: Request) {
     );
   const row = setGrade(body.courseId, body.userId, body.itemId, grade);
   if (!row) return NextResponse.json({ error: "not found" }, { status: 404 });
-  await audit("Изменена оценка", `${row.userName} · ${body.courseId} · ${body.itemId}: ${body.grade ?? "—"}`);
+  await audit("grade.updated", `${row.userName} · ${access.course.code} · ${body.itemId}`, [
+    { field: "Оценка", ...(grade !== null && { after: String(grade) }) },
+  ]);
   return NextResponse.json(row);
 }

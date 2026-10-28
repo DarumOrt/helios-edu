@@ -1,4 +1,4 @@
-import { audit, auditIfOk } from "@/mocks/audit-store";
+import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward, isNotImplemented } from "@/shared/lib/backend";
 import { deleteCohort, findCohort, findCohortByName, updateCohort } from "@/mocks/cohorts-store";
@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: Ctx) {
 export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/cohorts/${encodeURIComponent(id)}`);
-  if (forwarded) return auditIfOk(forwarded, "Изменена группа", id);
+  if (forwarded) return forwarded;
 
   const actor = await demoActorWith("cohort.manage");
   if (actor instanceof NextResponse) return actor;
@@ -44,7 +44,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (sameName && sameName.id !== id)
     return fail(409, "Группа с таким названием уже есть", { name: "Группа с таким названием уже есть" });
   const cohort = updateCohort(id, patch)!;
-  await audit(patch.courseIds ? "Изменены курсы группы" : "Изменена группа", cohort.name);
+  await audit("cohort.updated", cohort.name);
   return NextResponse.json(cohort);
 }
 
@@ -52,7 +52,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 export async function DELETE(req: Request, { params }: Ctx) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/cohorts/${encodeURIComponent(id)}`);
-  if (forwarded) return auditIfOk(forwarded, "Удалена группа", id);
+  if (forwarded) return forwarded;
 
   const actor = await demoActorWith("cohort.manage");
   if (actor instanceof NextResponse) return actor;
@@ -60,6 +60,6 @@ export async function DELETE(req: Request, { params }: Ctx) {
   if (!cohort) return fail(404, "not found");
   if (cohort.memberIds.length) return fail(409, "В группе есть студенты — сначала уберите их из группы");
   deleteCohort(id);
-  await audit("Удалена группа", cohort.name);
+  await audit("cohort.deleted", cohort.name);
   return new NextResponse(null, { status: 204 });
 }

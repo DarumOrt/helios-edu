@@ -1,4 +1,4 @@
-import { audit, auditIfOk } from "@/mocks/audit-store";
+import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { getSubmission, reviewSubmission } from "@/mocks/submissions-store";
 import { backendForward } from "@/shared/lib/backend";
@@ -10,7 +10,7 @@ import { demoCourseReviewer } from "@/mocks/management-guards";
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const forwarded = await backendForward(req, `/api/submissions/${encodeURIComponent(id)}/review`);
-  if (forwarded) return auditIfOk(forwarded, "Проверена работа", id);
+  if (forwarded) return forwarded;
   const submission = getSubmission(id);
   if (!submission) return NextResponse.json({ error: "not found" }, { status: 404 });
   const access = await demoCourseReviewer("submission.review", submission.courseId);
@@ -32,10 +32,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (Object.keys(fields).length)
     return NextResponse.json({ error: "Проверьте поля формы", fields }, { status: 400 });
 
-  await audit(
-    "Проверена работа",
-    `${submission.userName} · ${submission.assignmentTitle} · ${grade}/${submission.maxGrade}`,
-  );
+  await audit("submission.reviewed", `${submission.userName} · ${submission.assignmentTitle}`, [
+    { field: "Оценка", after: `${grade} из ${submission.maxGrade}` },
+  ]);
   // ученик узнаёт об оценке в колокольчике — как в C# (Notifications)
   addPersonal(submission.userId, {
     type: "grade",

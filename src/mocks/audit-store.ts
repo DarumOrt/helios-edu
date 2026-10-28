@@ -1,37 +1,66 @@
 import "server-only";
-import { currentUser } from "@/mocks/current-user";
+import { getDemoActor } from "@/mocks/demo-actor";
+import { AUDIT_ACTIONS, type AuditAction } from "@/shared/lib/audit-labels";
+import type { AuditChange, AuditEntry, AuditPage } from "@/shared/types/domain";
 
-// Журнал действий: кто, когда и что изменил (управление, оценки, настройки).
-// Пока в памяти Next в обоих режимах; в проде — append-only таблица в C#.
-export interface AuditEntry {
-  id: string;
-  at: string;
-  actorName: string;
-  actorRole: string;
-  action: string;
-  target: string;
-}
+// Журнал действий демо-режима — тот же формат и фильтры, что у C# (Audit/AuditEndpoints.cs).
+// В режиме «Сервер» журнал пишет и отдаёт C#, Next сам ничего не записывает.
 
-const g = globalThis as unknown as { __helios_audit?: AuditEntry[] };
-const store: AuditEntry[] = g.__helios_audit ?? (g.__helios_audit = []);
+const g = globalThis as unknown as { __helios_audit2?: { seq: number; items: AuditEntry[] } };
+const store = g.__helios_audit2 ?? (g.__helios_audit2 = { seq: 0, items: [] });
 
-export async function audit(action: string, target: string) {
-  const user = await currentUser();
-  if (user instanceof Response) return;
-  store.push({
-    id: `ev-${crypto.randomUUID().slice(0, 8)}`,
+export async function audit(action: AuditAction, target: string, changes?: AuditChange[]) {
+  const actor = await getDemoActor();
+  const [actionText, category] = AUDIT_ACTIONS[action];
+  store.items.push({
+    id: ++store.seq,
     at: new Date().toISOString(),
-    actorName: user.name,
-    actorRole: user.role,
+    actorName: actor.name,
+    actorRole: actor.role,
     action,
+    actionText,
+    category,
+    targetType: action.split(".")[0],
     target,
+    ...(changes?.length ? { changes } : {}),
   });
 }
 
-/** Для пересланных в C# запросов: пишем в журнал только успешные */
-export async function auditIfOk(response: Response, action: string, target: string) {
-  if (response.ok) await audit(action, target);
-  return response;
+/** Изменённые поля: только те, что поменялись (как AuditLog.Diff в C#) */
+export const diff = (...fields: [field: string, before?: string | null, after?: string | null][]) =>
+  fields
+    .filter(([, before, after]) => (before ?? "") !== (after ?? ""))
+    .map(([field, before, after]) => ({
+      field,
+      ...(before ? { before } : {}),
+      ...(after ? { after } : {}),
+    }));
+
+export interface AuditFilter {
+  from?: string | null;
+  to?: string | null;
+  category?: string | null;
+  role?: string | null;
+  q?: string | null;
+  cursor?: number | null;
+  limit?: number | null;
 }
 
-export const listAudit = () => [...store].reverse();
+/** Страница журнала: новее → старее, по 50, фильтры как в C# */
+export function listAudit(f: AuditFilter = {}): AuditPage {
+  const q = f.q?.trim().toLowerCase();
+  const rows = [...store.items]
+    .reverse()
+    .filter(
+      (e) =>
+        (!f.from || e.at.slice(0, 10) >= f.from) &&
+        (!f.to || e.at.slice(0, 10) <= f.to) &&
+        (!f.category || e.category === f.category) &&
+        (!f.role || e.actorRole === f.role) &&
+        (!q || [e.actorName, e.target, e.actionText].some((s) => s.toLowerCase().includes(q))) &&
+        (!f.cursor || e.id < f.cursor),
+    );
+  const size = Math.min(Math.max(f.limit ?? 50, 1), 200);
+  const items = rows.slice(0, size);
+  return rows.length > size ? { items, nextCursor: items[items.length - 1].id } : { items };
+}

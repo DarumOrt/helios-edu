@@ -27,14 +27,16 @@ function courseFromPath(path: string, query: URLSearchParams): { courseId?: stri
 }
 
 // Эти маршруты пересылаются в C#, права проверяет он: адаптивное обучение (ученик курса, преподаватель курса,
-// своя попытка), сданные работы, журнал оценок, объявления, уведомления и файлы курсов.
+// своя попытка), сданные работы, журнал оценок, объявления, уведомления, файлы курсов, настройки и журнал действий.
 function checkedByApi(path: string): boolean {
   return (
     /^\/api\/(assignment|submissions|gradebook|notifications|files)(\/|$)/.test(path) ||
     /^\/api\/courses\/[^/]+\/announcements$/.test(path) ||
     /^\/api\/courses\/[^/]+\/(skills|quizzes|adaptive|events)(\/|$)/.test(path) ||
     /^\/api\/courses\/[^/]+\/activities\/[^/]+\/skills$/.test(path) ||
-    /^\/api\/(attempts|me)\//.test(path)
+    /^\/api\/(attempts|me)\//.test(path) ||
+    path === "/api/settings" ||
+    path === "/api/audit"
   );
 }
 
