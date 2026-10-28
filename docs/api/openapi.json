@@ -510,6 +510,23 @@
         }
       }
     },
+    "/api/courses/{id}/cover": {
+      "put": {
+        "tags": ["CourseBuilderEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/courses/{id}/skills": {
       "get": {
         "tags": ["HeliosEdu.Api"],
@@ -1153,6 +1170,87 @@
           }
         }
       }
+    },
+    "/api/files": {
+      "post": {
+        "tags": ["FilesEndpoints"],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTicket"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{id}/complete": {
+      "post": {
+        "tags": ["FilesEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredFileInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{id}": {
+      "get": {
+        "tags": ["FilesEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/files/cleanup": {
+      "post": {
+        "tags": ["FilesEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupResult"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1385,6 +1483,37 @@
           },
           "group": {
             "type": ["null", "string"]
+          }
+        }
+      },
+      "CleanupResult": {
+        "required": ["abandoned", "trashed", "restored", "deleted", "orphans"],
+        "type": "object",
+        "properties": {
+          "abandoned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "trashed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "restored": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "deleted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "orphans": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
           }
         }
       },
@@ -1797,6 +1926,35 @@
           }
         }
       },
+      "StoredFileInfo": {
+        "required": ["id", "kind", "courseId", "fileName", "contentType", "size", "url"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "size": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "StudentCourseGrades": {
         "required": ["courseId", "courseTitle", "courseCode", "items", "total"],
         "type": "object",
@@ -1843,6 +2001,7 @@
           "userId",
           "text",
           "fileName",
+          "fileId",
           "status",
           "grade",
           "feedback",
@@ -1871,6 +2030,9 @@
             "type": "string"
           },
           "fileName": {
+            "type": ["null", "string"]
+          },
+          "fileId": {
             "type": ["null", "string"]
           },
           "status": {
@@ -1931,6 +2093,25 @@
           }
         }
       },
+      "UploadTicket": {
+        "required": ["id", "uploadUrl", "contentType", "expiresAt"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "UserInfo": {
         "required": ["id", "name", "email", "role", "tenantId", "faculty", "group", "status"],
         "type": "object",
@@ -1981,6 +2162,9 @@
     },
     {
       "name": "NotificationsEndpoints"
+    },
+    {
+      "name": "FilesEndpoints"
     }
   ]
 }

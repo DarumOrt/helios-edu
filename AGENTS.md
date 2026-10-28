@@ -58,7 +58,10 @@ backend/tests/          проверки API на настоящем PostgreSQL
   Текущий берётся только через `getDataSource()` из `shared/lib/backend.ts` (в `proxy.ts` — `resolveDataSource`),
   не через прямую проверку `process.env.BACKEND_API_URL`. Переключатель — cookie `helios-data-source`
   (`/api/data-source`). Без `BACKEND_API_URL` доступно только демо; `DEMO_MODE=off` запрещает демо.
-  Любая новая фича должна работать в обоих режимах; `backendRequest` возвращает `null` в демо.
+  Упор разработки — на «Сервер»: новое делаем в C# и PostgreSQL. Демо — витрина: то, что без сервера
+  невозможно (например, загрузка файлов), показывает понятную заглушку «доступно в режиме „Сервер“», но
+  не ломается. `backendRequest` возвращает `null` в демо.
+- Решения по архитектуре (что выбрали и почему) — в `docs/adr/`.
 - Управление (пользователи, группы, курсы): один контракт для моков и C# — `features/admin/api.ts`,
   правила ролей — `shared/auth/management.ts`, поля — `shared/lib/management-validation.ts`.
   В серверном режиме маршруты Next пересылают запрос в C# (`backendForward`); пока эндпоинта нет — `501`.

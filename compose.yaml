@@ -22,6 +22,26 @@ services:
       timeout: 3s
       retries: 20
 
+  # Хранилище файлов курсов (S3-совместимое, docs/adr/0001-object-storage.md).
+  # 8333 — S3 для C# и временных ссылок браузера; 8888 — просмотр файлов (filer) в браузере.
+  storage:
+    image: chrislusf/seaweedfs:4.48
+    profiles: [backend]
+    command: server -s3 -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-helios_local_only}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-helios_local_only_secret}
+    volumes:
+      - storage_data:/data
+    ports:
+      - "127.0.0.1:8333:8333"
+      - "127.0.0.1:8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8333/healthz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   api:
     build: ./backend
     profiles: [backend]
@@ -31,11 +51,22 @@ services:
       Database__SeedDemoData: "true"
       Auth__DemoPassword: ${DEMO_PASSWORD:-HeliosDemo2026!}
       Auth__AllowInsecureCookies: "true"
+      Storage__ServiceUrl: http://storage:8333
+      # адрес хранилища для браузера: на него выписываются временные ссылки
+      Storage__PublicUrl: ${STORAGE_PUBLIC_URL:-http://127.0.0.1:8333}
+      Storage__AccessKey: ${STORAGE_ACCESS_KEY:-helios_local_only}
+      Storage__SecretKey: ${STORAGE_SECRET_KEY:-helios_local_only_secret}
+      Storage__Bucket: helios-media
+      # откуда браузеру можно загружать файлы напрямую в хранилище (CORS)
+      Storage__AllowedOrigins: ${STORAGE_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
       db:
         condition: service_healthy
+      storage:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  storage_data:

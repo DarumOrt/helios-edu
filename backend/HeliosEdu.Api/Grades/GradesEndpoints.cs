@@ -55,8 +55,15 @@ public static class GradesEndpoints
         var course = await VisibleCourse(db, context.User, input.Text("courseId"), context.RequestAborted);
         if (course is null || Material(course, activityId)?.Type != "assignment") return Fail(404, "not found");
         var text = input.Text("text");
-        var fileName = input.OptionalText("fileName") is { } file ? file[..Math.Min(file.Length, 200)] : null;
-        if (text.Length == 0 && fileName is null)
+        // файл — загруженный заранее (POST /api/files, kind=submission) своим же студентом в этот курс
+        Files.StoredFile? attached = null;
+        if (input.OptionalText("fileId") is { } fileId)
+        {
+            attached = await db.Files.AsNoTracking().SingleOrDefaultAsync(file => file.Id == fileId && file.CourseId == course.Id &&
+                file.Kind == "submission" && file.OwnerId == actor.Id && file.Status != "pending", context.RequestAborted);
+            if (attached is null) return Invalid(new() { ["fileId"] = "Файл не найден — загрузите его ещё раз" });
+        }
+        if (text.Length == 0 && attached is null)
             return Fail(400, "Добавьте ответ или файл", new() { ["text"] = "Добавьте ответ или файл" });
         if (text.Length > 20000)
             return Fail(400, "Ответ — до 20 000 символов", new() { ["text"] = "Ответ — до 20 000 символов" });
@@ -70,7 +77,8 @@ public static class GradesEndpoints
             db.Submissions.Add(submission);
         }
         submission.Text = text;
-        submission.FileName = fileName;
+        submission.FileId = attached?.Id;
+        submission.FileName = attached?.FileName;
         submission.Status = "submitted";
         submission.SubmittedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(context.RequestAborted);
@@ -116,7 +124,7 @@ public static class GradesEndpoints
             var activity = course is null ? null : Material(course, item.ActivityId);
             var user = users.GetValueOrDefault(item.UserId);
             return new SubmissionInfo(item.Id, item.ActivityId, item.CourseId, item.UserId, item.Text, item.FileName,
-                item.Status, grades.TryGetValue(item.CourseId + "/" + item.ActivityId + "/" + item.UserId, out var grade) ? grade : null,
+                item.FileId, item.Status, grades.TryGetValue(item.CourseId + "/" + item.ActivityId + "/" + item.UserId, out var grade) ? grade : null,
                 item.Feedback, item.SubmittedAt, user?.Name ?? "Студент", user?.Group, activity?.Title ?? item.ActivityId,
                 course?.Title ?? "", activity is null ? 100 : MaxOf(activity));
         }).ToList();

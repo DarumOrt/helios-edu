@@ -3,8 +3,8 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Upload, CheckCircle2, Clock, Paperclip, Pencil } from "lucide-react";
-import { Badge, Button, Card, CardBody, Skeleton, Textarea } from "@/shared/ui";
+import { CheckCircle2, Clock, Paperclip, Pencil, X } from "lucide-react";
+import { Badge, Button, Card, CardBody, FileUpload, Skeleton, Textarea } from "@/shared/ui";
 import { assignmentApi } from "../api";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
@@ -35,9 +35,10 @@ export function SubmissionForm({ courseId, assignmentId }: { courseId: string; a
     <AnswerForm
       key={work?.id ?? "new"}
       initial={work}
+      courseId={courseId}
       onCancel={work ? () => setEditing(false) : undefined}
-      onSubmit={async (text, fileName) => {
-        await assignmentApi.submit(courseId, assignmentId, { text, fileName, userId: user.id });
+      onSubmit={async (text, fileId) => {
+        await assignmentApi.submit(courseId, assignmentId, { text, fileId, userId: user.id });
         await mutate();
         setEditing(false);
       }}
@@ -86,11 +87,21 @@ function SubmittedWork({ work, onEdit }: { work: SubmissionFull; onEdit: () => v
         <div>
           <div className="mb-1.5 text-sm font-medium">Ваш ответ</div>
           <p className="text-sm whitespace-pre-line text-foreground/90">{work.text || "—"}</p>
-          {work.fileName && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Paperclip size={14} aria-hidden /> {work.fileName}
-            </p>
-          )}
+          {work.fileName &&
+            (work.fileId ? (
+              <a
+                href={`/api/files/${work.fileId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex w-fit items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+              >
+                <Paperclip size={14} aria-hidden /> {work.fileName}
+              </a>
+            ) : (
+              <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Paperclip size={14} aria-hidden /> {work.fileName}
+              </p>
+            ))}
         </div>
       </CardBody>
     </Card>
@@ -99,22 +110,27 @@ function SubmittedWork({ work, onEdit }: { work: SubmissionFull; onEdit: () => v
 
 function AnswerForm({
   initial,
+  courseId,
   onCancel,
   onSubmit,
 }: {
   initial?: SubmissionFull;
+  courseId: string;
   onCancel?: () => void;
-  onSubmit: (text: string, fileName?: string) => Promise<void>;
+  onSubmit: (text: string, fileId?: string) => Promise<void>;
 }) {
   const [text, setText] = useState(initial?.text ?? "");
-  const [fileName, setFileName] = useState(initial?.fileName);
+  // файл работы: прежний (при замене ответа) или только что загруженный в хранилище
+  const [file, setFile] = useState(
+    initial?.fileId && initial.fileName ? { id: initial.fileId, name: initial.fileName } : undefined,
+  );
   const [submitting, setSubmitting] = useState(false);
   const replacing = Boolean(initial);
 
   async function submit() {
     setSubmitting(true);
     try {
-      await onSubmit(text, fileName);
+      await onSubmit(text, file?.id);
       toast.success(replacing ? "Ответ заменён" : "Работа отправлена", {
         description: "Преподаватель проверит её в ближайшее время",
       });
@@ -147,17 +163,29 @@ function AnswerForm({
         </div>
 
         <div>
-          <span className="mb-1.5 block text-sm font-medium">Файл (опционально)</span>
-          <label className="flex cursor-pointer items-center gap-3 rounded-md border-2 border-dashed border-border px-4 py-6 transition hover:border-primary/50 hover:bg-primary-soft/40">
-            <Upload size={18} className="text-muted-foreground" />
-            <div className="flex-1">
-              <div className="text-sm font-medium">
-                {fileName ?? "Перетащите файл или нажмите для выбора"}
-              </div>
-              <div className="text-xs text-muted-foreground">PDF, DOCX, ZIP — до 50 МБ</div>
-            </div>
-            <input type="file" className="sr-only" onChange={(e) => setFileName(e.target.files?.[0]?.name)} />
-          </label>
+          <span className="mb-1.5 block text-sm font-medium">Файл (необязательно)</span>
+          {file ? (
+            <p className="flex items-center gap-2 text-sm">
+              <Paperclip size={14} aria-hidden className="text-muted-foreground" /> {file.name}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFile(undefined)}
+                disabled={submitting}
+                aria-label="Убрать файл"
+              >
+                <X size={14} aria-hidden />
+              </Button>
+            </p>
+          ) : (
+            <FileUpload
+              kind="submission"
+              courseId={courseId}
+              disabled={submitting}
+              label="Прикрепить файл"
+              onUploaded={(uploaded) => setFile({ id: uploaded.id, name: uploaded.fileName })}
+            />
+          )}
         </div>
 
         <div className="flex justify-end gap-2">
@@ -166,7 +194,7 @@ function AnswerForm({
               Отмена
             </Button>
           )}
-          <Button onClick={submit} disabled={!text.trim() || submitting} size="lg">
+          <Button onClick={submit} disabled={(!text.trim() && !file) || submitting} size="lg">
             {submitting ? "Отправка…" : replacing ? "Заменить работу" : "Отправить на проверку"}
           </Button>
         </div>

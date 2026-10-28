@@ -1,5 +1,6 @@
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Data;
+using HeliosEdu.Api.Files;
 using HeliosEdu.Api.Management;
 using Microsoft.EntityFrameworkCore;
 using static HeliosEdu.Api.Management.ManagementValidation;
@@ -20,6 +21,45 @@ public static class CourseBuilderEndpoints
         course.MapPut("/sections/{sectionId}/activities/order", OrderActivitiesAsync);
         course.MapPatch("/activities/{activityId}", UpdateActivityAsync);
         course.MapDelete("/activities/{activityId}", DeleteActivityAsync);
+        course.MapPut("/cover", UpdateCoverAsync).Produces<CourseSummary>();
+    }
+
+    /// <summary>Загруженный файл материала — этого курса и нужного вида (видео — video, PDF и презентация — document).</summary>
+    private static async Task<string?> SourceError(LearningDbContext db, ContentInput values, string type, string courseId,
+        CancellationToken token) =>
+        FileKinds.ForActivity(type) is { } kind
+            ? await FilesEndpoints.CheckAttachedAsync(db, values.Src, courseId, kind, null, token)
+            : null;
+
+    /// <summary>
+    /// PUT { coverColor?, cover? } — цвет шаблона и своя картинка обложки (загруженный файл вида cover, null — убрать).
+    /// Старая картинка без ссылок уйдёт в корзину файлов сама (FileJanitor).
+    /// </summary>
+    private static async Task<IResult> UpdateCoverAsync(HttpContext context, LearningDbContext db)
+    {
+        var course = Current(context);
+        var token = context.RequestAborted;
+        var input = await ManagementInput.ReadAsync(context.Request);
+        if (input is null) return Fail(400, "Некорректный запрос");
+        if (input.Has("coverColor"))
+        {
+            // null — цвет по умолчанию (как у курсов из начальных данных)
+            var color = input.OptionalText("coverColor");
+            if (color is not null && !CoverColors.Contains(color))
+                return Invalid(new() { ["coverColor"] = "Неизвестный цвет обложки" });
+            course.CoverColor = color;
+        }
+        if (input.Has("cover"))
+        {
+            var cover = input.OptionalText("cover");
+            if (cover is not null && (!cover.StartsWith(FilesEndpoints.UrlPrefix, StringComparison.Ordinal) ||
+                    await FilesEndpoints.CheckAttachedAsync(db, cover, course.Id, FileKinds.Cover.Name, null, token) is not null))
+                return Invalid(new() { ["cover"] = "Картинка не найдена — загрузите её ещё раз" });
+            course.Cover = cover;
+        }
+        await db.SaveChangesAsync(token);
+        var actor = (Account)context.Items[typeof(Account)]!;
+        return Results.Ok(CourseSummary.From(course, (await CourseProgress.ForViewer(db, actor, [course.Id], token))[course.Id]));
     }
 
     private static Course Current(HttpContext context) => (Course)context.Items[typeof(Course)]!;
@@ -105,6 +145,8 @@ public static class CourseBuilderEndpoints
         var course = Current(context);
         var section = course.Sections.Find(section => section.Id == sectionId);
         if (section is null) return Fail(404, "not found");
+        if (await SourceError(db, values, type, course.Id, context.RequestAborted) is { } sourceError)
+            return Invalid(new() { ["src"] = sourceError });
         var activity = new Activity { Id = NewId("a", course.Sections.SelectMany(section => section.Activities).Select(activity => activity.Id)),
             Type = type, Title = "" };
         values.Apply(activity);
@@ -143,6 +185,8 @@ public static class CourseBuilderEndpoints
         var values = new ContentInput(activity.Type, input, true);
         var errors = values.Validate(activity.Type, true);
         if (errors.Count > 0) return Invalid(errors);
+        if (await SourceError(db, values, activity.Type, course.Id, context.RequestAborted) is { } sourceError)
+            return Invalid(new() { ["src"] = sourceError });
         // Как в updateActivity мока: пустой или нестроковый sectionId не переносит материал.
         var sectionId = input.Value("sectionId") is { ValueKind: System.Text.Json.JsonValueKind.String } raw ? raw.GetString() : null;
         var to = string.IsNullOrEmpty(sectionId) ? from : course.Sections.Find(section => section.Id == sectionId);

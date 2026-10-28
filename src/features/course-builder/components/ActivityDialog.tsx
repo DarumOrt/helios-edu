@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Button, Dialog, Field, Input, Select, Textarea, describedBy } from "@/shared/ui";
+import { Button, Dialog, Field, FileUpload, Input, Select, Textarea, describedBy } from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import { cn } from "@/shared/lib/utils";
 import { activityIcon, activityLabel, fromLocalInput, toLocalInput } from "@/shared/lib/activity-meta";
@@ -58,6 +58,8 @@ export function ActivityDialog({
     sectionId,
   });
   const { pending, fields, error, run, setFields } = useFormSubmit();
+  // имя только что загруженного файла — в поле ссылки остаётся /api/files/…
+  const [uploaded, setUploaded] = useState<string>();
   const has = (k: string) => (ACTIVITY_FIELDS[type] as string[]).includes(k);
   const set = (key: keyof typeof v, value: string) => setV((x) => ({ ...x, [key]: value }));
 
@@ -162,12 +164,27 @@ export function ActivityDialog({
         {has("src") && (
           <Field
             id="act-src"
-            label={type === "video" ? "Ссылка на видеофайл" : "Ссылка на файл (необязательно)"}
+            label={type === "video" ? "Видеофайл" : "Файл (необязательно)"}
             error={fields.src}
             hint={
-              type === "video" ? "MP4 по прямой ссылке https://… или путь /media/lesson-matan.mp4" : undefined
+              uploaded
+                ? `Загружен: ${uploaded}`
+                : type === "video"
+                  ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
+                  : "Загрузите PDF или укажите ссылку на файл"
             }
           >
+            <div className="mb-2">
+              <FileUpload
+                kind={type === "video" ? "video" : "document"}
+                courseId={courseId}
+                disabled={pending}
+                onUploaded={(file) => {
+                  set("src", file.url);
+                  setUploaded(file.fileName);
+                }}
+              />
+            </div>
             <Input
               id="act-src"
               inputMode="url"

@@ -73,6 +73,14 @@ export type ClassmateInfo = {
   group: string | null;
 };
 
+export type CleanupResult = {
+  abandoned: number;
+  trashed: number;
+  restored: number;
+  deleted: number;
+  orphans: number;
+};
+
 export type CohortInfo = {
   id: string;
   name: string;
@@ -183,6 +191,16 @@ export type SkillInfo = {
   activityIds: string[];
 };
 
+export type StoredFileInfo = {
+  id: string;
+  kind: string;
+  courseId: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  url: string;
+};
+
 export type StudentCourseGrades = {
   courseId: string;
   courseTitle: string;
@@ -202,6 +220,7 @@ export type SubmissionInfo = {
   userId: string;
   text: string;
   fileName: string | null;
+  fileId: string | null;
   status: string;
   grade: number | null;
   feedback: string | null;
@@ -220,6 +239,13 @@ export type SubmissionList = {
 export type SubmitResult = {
   id: string;
   status: string;
+};
+
+export type UploadTicket = {
+  id: string;
+  uploadUrl: string;
+  contentType: string;
+  expiresAt: string;
 };
 
 export type UserInfo = {

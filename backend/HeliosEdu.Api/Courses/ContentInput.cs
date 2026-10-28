@@ -40,6 +40,9 @@ public sealed class ContentInput
             values["maxGrade"] = JsonSerializer.SerializeToElement(100);
     }
 
+    /// <summary>Новая ссылка на файл материала, если она есть в запросе (проверяется по таблице Files).</summary>
+    public string? Src => values.ContainsKey("src") ? Text("src") : null;
+
     private bool Provided(string key) => values.TryGetValue(key, out var value) && value is not null;
     private string? Text(string key) => values.GetValueOrDefault(key) is { ValueKind: JsonValueKind.String } value ? value.GetString() : null;
     private int? Number(string key) => values.GetValueOrDefault(key) is { ValueKind: JsonValueKind.Number } value &&

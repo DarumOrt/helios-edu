@@ -10,6 +10,7 @@ using HeliosEdu.Api.Management;
 using HeliosEdu.Api.Adaptive;
 using HeliosEdu.Api.Grades;
 using HeliosEdu.Api.Notifications;
+using HeliosEdu.Api.Files;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -17,6 +18,8 @@ var connectionString = builder.Configuration.GetConnectionString("Database")
 
 builder.Services.AddDbContext<LearningDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<AdaptiveEngine>();
+builder.Services.AddSingleton<FileStorage>();
+builder.Services.AddHostedService<FileJanitor>();
 // Описание API для генерации типов фронтенда (npm run api:types, docs/api/openapi.json).
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -58,6 +61,7 @@ app.MapCatalogEndpoints();
 app.MapAdaptiveEndpoints();
 app.MapGradesEndpoints();
 app.MapNotificationsEndpoints();
+app.MapFilesEndpoints();
 app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.

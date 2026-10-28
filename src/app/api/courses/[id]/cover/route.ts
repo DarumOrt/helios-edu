@@ -2,14 +2,18 @@ import { NextResponse } from "next/server";
 import { findDemoCourse } from "@/mocks/course-store";
 import { setCover, withCover } from "@/mocks/course-cover-store";
 import { isCoverColor } from "@/shared/lib/cover-colors";
+import { backendForward } from "@/shared/lib/backend";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const IMAGE_DATA_URL = /^data:image\/(png|jpe?g|webp);base64,/;
 
-// PUT { coverColor } — сменить цвет шаблона; { cover: dataURL } — своя картинка; { cover: null } — убрать картинку.
-// UI проверяет course.edit; при подключённом бэкенде proxy.ts проверяет сессию и доступ к курсу.
+// PUT { coverColor } — сменить цвет шаблона; { cover } — своя картинка; { cover: null } — убрать картинку.
+// Сервер — C# (CourseBuilderEndpoints.UpdateCoverAsync): картинка — загруженный файл /api/files/…, права проверяет он.
+// Демо — моки ниже: картинка — data URL до 2 МБ в памяти.
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const forwarded = await backendForward(req, `/api/courses/${encodeURIComponent(id)}/cover`);
+  if (forwarded) return forwarded;
   const course = findDemoCourse(id);
   if (!course) return NextResponse.json({ error: "Курс не найден" }, { status: 404 });
 

@@ -30,6 +30,9 @@ export async function backendRequest(path: string, init?: RequestInit): Promise<
       "Cache-Control": "no-store",
     });
     for (const cookie of response.headers.getSetCookie()) responseHeaders.append("Set-Cookie", cookie);
+    // перенаправление на временную ссылку хранилища (GET /api/files/{id}) отдаём браузеру как есть
+    const location = response.headers.get("Location");
+    if (location) responseHeaders.set("Location", location);
     return new Response(response.body, {
       status: response.status,
       headers: responseHeaders,
