@@ -3,7 +3,8 @@
 import { use } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, Breadcrumbs, DataState } from "@/shared/ui";
+import { ExternalLink } from "lucide-react";
+import { PageHeader, Breadcrumbs, DataState, buttonVariants } from "@/shared/ui";
 import { DocumentReader } from "@/features/player/DocumentReader";
 import { LessonStatsPanel } from "@/features/analytics/components/LessonStatsPanel";
 import { RoleGate } from "@/shared/auth/RoleGate";
@@ -33,6 +34,19 @@ export default function DocumentLessonPage({
             <PageHeader
               title={activity.title}
               subtitle={`${kind === "pdf" ? "PDF-документ" : "Презентация"} · просмотр отслеживается`}
+              actions={
+                // сам файл (загруженный — /api/files/…); встроенный просмотр PDF — следующий шаг (PDF.js)
+                activity.src && (
+                  <a
+                    href={activity.src}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    <ExternalLink size={15} aria-hidden /> Открыть файл
+                  </a>
+                )
+              }
               breadcrumbs={
                 <Breadcrumbs
                   items={[
