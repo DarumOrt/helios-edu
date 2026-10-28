@@ -15,7 +15,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(_req: Request, { params }: Ctx) {
   const { id } = await params;
   const backend = await backendJson<Course>(`/api/courses/${encodeURIComponent(id)}`);
-  if (backend) return backend.ok ? NextResponse.json(withCover(backend.data)) : backend.response;
+  if (backend) return backend.ok ? NextResponse.json(backend.data) : backend.response;
 
   // как в C#: невидимый курс неотличим от несуществующего
   const course = (await visibleDemoCourses()).find((c) => c.id === id);

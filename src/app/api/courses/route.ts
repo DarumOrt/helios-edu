@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const backend = await backendJson<Course[]>("/api/courses");
   if (backend) {
     if (!backend.ok) return backend.response;
-    if (!withSections) return NextResponse.json(backend.data.map(withCover));
+    if (!withSections) return NextResponse.json(backend.data);
     // C# API отдаёт разделы только в карточке курса — собираем их параллельно
     const details = await Promise.all(
       backend.data.map((c) => backendJson<Course>(`/api/courses/${encodeURIComponent(c.id)}`)),
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     for (const detail of details) {
       if (!detail) continue;
       if (!detail.ok) return detail.response;
-      full.push(withCover(detail.data));
+      full.push(detail.data);
     }
     return NextResponse.json(full);
   }

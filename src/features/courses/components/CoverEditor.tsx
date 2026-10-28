@@ -5,7 +5,10 @@ import { useSWRConfig } from "swr";
 import { toast } from "sonner";
 import { Check, ImagePlus, Palette, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui";
-import { ApiError } from "@/shared/lib/api-client";
+import { ApiError, apiErrorInfo } from "@/shared/lib/api-client";
+import { useSession } from "@/shared/auth/session";
+import { uploadFile } from "@/shared/lib/upload";
+import { FILE_RULES } from "@/shared/lib/file-rules";
 import {
   COVER_COLORS,
   COVER_COLOR_KEYS,
@@ -16,7 +19,8 @@ import { cn } from "@/shared/lib/utils";
 import type { Course } from "@/shared/types/domain";
 import { coursesApi } from "../api";
 
-const MAX_BYTES = 2 * 1024 * 1024;
+// демо хранит картинку data URL в памяти Next — там лимит меньше, чем у хранилища
+const DEMO_MAX_BYTES = 2 * 1024 * 1024;
 
 function readAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -45,6 +49,8 @@ export function CoverEditor({ course }: { course: Course }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const { mutate } = useSWRConfig();
+  const server = useSession((s) => s.dataSource.source === "server");
+  const limitText = server ? FILE_RULES.cover.limitText : "2 МБ";
   const current = course.coverColor ?? fallbackCoverColor(course.id);
 
   useEffect(() => {
@@ -64,8 +70,9 @@ export function CoverEditor({ course }: { course: Course }) {
   async function save(patch: { coverColor?: CoverColor; cover?: string | null }, done: string) {
     setBusy(true);
     try {
-      const updated = await coursesApi.updateCover(course.id, patch);
-      await mutate(`/api/courses/${course.id}`, updated, { revalidate: false });
+      await coursesApi.updateCover(course.id, patch);
+      // сервер отвечает карточкой без модулей — страницу курса перечитываем целиком
+      await mutate(`/api/courses/${course.id}`);
       // списки курсов (с модулями и без) — перечитать
       await mutate((key) => typeof key === "string" && key.startsWith("/api/courses?"));
       await mutate("/api/courses");
@@ -83,7 +90,21 @@ export function CoverEditor({ course }: { course: Course }) {
       toast.error("Подойдёт картинка PNG, JPG или WebP");
       return;
     }
-    if (file.size > MAX_BYTES) {
+    if (server) {
+      // в режиме «Сервер» картинка — файл в хранилище курса, в обложке — ссылка на него
+      setBusy(true);
+      try {
+        const uploaded = await uploadFile("cover", course.id, file);
+        await save({ cover: uploaded.url }, "Обложка загружена");
+        setOpen(false);
+      } catch (e) {
+        toast.error("Картинка не загружена", { description: apiErrorInfo(e).error });
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (file.size > DEMO_MAX_BYTES) {
       toast.error("Картинка больше 2 МБ — уменьшите её");
       return;
     }
@@ -130,7 +151,9 @@ export function CoverEditor({ course }: { course: Course }) {
           </div>
 
           <div className="mt-4 text-sm font-medium">Своя картинка</div>
-          <p className="mt-0.5 text-xs text-muted-foreground">PNG, JPG или WebP до 2 МБ, лучше 1200×400</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            PNG, JPG или WebP до {limitText}, лучше 1200×400
+          </p>
           <input
             ref={fileRef}
             type="file"
