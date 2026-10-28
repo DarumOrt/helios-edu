@@ -67,6 +67,7 @@ app.MapNotificationsEndpoints();
 app.MapFilesEndpoints();
 app.MapAuditEndpoints();
 app.MapTrackingEndpoints();
+app.MapCourseTrashEndpoints();
 app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.

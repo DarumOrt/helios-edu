@@ -56,8 +56,9 @@ public static partial class ManagementEndpoints
         group.Id, group.Name, group.Faculty,
         await db.Accounts.Where(user => user.TenantId == group.TenantId && user.Role == "student" && user.Group == group.Name)
             .OrderBy(user => user.Id).Select(user => user.Id).ToListAsync(token),
-        await db.CohortCourses.Where(link => link.CohortId == group.Id).OrderBy(link => link.Position)
-            .Select(link => link.CourseId).ToListAsync(token),
+        await db.CohortCourses.Where(link => link.CohortId == group.Id &&
+                db.Courses.Any(course => course.Id == link.CourseId && course.DeletedAt == null))
+            .OrderBy(link => link.Position).Select(link => link.CourseId).ToListAsync(token),
         group.Year, group.Level, group.DirectionCode, group.Direction, group.Profile);
 
     private static async Task<IResult> CreateCohortAsync(HttpContext context, LearningDbContext db)
@@ -89,7 +90,7 @@ public static partial class ManagementEndpoints
         var fields = Cohort(input, true);
         var courseIds = input.Ids("courseIds");
         if (input.Has("courseIds") && (courseIds is null ||
-                await db.Courses.CountAsync(course => courseIds.Contains(course.Id), context.RequestAborted) != courseIds.Length))
+                await db.Courses.CountAsync(course => courseIds.Contains(course.Id) && course.DeletedAt == null, context.RequestAborted) != courseIds.Length))
             fields["courseIds"] = "Есть неизвестные курсы";
         if (fields.Count > 0) return Invalid(fields);
         var before = (group.Name, group.Faculty, Courses: await CourseCodes(db, id, context.RequestAborted));
@@ -107,7 +108,10 @@ public static partial class ManagementEndpoints
         if (input.Has("faculty")) group.Faculty = input.OptionalText("faculty");
         if (courseIds is not null)
         {
-            await db.CohortCourses.Where(link => link.CohortId == id).ExecuteDeleteAsync(context.RequestAborted);
+            // связь с курсом из корзины не трогаем: восстановленный курс вернётся к своим группам
+            await db.CohortCourses.Where(link => link.CohortId == id &&
+                    db.Courses.Any(course => course.Id == link.CourseId && course.DeletedAt == null))
+                .ExecuteDeleteAsync(context.RequestAborted);
             db.CohortCourses.AddRange(courseIds.Select((courseId, position) => new CohortCourse
                 { CohortId = id, CourseId = courseId, Position = position }));
         }

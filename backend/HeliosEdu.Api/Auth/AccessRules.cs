@@ -38,13 +38,16 @@ public static class AccessRules
     public static bool CanViewGroup(Account account, string group) =>
         account.Role != "student" || (!string.IsNullOrEmpty(account.Group) && account.Group == group);
 
-    public static IQueryable<Course> VisibleCourses(LearningDbContext db, ClaimsPrincipal user)
+    /// <param name="withTrash">вместе с курсами в корзине — для «Моих оценок»: пока курс в корзине, рейтинг не меняется</param>
+    public static IQueryable<Course> VisibleCourses(LearningDbContext db, ClaimsPrincipal user, bool withTrash = false)
     {
-        if (user.IsInRole("admin") || user.IsInRole("organizer")) return db.Courses;
+        // курс в корзине не виден никому — его видно только в корзине курсов (CourseTrash)
+        var active = withTrash ? db.Courses : db.Courses.Where(course => course.DeletedAt == null);
+        if (user.IsInRole("admin") || user.IsInRole("organizer")) return active;
         var accountId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (user.IsInRole("tutor")) return db.Courses.Where(course => course.TutorId == accountId);
+        if (user.IsInRole("tutor")) return active.Where(course => course.TutorId == accountId);
         // Эталон — visibleDemoCourses.
-        return db.Courses.Where(course => course.Status == "published" && db.CohortCourses.Any(link =>
+        return active.Where(course => course.Status == "published" && db.CohortCourses.Any(link =>
             link.CourseId == course.Id && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
                 db.Accounts.Any(account => account.Id == accountId && account.Role == "student" &&
                     account.TenantId == cohort.TenantId && account.Group == cohort.Name))));

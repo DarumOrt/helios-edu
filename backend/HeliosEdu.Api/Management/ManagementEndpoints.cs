@@ -16,6 +16,8 @@ public static partial class ManagementEndpoints
             .AddEndpointFilter<ManagementWriteFilter>();
         users.MapPost("", CreateUserAsync);
         users.MapPatch("/{id}", UpdateUserAsync);
+        users.MapDelete("/{id}", DeleteUserAsync);
+        users.MapPost("/{id}/password-reset", ResetPasswordAsync).Produces<PasswordResetResult>();
         MapCohorts(app);
         MapCourses(app);
     }
@@ -54,8 +56,7 @@ public static partial class ManagementEndpoints
         var normalized = email.ToUpperInvariant();
         if (await db.Accounts.AnyAsync(account => account.NormalizedEmail == normalized, context.RequestAborted))
             return Duplicate("email", "Эта почта уже зарегистрирована");
-        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-        var password = RandomNumberGenerator.GetString(alphabet, 12);
+        var password = TemporaryPassword();
         var account = new Account
         {
             Id = $"u-{Guid.NewGuid():N}", Name = input.Text("name"), Email = email,
@@ -63,6 +64,8 @@ public static partial class ManagementEndpoints
             Group = group?.Name, Faculty = input.OptionalText("faculty")
         };
         account.PasswordHash = hasher.HashPassword(account, password);
+        // временный пароль — при первом входе попросить сменить
+        account.MustChangePassword = true;
         db.Accounts.Add(account);
         AuditLog.Write(db, context, "user.created", "user", account.Id, $"{account.Name} · {account.Email}",
             AuditLog.Diff(("Роль", null, AuditLog.Role(account.Role)), ("Группа", null, account.Group),
@@ -71,10 +74,85 @@ public static partial class ManagementEndpoints
         return Results.Json(new { user = UserInfo.From(account), temporaryPassword = password }, statusCode: 201);
     }
 
+    private static string TemporaryPassword() =>
+        RandomNumberGenerator.GetString("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789", 12);
+
+    /// <summary>Пользователь, которого актор может менять: не он сам, не удалённый, администратора — только администратор.</summary>
+    private static async Task<(Account? Account, IResult? Error)> ManagedAccount(LearningDbContext db, HttpContext context, string id)
+    {
+        var actor = Actor(context);
+        var account = await db.Accounts.SingleOrDefaultAsync(user => user.Id == id && user.TenantId == actor.TenantId &&
+            user.Status != "deleted", context.RequestAborted);
+        if (account is null) return (null, Fail(404, "not found"));
+        if (!AccessRules.CanManageUser(actor, account))
+            return (null, Fail(403, "Учётные записи администраторов меняет только администратор"));
+        return (account, null);
+    }
+
+    /// <summary>
+    /// POST — новый временный пароль (показывается один раз): все сессии пользователя закрываются,
+    /// при входе он сменит пароль на свой.
+    /// </summary>
+    private static async Task<IResult> ResetPasswordAsync(string id, HttpContext context, LearningDbContext db,
+        IPasswordHasher<Account> hasher)
+    {
+        var (account, error) = await ManagedAccount(db, context, id);
+        if (error is not null) return error;
+        var password = TemporaryPassword();
+        account!.PasswordHash = hasher.HashPassword(account, password);
+        account.MustChangePassword = true;
+        await db.LoginSessions.Where(session => session.AccountId == id).ExecuteDeleteAsync(context.RequestAborted);
+        AuditLog.Write(db, context, "password.reset", "user", account.Id, $"{account.Name} · {account.Email}");
+        await db.SaveChangesAsync(context.RequestAborted);
+        return Results.Ok(new PasswordResetResult(UserInfo.From(account), password));
+    }
+
+    /// <summary>
+    /// DELETE — как в Moodle: если у пользователя есть учебные данные или курсы, он обезличивается
+    /// («Удалённый пользователь», почта стёрта, вход закрыт) — оценки, работы и журнал остаются;
+    /// без данных — удаляется полностью. Себя удалить нельзя.
+    /// </summary>
+    private static async Task<IResult> DeleteUserAsync(string id, HttpContext context, LearningDbContext db,
+        IPasswordHasher<Account> hasher)
+    {
+        if (id == Actor(context).Id) return Fail(400, "Себя удалить нельзя");
+        var (account, error) = await ManagedAccount(db, context, id);
+        if (error is not null) return error;
+        var token = context.RequestAborted;
+        var hasData = await db.Submissions.AnyAsync(item => item.UserId == id, token) ||
+            await db.Grades.AnyAsync(item => item.UserId == id, token) ||
+            await db.QuizAttempts.AnyAsync(item => item.UserId == id, token) ||
+            await db.SkillMastery.AnyAsync(item => item.UserId == id, token) ||
+            await db.Recommendations.AnyAsync(item => item.UserId == id, token) ||
+            await db.StudentPins.AnyAsync(item => item.UserId == id, token) ||
+            await db.LearningEvents.AnyAsync(item => item.UserId == id || item.ActorId == id, token) ||
+            await db.ActivityProgress.AnyAsync(item => item.UserId == id, token) ||
+            await db.Files.AnyAsync(item => item.OwnerId == id, token) ||
+            await db.Courses.AnyAsync(course => course.TutorId == id, token);
+        var name = $"{account!.Name} · {account.Email}";
+        await db.LoginSessions.Where(session => session.AccountId == id).ExecuteDeleteAsync(token);
+        AuditLog.Write(db, context, "user.deleted", "user", account.Id, name,
+            [new AuditChange("Как", null, hasData ? "обезличен: оценки и работы сохранены" : "удалён полностью")]);
+        if (hasData)
+        {
+            account.Name = "Удалённый пользователь";
+            account.Email = $"deleted-{account.Id}@deleted.invalid";
+            account.NormalizedEmail = account.Email.ToUpperInvariant();
+            account.PasswordHash = hasher.HashPassword(account, TemporaryPassword() + TemporaryPassword());
+            account.Faculty = null;
+            account.Status = "deleted";
+            account.MustChangePassword = false;
+        }
+        else db.Accounts.Remove(account);
+        await db.SaveChangesAsync(token);
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> UpdateUserAsync(string id, HttpContext context, LearningDbContext db)
     {
         var actor = Actor(context);
-        var account = await db.Accounts.SingleOrDefaultAsync(user => user.Id == id && user.TenantId == actor.TenantId,
+        var account = await db.Accounts.SingleOrDefaultAsync(user => user.Id == id && user.TenantId == actor.TenantId &&
+            user.Status != "deleted",
             context.RequestAborted);
         if (account is null) return Fail(404, "not found");
         if (!AccessRules.CanManageUser(actor, account))

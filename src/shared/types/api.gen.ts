@@ -104,6 +104,8 @@ export type CleanupResult = {
   restored: number;
   deleted: number;
   orphans: number;
+  courses?: number;
+  courseItems?: number;
 };
 
 export type CohortInfo = {
@@ -151,6 +153,13 @@ export type CourseDetail = {
   academicYear: string | null;
 };
 
+export type CourseImpact = {
+  students: number;
+  submissions: number;
+  grades: number;
+  attempts: number;
+};
+
 export type CourseSummary = {
   id: string;
   code: string;
@@ -165,6 +174,17 @@ export type CourseSummary = {
   coverColor: string | null;
   faculty: string | null;
   academicYear: string | null;
+};
+
+export type DeletedCourseInfo = {
+  id: string;
+  code: string;
+  title: string;
+  tutorId: string;
+  deletedAt: string;
+  deletedByName: string;
+  purgeAt: string;
+  impact: CourseImpact;
 };
 
 export type GradeItem = {
@@ -244,6 +264,16 @@ export type PairTimeInfo = {
   n: number;
   start: string;
   end: string;
+};
+
+export type PasswordChangeRequest = {
+  currentPassword: string | null;
+  newPassword: string | null;
+};
+
+export type PasswordResetResult = {
+  user: UserInfo;
+  temporaryPassword: string;
 };
 
 export type ProgressInfo = {
@@ -395,6 +425,17 @@ export type TrackingEventInfo = {
   ts: number;
 };
 
+export type TrashItemInfo = {
+  id: string;
+  kind: string;
+  title: string;
+  type: string | null;
+  sectionTitle: string | null;
+  deletedAt: string;
+  deletedByName: string;
+  purgeAt: string;
+};
+
 export type UploadTicket = {
   id: string;
   uploadUrl: string;
@@ -411,4 +452,5 @@ export type UserInfo = {
   faculty: string | null;
   group: string | null;
   status: string;
+  mustChangePassword: boolean | null;
 };

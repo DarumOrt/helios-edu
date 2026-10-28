@@ -56,6 +56,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Tracking.ActivityProgress> ActivityProgress => Set<Tracking.ActivityProgress>();
     public DbSet<Tracking.TrackingEvent> TrackingEvents => Set<Tracking.TrackingEvent>();
     public DbSet<Tracking.ScheduleSlot> ScheduleSlots => Set<Tracking.ScheduleSlot>();
+    public DbSet<TrashItem> TrashItems => Set<TrashItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,6 +68,10 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<Submission>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Grade>().HasKey(item => new { item.CourseId, item.ActivityId, item.UserId });
+        var trash = modelBuilder.Entity<TrashItem>();
+        trash.Property(item => item.Snapshot).HasColumnType("jsonb");
+        trash.HasIndex(item => new { item.CourseId, item.DeletedAt });
+        trash.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
         // прогресс — один на ученика и материал курса (id материалов уникальны только внутри курса)
         var progress = modelBuilder.Entity<Tracking.ActivityProgress>();
         progress.HasKey(item => new { item.UserId, item.CourseId, item.ActivityId });

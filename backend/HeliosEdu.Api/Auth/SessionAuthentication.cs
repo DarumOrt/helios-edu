@@ -35,7 +35,7 @@ public sealed class SessionAuthentication(
         var session = await db.LoginSessions.AsNoTracking().Include(session => session.Account)
             .SingleOrDefaultAsync(session => session.TokenHash == tokenHash &&
                 session.ExpiresAt > DateTimeOffset.UtcNow, Context.RequestAborted);
-        if (session is null || session.Account.Status == "blocked") return AuthenticateResult.Fail("Сессия завершена.");
+        if (session is null || session.Account.Status is "blocked" or "deleted") return AuthenticateResult.Fail("Сессия завершена.");
         Context.Items[typeof(Account)] = session.Account;
         var identity = new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, session.AccountId),

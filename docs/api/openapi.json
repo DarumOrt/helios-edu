@@ -45,6 +45,33 @@
         }
       }
     },
+    "/api/auth/password": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/me": {
       "get": {
         "tags": ["HeliosEdu.Api"],
@@ -345,6 +372,24 @@
             "description": "OK"
           }
         }
+      },
+      "delete": {
+        "tags": ["CourseTrash"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/users/{id}": {
@@ -363,6 +408,51 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/password-reset": {
+      "post": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetResult"
+                }
+              }
+            }
           }
         }
       }
@@ -627,6 +717,46 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/trash": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrashItemInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/trash/{itemId}/restore": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1540,6 +1670,80 @@
           }
         }
       }
+    },
+    "/api/courses/trash": {
+      "get": {
+        "tags": ["CourseTrash"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeletedCourseInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/impact": {
+      "get": {
+        "tags": ["CourseTrash"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseImpact"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/restore": {
+      "post": {
+        "tags": ["CourseTrash"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1892,6 +2096,18 @@
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": ["integer", "string"],
             "format": "int32"
+          },
+          "courses": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32",
+            "default": 0
+          },
+          "courseItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32",
+            "default": 0
           }
         }
       },
@@ -2081,6 +2297,32 @@
           }
         }
       },
+      "CourseImpact": {
+        "required": ["students", "submissions", "grades", "attempts"],
+        "type": "object",
+        "properties": {
+          "students": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "submissions": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "grades": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "attempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
       "CourseSummary": {
         "required": [
           "id",
@@ -2141,6 +2383,38 @@
           },
           "academicYear": {
             "type": ["null", "string"]
+          }
+        }
+      },
+      "DeletedCourseInfo": {
+        "required": ["id", "code", "title", "tutorId", "deletedAt", "deletedByName", "purgeAt", "impact"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "tutorId": {
+            "type": "string"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedByName": {
+            "type": "string"
+          },
+          "purgeAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/CourseImpact"
           }
         }
       },
@@ -2420,6 +2694,30 @@
             "type": "string"
           },
           "end": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordChangeRequest": {
+        "required": ["currentPassword", "newPassword"],
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": ["null", "string"]
+          },
+          "newPassword": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "PasswordResetResult": {
+        "required": ["user", "temporaryPassword"],
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserInfo"
+          },
+          "temporaryPassword": {
             "type": "string"
           }
         }
@@ -2981,6 +3279,38 @@
           }
         }
       },
+      "TrashItemInfo": {
+        "required": ["id", "kind", "title", "type", "sectionTitle", "deletedAt", "deletedByName", "purgeAt"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": ["null", "string"]
+          },
+          "sectionTitle": {
+            "type": ["null", "string"]
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedByName": {
+            "type": "string"
+          },
+          "purgeAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "UploadTicket": {
         "required": ["id", "uploadUrl", "contentType", "expiresAt"],
         "type": "object",
@@ -3001,7 +3331,17 @@
         }
       },
       "UserInfo": {
-        "required": ["id", "name", "email", "role", "tenantId", "faculty", "group", "status"],
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "tenantId",
+          "faculty",
+          "group",
+          "status",
+          "mustChangePassword"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3027,6 +3367,9 @@
           },
           "status": {
             "type": "string"
+          },
+          "mustChangePassword": {
+            "type": ["null", "boolean"]
           }
         }
       }
@@ -3041,6 +3384,9 @@
     },
     {
       "name": "AuditEndpoints"
+    },
+    {
+      "name": "CourseTrash"
     },
     {
       "name": "CourseBuilderEndpoints"

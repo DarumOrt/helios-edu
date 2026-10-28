@@ -42,8 +42,11 @@ public static partial class ManagementEndpoints
         await ValidateTutor(input, false, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
         var code = input.Text("code").ToUpperInvariant();
-        if (await db.Courses.AnyAsync(course => course.Code == code, context.RequestAborted))
-            return Duplicate("code", "Курс с таким кодом уже есть");
+        if (await db.Courses.Where(course => course.Code == code).Select(course => (bool?)(course.DeletedAt != null))
+                .SingleOrDefaultAsync(context.RequestAborted) is { } inTrash)
+            return Duplicate("code", inTrash
+                ? "Курс с таким кодом в корзине — восстановите его или выберите другой код"
+                : "Курс с таким кодом уже есть");
         var course = new Course { Id = $"c-{Guid.NewGuid():N}", Code = code, Title = input.Text("title"),
             Category = input.Text("category"), Description = input.Text("description"), TutorId = input.Text("tutorId"),
             Status = "draft", CoverColor = CoverColors[RandomNumberGenerator.GetInt32(CoverColors.Length)],

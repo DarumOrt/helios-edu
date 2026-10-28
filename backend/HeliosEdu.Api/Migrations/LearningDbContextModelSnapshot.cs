@@ -468,6 +468,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("Group")
                         .HasColumnType("text");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -551,6 +554,12 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("CoverColor")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedByName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -581,6 +590,44 @@ namespace HeliosEdu.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.TrashItem", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedByName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ItemId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<JsonElement>("Snapshot")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId", "DeletedAt");
+
+                    b.ToTable("TrashItems");
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Files.StoredFile", b =>
@@ -1238,6 +1285,15 @@ namespace HeliosEdu.Api.Migrations
                         });
 
                     b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.TrashItem", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Files.StoredFile", b =>

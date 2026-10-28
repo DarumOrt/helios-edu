@@ -11,6 +11,7 @@ public static class AuthEndpoints
     private static readonly Account DummyAccount = new();
     private static readonly string DummyHash = new PasswordHasher<Account>().HashPassword(DummyAccount, "not-an-account");
     public sealed record LoginRequest(string? Email, string? Password);
+    public sealed record PasswordChangeRequest(string? CurrentPassword, string? NewPassword);
     public sealed record RegisterRequest(string? Name, string? Email, string? Password, bool? Consent);
     private const int PasswordMin = 8;
 
@@ -96,6 +97,30 @@ public static class AuthEndpoints
             return Results.Created("/api/auth/me", UserInfo.From(account));
         }).RequireRateLimiting("login");
 
+        // смена своего пароля: старый, новый по правилам регистрации; остальные сессии закрываются
+        auth.MapPost("/password", async (PasswordChangeRequest input, LearningDbContext db, IPasswordHasher<Account> hasher,
+            HttpContext context) =>
+        {
+            var account = await db.Accounts.SingleAsync(item => item.Id == ((Account)context.Items[typeof(Account)]!).Id,
+                context.RequestAborted);
+            var fields = new Dictionary<string, string>();
+            if (string.IsNullOrEmpty(input.CurrentPassword) || input.CurrentPassword.Length > 256 ||
+                hasher.VerifyHashedPassword(account, account.PasswordHash, input.CurrentPassword) == PasswordVerificationResult.Failed)
+                fields["currentPassword"] = "Текущий пароль неверный";
+            if (PasswordError(input.NewPassword) is { } error) fields["newPassword"] = error;
+            else if (input.NewPassword == input.CurrentPassword) fields["newPassword"] = "Новый пароль совпадает с текущим";
+            if (fields.Count > 0) return Results.BadRequest(new { error = "Проверьте поля формы.", fields });
+            account.PasswordHash = hasher.HashPassword(account, input.NewPassword!);
+            account.MustChangePassword = false;
+            var current = context.Request.Cookies.TryGetValue(SessionAuthentication.CookieName, out var token)
+                ? SessionAuthentication.Hash(token) : "";
+            await db.LoginSessions.Where(session => session.AccountId == account.Id && session.TokenHash != current)
+                .ExecuteDeleteAsync(context.RequestAborted);
+            AuditLog.Write(db, account, "password.changed", "account", account.Id, account.Name);
+            await db.SaveChangesAsync(context.RequestAborted);
+            return Results.Ok(UserInfo.From(account));
+        }).RequireAuthorization().RequireRateLimiting("login").Produces<UserInfo>();
+
         auth.MapGet("/me", (HttpContext context) =>
             Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!))).RequireAuthorization().Produces<UserInfo>();
 
@@ -124,14 +149,16 @@ public static class AuthEndpoints
             if (string.IsNullOrWhiteSpace(group)) return Results.BadRequest(new { error = "Укажите группу." });
             if (!AccessRules.CanViewGroup(account, group)) return Results.StatusCode(403);
             var classmates = await db.Accounts.AsNoTracking().Where(user =>
-                user.TenantId == account.TenantId && user.Group == group && user.Role == "student")
+                user.TenantId == account.TenantId && user.Group == group && user.Role == "student" && user.Status != "deleted")
                 .OrderBy(user => user.Name).ToListAsync(cancellationToken);
             return Results.Ok(classmates.Select(user => new ClassmateInfo(user.Id, user.Name, user.Group)));
         }).RequireAuthorization().Produces<ClassmateInfo[]>();
 
         app.MapGet("/api/users", async (LearningDbContext db, CancellationToken cancellationToken) =>
         {
-            var accounts = await db.Accounts.AsNoTracking().OrderBy(account => account.Name).ToListAsync(cancellationToken);
+            // удалённые (обезличенные) не показываются: их данные видны только в оценках и журнале
+            var accounts = await db.Accounts.AsNoTracking().Where(account => account.Status != "deleted")
+                .OrderBy(account => account.Name).ToListAsync(cancellationToken);
             return Results.Ok(accounts.Select(UserInfo.From));
         }).RequireAuthorization(AccessRules.ManageUsers).Produces<UserInfo[]>();
     }
@@ -148,8 +175,6 @@ public static class AuthEndpoints
         var fields = new Dictionary<string, string>();
         var name = input.Name?.Trim() ?? "";
         var email = input.Email?.Trim() ?? "";
-        var password = input.Password ?? "";
-
         if (name.Length < 2) fields["name"] = "Укажите имя и фамилию";
         else if (name.Length > 100) fields["name"] = "Имя длиннее 100 символов — сократите";
 
@@ -157,13 +182,21 @@ public static class AuthEndpoints
         else if (email.Length > 254 || !LooksLikeEmail(email))
             fields["email"] = "Почта выглядит неполной, например name@pspu.ru";
 
-        if (password.Length == 0) fields["password"] = "Придумайте пароль";
-        else if (password.Length > 256) fields["password"] = "Пароль длиннее 256 символов";
-        else if (password.Length < PasswordMin || !password.Any(char.IsLetter) || !password.Any(char.IsDigit))
-            fields["password"] = $"Пароль: не короче {PasswordMin} символов, буквы и цифра";
+        if (PasswordError(input.Password) is { } passwordError) fields["password"] = passwordError;
 
         if (input.Consent != true) fields["consent"] = "Без согласия мы не сможем создать учётную запись";
         return fields;
+    }
+
+    /// <summary>Правило пароля — как shared/lib/registration.ts (регистрация и смена пароля).</summary>
+    private static string? PasswordError(string? password)
+    {
+        password ??= "";
+        if (password.Length == 0) return "Придумайте пароль";
+        if (password.Length > 256) return "Пароль длиннее 256 символов";
+        if (password.Length < PasswordMin || !password.Any(char.IsLetter) || !password.Any(char.IsDigit))
+            return $"Пароль: не короче {PasswordMin} символов, буквы и цифра";
+        return null;
     }
 
     private static bool LooksLikeEmail(string email)
