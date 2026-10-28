@@ -36,7 +36,7 @@
 | `POST /api/files/{id}/complete` | — | `200 StoredFileInfo { id, kind, courseId, fileName, contentType, size, url }`. Не загружен — `409 "Файл не загружен — попробуйте ещё раз"`; размер не совпал — файл удаляется, `400 fields.size`; чужая запись — `404` |
 | `GET /api/files/{id}` | — | `302` на временную ссылку (1 час). Нет доступа или файл не готов — `404` |
 | `POST /api/files/cleanup` | — | только администратор: `200 CleanupResult { abandoned, trashed, restored, deleted, orphans }` |
-| `PUT /api/courses/{id}/cover` | `{ coverColor?, cover? }` | `200 CourseSummary`; `cover` — `/api/files/{id}` вида `cover` этого курса или `null`. `400 fields.coverColor = "Неизвестный цвет обложки"`, `fields.cover = "Картинка не найдена — загрузите её ещё раз"` |
+| `PUT /api/courses/{id}/cover` | `{ coverColor?, cover? }` | `200 CourseSummary`; `cover` — `/api/files/{id}` вида `cover` этого курса или `null`; `coverColor: null` — цвет по умолчанию. `400 fields.coverColor = "Неизвестный цвет обложки"`, `fields.cover = "Картинка не найдена — загрузите её ещё раз"` |
 
 Материал (`POST/PATCH …/activities`) с `src = /api/files/{id}` принимается, только если файл этого курса и
 подходящего вида (видео — `video`, PDF и презентация — `document`): иначе `400 fields.src = "Файл не найден —

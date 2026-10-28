@@ -43,9 +43,11 @@ public static class CourseBuilderEndpoints
         if (input is null) return Fail(400, "Некорректный запрос");
         if (input.Has("coverColor"))
         {
-            if (!CoverColors.Contains(input.Text("coverColor")))
+            // null — цвет по умолчанию (как у курсов из начальных данных)
+            var color = input.OptionalText("coverColor");
+            if (color is not null && !CoverColors.Contains(color))
                 return Invalid(new() { ["coverColor"] = "Неизвестный цвет обложки" });
-            course.CoverColor = input.Text("coverColor");
+            course.CoverColor = color;
         }
         if (input.Has("cover"))
         {

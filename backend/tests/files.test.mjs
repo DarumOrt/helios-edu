@@ -78,7 +78,7 @@ for (const [name, baseUrl] of [
   ...(process.env.TEST_WEB_URL ? [["Next.js", process.env.TEST_WEB_URL]] : []),
 ]) {
   test(`${name}: загрузка видео, чтение по правам и перемотка`, async () => {
-    const { send, expect, upload } = client(baseUrl);
+    const { send, expect } = client(baseUrl);
     const tutor = await login(baseUrl, "tutor@pspu.ru");
     const student = await login(baseUrl);
     const outsider = await login(baseUrl, "student4@student.pspu.ru");
@@ -214,8 +214,8 @@ for (const [name, baseUrl] of [
     } finally {
       await expect(
         await send(tutor, "PUT", "/api/courses/c-dor-ai/cover", {
-          coverColor: before.coverColor,
-          cover: null,
+          coverColor: before.coverColor ?? null,
+          cover: before.cover ?? null,
         }),
         200,
       );
