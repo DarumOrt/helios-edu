@@ -507,6 +507,68 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Files.StoredFile", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("ReadyAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("TrashedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Files", (string)null);
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Grades.Grade", b =>
                 {
                     b.Property<string>("CourseId")
@@ -551,6 +613,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("Feedback")
                         .HasColumnType("text");
 
+                    b.Property<string>("FileId")
+                        .HasColumnType("character varying(40)");
+
                     b.Property<string>("FileName")
                         .HasColumnType("text");
 
@@ -576,6 +641,8 @@ namespace HeliosEdu.Api.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FileId");
 
                     b.HasIndex("UserId");
 
@@ -940,6 +1007,21 @@ namespace HeliosEdu.Api.Migrations
                     b.Navigation("Sections");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Files.StoredFile", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Grades.Grade", b =>
                 {
                     b.HasOne("HeliosEdu.Api.Courses.Course", null)
@@ -962,6 +1044,11 @@ namespace HeliosEdu.Api.Migrations
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Files.StoredFile", null)
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("HeliosEdu.Api.Auth.Account", null)
                         .WithMany()

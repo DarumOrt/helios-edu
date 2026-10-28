@@ -47,6 +47,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
+    public DbSet<Files.StoredFile> Files => Set<Files.StoredFile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,6 +59,21 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<Submission>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Grade>().HasKey(item => new { item.CourseId, item.ActivityId, item.UserId });
+        var files = modelBuilder.Entity<Files.StoredFile>();
+        files.ToTable("Files");
+        files.Ignore(file => file.Url);
+        files.Property(file => file.Id).HasMaxLength(40);
+        files.Property(file => file.Kind).HasMaxLength(20);
+        files.Property(file => file.Status).HasMaxLength(20);
+        files.Property(file => file.FileName).HasMaxLength(200);
+        files.Property(file => file.ContentType).HasMaxLength(120);
+        files.Property(file => file.ObjectKey).HasMaxLength(300);
+        files.HasIndex(file => file.Status);
+        files.HasOne<Course>().WithMany().HasForeignKey(file => file.CourseId).OnDelete(DeleteBehavior.Cascade);
+        files.HasOne<Account>().WithMany().HasForeignKey(file => file.OwnerId).OnDelete(DeleteBehavior.Cascade);
+        // файл сданной работы не удаляется, пока есть работа (FileJanitor его и не трогает)
+        modelBuilder.Entity<Submission>().HasOne<Files.StoredFile>().WithMany().HasForeignKey(item => item.FileId)
+            .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Announcement>().HasIndex(item => new { item.CourseId, item.CreatedAt });
         modelBuilder.Entity<Announcement>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)
             .OnDelete(DeleteBehavior.Cascade);

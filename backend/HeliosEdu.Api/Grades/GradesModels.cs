@@ -9,6 +9,8 @@ public sealed class Submission
     public string UserId { get; set; } = "";
     public string Text { get; set; } = "";
     public string? FileName { get; set; }
+    /// <summary>Загруженный файл работы (Files); FileName — его имя для показа.</summary>
+    public string? FileId { get; set; }
     public string Status { get; set; } = "submitted";
     public DateTimeOffset SubmittedAt { get; set; }
     public string? Feedback { get; set; }
@@ -30,7 +32,7 @@ public sealed class Grade
 
 // Ответы — в формате src/shared/types/domain.ts (Submission, GradeRow) и src/mocks/gradebook-store.ts.
 public sealed record SubmissionInfo(string Id, string AssignmentId, string CourseId, string UserId, string Text,
-    string? FileName, string Status, double? Grade, string? Feedback, DateTimeOffset SubmittedAt,
+    string? FileName, string? FileId, string Status, double? Grade, string? Feedback, DateTimeOffset SubmittedAt,
     string UserName, string? Group, string AssignmentTitle, string CourseTitle, int MaxGrade);
 
 public sealed record SubmissionList(IReadOnlyList<SubmissionInfo> Items);

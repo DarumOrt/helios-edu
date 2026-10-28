@@ -120,6 +120,8 @@ export interface Submission {
   userId: string;
   text: string;
   fileName?: string;
+  /** загруженный файл работы — открывается по /api/files/{fileId} (только в режиме «Сервер») */
+  fileId?: string;
   status: "draft" | "submitted" | "reviewed";
   grade?: number;
   feedback?: string;
@@ -134,6 +136,28 @@ export interface SubmissionFull extends Submission {
   courseId: string;
   courseTitle: string;
   maxGrade: number;
+}
+
+/** Вид загружаемого файла — лимиты и форматы в shared/lib/file-rules.ts (зеркало Files/StoredFile.cs) */
+export type FileKind = "video" | "document" | "cover" | "submission";
+
+/** Ссылка на загрузку файла в хранилище: POST /api/files → PUT uploadUrl с Content-Type = contentType */
+export interface UploadTicket {
+  id: string;
+  uploadUrl: string;
+  contentType: string;
+  expiresAt: string;
+}
+
+/** Загруженный файл: POST /api/files/{id}/complete; открывается по url (/api/files/{id}) */
+export interface UploadedFile {
+  id: string;
+  kind: string;
+  courseId: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  url: string;
 }
 
 /** Одногруппник: GET /api/users?group=… — без почты, контакты видит только управление */
