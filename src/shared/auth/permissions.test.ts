@@ -58,6 +58,14 @@ describe("actionForMockApi — права маршрутов на моках", (
   it("журнал действий проверяет C#, неизвестный путь закрыт", () => {
     // настройки и журнал проверяет C# (Audit/AuditEndpoints.cs) — proxy их пропускает
     expect(actionForMockApi("/api/audit", "GET")).toBeNull();
+    // трекинг, аналитику, лидерборд и расписание тоже проверяет C# (Tracking/TrackingEndpoints.cs)
+    for (const path of [
+      "/api/tracking/progress",
+      "/api/analytics/course/c-1",
+      "/api/hub/leaderboard",
+      "/api/schedule",
+    ])
+      expect(actionForMockApi(path, "GET")).toBeNull();
     expect(actionForMockApi("/api/unknown", "GET")).toBeNull();
   });
 });

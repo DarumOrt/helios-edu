@@ -58,6 +58,7 @@ export default function DocumentLessonPage({
               }
             />
             <DocumentReader
+              courseId={courseId}
               activityId={activity.id}
               kind={kind}
               title={activity.title}

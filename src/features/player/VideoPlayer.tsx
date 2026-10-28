@@ -28,11 +28,14 @@ interface LiveStats {
 }
 
 export function VideoPlayer({
+  courseId,
   activityId,
   src,
   title,
   onComplete,
 }: {
+  /** курс материала — id материалов уникальны только внутри курса */
+  courseId: string;
   activityId: string;
   src: string;
   title: string;
@@ -47,7 +50,7 @@ export function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   // прежний прогресс: покрытие не начинается с нуля, просмотр продолжается с места остановки
   const { data: prior } = useSWR<ActivityProgress | null>(
-    `/api/tracking/progress?userId=${encodeURIComponent(user.id)}&activityId=${encodeURIComponent(activityId)}`,
+    `/api/tracking/progress?courseId=${encodeURIComponent(courseId)}&activityId=${encodeURIComponent(activityId)}&userId=${encodeURIComponent(user.id)}`,
     fetcher,
     { revalidateOnFocus: false, revalidateIfStale: false },
   );
@@ -100,6 +103,7 @@ export function VideoPlayer({
   useEffect(() => {
     const sessionId = sessionRef.current;
     tracker.event({
+      courseId,
       sessionId,
       userId: user.id,
       activityId,
@@ -109,6 +113,7 @@ export function VideoPlayer({
     return () => {
       sendProgress(true);
       tracker.event({
+        courseId,
         sessionId,
         userId: user.id,
         activityId,
@@ -136,6 +141,7 @@ export function VideoPlayer({
     const v = videoRef.current;
     tracker.progress(
       {
+        courseId,
         sessionId: sessionRef.current,
         userId: user.id,
         activityId,
@@ -172,6 +178,7 @@ export function VideoPlayer({
       if (!completedRef.current && cov >= COMPLETE_AT) {
         completedRef.current = true;
         tracker.event({
+          courseId,
           sessionId: sessionRef.current,
           userId: user.id,
           activityId,
@@ -199,6 +206,7 @@ export function VideoPlayer({
         lastProgressSent.current = Date.now();
         sendProgress();
         tracker.event({
+          courseId,
           sessionId: sessionRef.current,
           userId: user.id,
           activityId,
@@ -219,6 +227,7 @@ export function VideoPlayer({
     payload?: Record<string, unknown>,
   ) =>
     tracker.event({
+      courseId,
       sessionId: sessionRef.current,
       userId: user.id,
       activityId,

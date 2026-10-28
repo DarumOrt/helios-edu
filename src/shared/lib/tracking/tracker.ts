@@ -2,6 +2,10 @@
 
 import type { TrackingEvent, ProgressSnapshot } from "./types";
 
+/** Событие от плеера: курс обязателен — id материалов уникальны только внутри курса */
+export type TrackedEvent = Omit<TrackingEvent, "id" | "ts"> & { courseId: string };
+type Queued = TrackingEvent & { courseId: string };
+
 // Клиентский трекер-синглтон.
 // - Батчит дискретные события и флашит по интервалу + через sendBeacon на закрытие вкладки
 //   (иначе теряются события при unload — критично для "закрыл вкладку на середине").
@@ -10,7 +14,7 @@ import type { TrackingEvent, ProgressSnapshot } from "./types";
 const FLUSH_INTERVAL_MS = 5000;
 
 class Tracker {
-  private queue: TrackingEvent[] = [];
+  private queue: Queued[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
   private bound = false;
 
@@ -24,16 +28,26 @@ class Tracker {
     window.addEventListener("pagehide", () => this.flush(true));
   }
 
-  event(e: Omit<TrackingEvent, "id" | "ts">) {
+  event(e: TrackedEvent) {
     this.ensure();
     this.queue.push({ ...e, id: crypto.randomUUID(), ts: Date.now() });
   }
 
   flush(useBeacon = false) {
     if (this.queue.length === 0) return;
-    const batch = this.queue;
+    const all = this.queue;
     this.queue = [];
-    const body = JSON.stringify({ events: batch });
+    // одна отправка — один курс: { courseId, events }
+    for (const courseId of new Set(all.map((e) => e.courseId)))
+      this.send(
+        courseId,
+        all.filter((e) => e.courseId === courseId),
+        useBeacon,
+      );
+  }
+
+  private send(courseId: string, batch: Queued[], useBeacon: boolean) {
+    const body = JSON.stringify({ courseId, events: batch.map(({ courseId: _course, ...event }) => event) });
     try {
       if (useBeacon && navigator.sendBeacon) {
         navigator.sendBeacon("/api/tracking/events", new Blob([body], { type: "application/json" }));
@@ -54,7 +68,7 @@ class Tracker {
   }
 
   // Снимок прогресса — отдельно, чтобы агрегат на сервере обновлялся даже без флаша очереди.
-  progress(snapshot: ProgressSnapshot, useBeacon = false) {
+  progress(snapshot: ProgressSnapshot & { courseId: string }, useBeacon = false) {
     const body = JSON.stringify(snapshot);
     if (useBeacon && typeof navigator !== "undefined" && navigator.sendBeacon) {
       navigator.sendBeacon("/api/tracking/progress", new Blob([body], { type: "application/json" }));

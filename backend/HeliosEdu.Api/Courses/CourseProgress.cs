@@ -15,7 +15,7 @@ public sealed record CourseStats(int Enrolled, int? Progress, IReadOnlySet<strin
 
 // Прогресс по формуле P5 (docs/backend/p5-adaptive.md, раздел 2.3; AdaptiveEngine.Progress), но только на чтение:
 // модуль без навыков считается одним неосвоенным авто-навыком, как если бы P5 его уже создал.
-// Пройден материал — завершён просмотр (activity.completed), сдан тест или сдана работа.
+// Пройден материал — завершён просмотр (activity.completed или трекинг), сдан тест или сдана работа.
 public static class CourseProgress
 {
     public static async Task<Dictionary<string, CourseStats>> ForViewer(LearningDbContext db, Account viewer,
@@ -58,7 +58,8 @@ public static class CourseProgress
         return rows.GroupBy(row => row.CourseId).ToDictionary(group => group.Key, group => group.Select(row => row.Id).ToList());
     }
 
-    private static async Task<Dictionary<string, (int Progress, HashSet<string> Done)>> ForUsers(LearningDbContext db,
+    /// <summary>Прогресс и пройденные материалы учеников курса (тем же правилом пользуется лидерборд).</summary>
+    public static async Task<Dictionary<string, (int Progress, HashSet<string> Done)>> ForUsers(LearningDbContext db,
         Course course, IReadOnlyCollection<string> userIds, CancellationToken token)
     {
         var materials = course.Sections.SelectMany(section => section.Activities).ToList();
@@ -87,6 +88,9 @@ public static class CourseProgress
             Add(row.UserId, row.ActivityId);
         foreach (var row in await db.Submissions.AsNoTracking().Where(item => item.CourseId == course.Id &&
                      userIds.Contains(item.UserId)).Select(item => new { item.UserId, item.ActivityId }).ToListAsync(token))
+            Add(row.UserId, row.ActivityId);
+        foreach (var row in await db.ActivityProgress.AsNoTracking().Where(item => item.CourseId == course.Id &&
+                     item.Completed && userIds.Contains(item.UserId)).Select(item => new { item.UserId, item.ActivityId }).ToListAsync(token))
             Add(row.UserId, row.ActivityId);
 
         var hasQuiz = materials.Any(activity => activity.Type == "quiz");

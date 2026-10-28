@@ -42,6 +42,7 @@ export default function VideoLessonPage({
               }
             />
             <VideoPlayer
+              courseId={courseId}
               activityId={activity.id}
               src={activity.src ?? "/media/lesson-matan.mp4"}
               title={activity.title}

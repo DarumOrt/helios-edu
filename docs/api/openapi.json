@@ -1355,6 +1355,191 @@
           }
         }
       }
+    },
+    "/api/tracking/progress": {
+      "post": {
+        "tags": ["TrackingEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackingAccepted"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["TrackingEndpoints"],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "activityId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tracking/events": {
+      "post": {
+        "tags": ["TrackingEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackingAccepted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/course/{courseId}": {
+      "get": {
+        "tags": ["TrackingEndpoints"],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseActivityStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/lesson/{activityId}": {
+      "get": {
+        "tags": ["TrackingEndpoints"],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LessonStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/leaderboard": {
+      "get": {
+        "tags": ["TrackingEndpoints"],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Leaderboard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedule": {
+      "get": {
+        "tags": ["TrackingEndpoints"],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleInfo"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1765,6 +1950,67 @@
           }
         }
       },
+      "CourseActivityStat": {
+        "required": [
+          "activityId",
+          "title",
+          "type",
+          "started",
+          "completed",
+          "total",
+          "avgCoverage",
+          "avgTimeSec"
+        ],
+        "type": "object",
+        "properties": {
+          "activityId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "started": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "completed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "avgCoverage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "avgTimeSec": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "CourseActivityStats": {
+        "required": ["activities"],
+        "type": "object",
+        "properties": {
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CourseActivityStat"
+            }
+          }
+        }
+      },
       "CourseDetail": {
         "required": [
           "sections",
@@ -1943,6 +2189,168 @@
           }
         }
       },
+      "JsonElement": {},
+      "Leaderboard": {
+        "required": ["courseId", "entries"],
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardEntry"
+            }
+          }
+        }
+      },
+      "LeaderboardEntry": {
+        "required": [
+          "rank",
+          "userId",
+          "userName",
+          "group",
+          "score",
+          "materialsCompleted",
+          "materialsTotal",
+          "avgCoverage",
+          "quizAvg",
+          "streak",
+          "isCurrentUser"
+        ],
+        "type": "object",
+        "properties": {
+          "rank": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "materialsCompleted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "materialsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "avgCoverage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "quizAvg": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "streak": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "isCurrentUser": {
+            "type": ["null", "boolean"]
+          }
+        }
+      },
+      "LessonStatRow": {
+        "required": [
+          "userId",
+          "userName",
+          "group",
+          "coverage",
+          "activeTimeSec",
+          "completed",
+          "seeks",
+          "pagesViewed",
+          "totalPages",
+          "lastAt",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "coverage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "activeTimeSec": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "seeks": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "pagesViewed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "lastAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "LessonStats": {
+        "required": ["rows", "events"],
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LessonStatRow"
+            }
+          },
+          "events": {
+            "type": ["null", "array"],
+            "items": {
+              "$ref": "#/components/schemas/TrackingEventInfo"
+            }
+          }
+        }
+      },
       "LoginRequest": {
         "required": ["email", "password"],
         "type": "object",
@@ -1999,6 +2407,136 @@
           }
         }
       },
+      "PairTimeInfo": {
+        "required": ["n", "start", "end"],
+        "type": "object",
+        "properties": {
+          "n": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        }
+      },
+      "ProgressInfo": {
+        "required": [
+          "sessionId",
+          "userId",
+          "activityId",
+          "activityType",
+          "coverage",
+          "activeTimeSec",
+          "completed",
+          "seeks",
+          "pauses",
+          "maxRate",
+          "pagesViewed",
+          "totalPages",
+          "durationSec",
+          "position",
+          "ts",
+          "userName",
+          "group",
+          "firstAt",
+          "lastAt",
+          "sessions"
+        ],
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "activityId": {
+            "type": "string"
+          },
+          "activityType": {
+            "type": "string"
+          },
+          "coverage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "activeTimeSec": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "seeks": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "pauses": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "maxRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          },
+          "pagesViewed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "durationSec": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          },
+          "position": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "ts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "firstAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          },
+          "lastAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          },
+          "sessions": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
       "RegisterRequest": {
         "required": ["name", "email", "password", "consent"],
         "type": "object",
@@ -2014,6 +2552,83 @@
           },
           "consent": {
             "type": ["null", "boolean"]
+          }
+        }
+      },
+      "ScheduleCourse": {
+        "required": ["id", "code", "title", "coverColor"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "coverColor": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "ScheduleInfo": {
+        "required": ["group", "pairs", "slots"],
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "pairs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PairTimeInfo"
+            }
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleSlotInfo"
+            }
+          }
+        }
+      },
+      "ScheduleSlotInfo": {
+        "required": ["id", "courseId", "weekday", "pair", "kind", "room", "course"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "weekday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "pair": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "room": {
+            "type": "string"
+          },
+          "course": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScheduleCourse"
+              }
+            ]
           }
         }
       },
@@ -2298,6 +2913,74 @@
           }
         }
       },
+      "TrackingAccepted": {
+        "required": ["ok", "accepted"],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "accepted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "TrackingEventInfo": {
+        "required": [
+          "id",
+          "sessionId",
+          "userId",
+          "activityId",
+          "activityType",
+          "verb",
+          "position",
+          "payload",
+          "ts"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "activityId": {
+            "type": "string"
+          },
+          "activityType": {
+            "type": "string"
+          },
+          "verb": {
+            "type": "string"
+          },
+          "position": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          },
+          "payload": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "ts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        }
+      },
       "UploadTicket": {
         "required": ["id", "uploadUrl", "contentType", "expiresAt"],
         "type": "object",
@@ -2373,6 +3056,9 @@
     },
     {
       "name": "FilesEndpoints"
+    },
+    {
+      "name": "TrackingEndpoints"
     }
   ]
 }

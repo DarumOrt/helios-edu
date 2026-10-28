@@ -12,6 +12,7 @@ using HeliosEdu.Api.Grades;
 using HeliosEdu.Api.Notifications;
 using HeliosEdu.Api.Files;
 using HeliosEdu.Api.Audit;
+using HeliosEdu.Api.Tracking;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -65,6 +66,7 @@ app.MapGradesEndpoints();
 app.MapNotificationsEndpoints();
 app.MapFilesEndpoints();
 app.MapAuditEndpoints();
+app.MapTrackingEndpoints();
 app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.

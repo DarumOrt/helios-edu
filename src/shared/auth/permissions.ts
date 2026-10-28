@@ -59,21 +59,14 @@ export function actionForMockApi(path: string, method: string): Action | null {
     return method === "GET" ? "course.view" : "course.edit";
   if (/^\/api\/courses\/[^/]+\/(sections|activities)(\/|$)/.test(path)) return "course.edit";
   if (path === "/api/gradebook/grade") return "grade.edit";
-  if (path === "/api/gradebook" || path.startsWith("/api/analytics/")) return "analytics.view";
+  if (path === "/api/gradebook") return "analytics.view";
   if (path.startsWith("/api/submissions")) return "submission.review";
   // GET групп — для аналитики; изменения — управление группами (C# проверяет ещё раз)
   if (path === "/api/cohorts" || path.startsWith("/api/cohorts/"))
     return method === "GET" ? "analytics.view" : "cohort.manage";
   if (/^\/api\/assignment\/[^/]+\/submit$/.test(path)) return "assignment.submit";
   if (
-    [
-      "/api/schedule",
-      "/api/gradebook/me",
-      "/api/hub/leaderboard",
-      "/api/tracking/progress",
-      "/api/tracking/events",
-      "/api/notifications",
-    ].includes(path) ||
+    ["/api/gradebook/me", "/api/notifications"].includes(path) ||
     /^\/api\/notifications\/[^/]+\/read$/.test(path)
   )
     return "course.view";

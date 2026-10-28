@@ -53,6 +53,9 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Files.StoredFile> Files => Set<Files.StoredFile>();
     public DbSet<Audit.SystemSettings> Settings => Set<Audit.SystemSettings>();
     public DbSet<Audit.AuditEntry> AuditLog => Set<Audit.AuditEntry>();
+    public DbSet<Tracking.ActivityProgress> ActivityProgress => Set<Tracking.ActivityProgress>();
+    public DbSet<Tracking.TrackingEvent> TrackingEvents => Set<Tracking.TrackingEvent>();
+    public DbSet<Tracking.ScheduleSlot> ScheduleSlots => Set<Tracking.ScheduleSlot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +67,22 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         modelBuilder.Entity<Submission>().HasOne<Account>().WithMany().HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Grade>().HasKey(item => new { item.CourseId, item.ActivityId, item.UserId });
+        // прогресс — один на ученика и материал курса (id материалов уникальны только внутри курса)
+        var progress = modelBuilder.Entity<Tracking.ActivityProgress>();
+        progress.HasKey(item => new { item.UserId, item.CourseId, item.ActivityId });
+        progress.HasIndex(item => new { item.CourseId, item.ActivityId });
+        progress.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
+        progress.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        var tracking = modelBuilder.Entity<Tracking.TrackingEvent>();
+        tracking.Property(item => item.Id).UseIdentityAlwaysColumn();
+        tracking.Property(item => item.Payload).HasColumnType("jsonb");
+        tracking.HasIndex(item => new { item.CourseId, item.ActivityId, item.UserId, item.At });
+        tracking.HasIndex(item => new { item.CourseId, item.UserId, item.At });
+        tracking.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
+        tracking.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        var schedule = modelBuilder.Entity<Tracking.ScheduleSlot>();
+        schedule.HasIndex(item => new { item.TenantId, item.Group });
+        schedule.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Audit.SystemSettings>().ToTable("Settings").HasKey(item => item.TenantId);
         var audit = modelBuilder.Entity<Audit.AuditEntry>();
         audit.ToTable("AuditLog");
