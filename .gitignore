@@ -34,3 +34,6 @@ test-results/
 # .NET
 **/bin/
 **/obj/
+
+# вывод npm run test:backend
+.test-backend/
