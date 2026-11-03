@@ -25,6 +25,8 @@ npm run dev         # http://localhost:3000
 npm run check       # typecheck + lint + format:check + test — то же, что в CI
 npm test            # модульные тесты (Vitest): права, валидация, формулы — рядом с кодом, *.test.ts
 npm run api:types   # типы из описания C# API (нужен запущенный API) → docs/api/openapi.json, src/shared/types/api.gen.ts
+npm run test:backend   # все тесты бэкенда в порядке CI на отдельном стеке (6–8 минут, по одному на машину)
+bash scripts/dotnet.sh build | migration <Имя>   # сборка C# и миграции без локального .NET (через Docker)
 npm run lint:fix    # автоисправление ESLint
 npm run format      # Prettier на весь проект
 npm run build       # production-сборка
@@ -75,6 +77,28 @@ backend/tests/          проверки API на настоящем PostgreSQL
   Новые id в конструкторе — глобально уникальные (`s-…`, `a-…`).
 - Правила регистрации — в `shared/lib/registration.ts` и зеркально в `AuthEndpoints.ValidateRegistration` (C#):
   меняются вместе. Самостоятельно регистрируется только студент без группы; роль и группу клиент не задаёт.
+
+## Модули и общие файлы
+
+Состояние проекта и ключевые решения — `docs/STATUS.md`. Модуль — вертикальный срез (C# + Next + тесты);
+у каждого файл `docs/modules/<модуль>.md`: зона, контракт, проверки, что сделано, ловушки, что осталось.
+
+| Модуль | C# (`backend/HeliosEdu.Api/`) | Next (`src/`) | Тесты (`backend/tests/`) |
+| --- | --- | --- | --- |
+| auth | `Auth/` | `features/auth`, `app/login`, `app/register`, `app/api/auth` | auth, lifecycle, accounts |
+| admin | `Management/`, `Audit/` | `features/admin`, `app/(app)/admin`, `app/api/users·cohorts·settings·audit` | management, settings, audit |
+| courses | `Courses/`, `Files/` | `features/courses·course-builder·search`, `app/api/courses·catalog·files` | course-builder, catalog, files, trash, api |
+| adaptive | `Adaptive/` | `features/adaptive`, моки adaptive | adaptive |
+| grades | `Grades/`, `Notifications/` | `features/assignment·submissions·gradebook·notifications` | grades, notifications |
+| learning | `Tracking/` | `features/player·analytics·hub·dashboard`, `shared/lib/tracking` | tracking |
+| e2e | — | `e2e/`, `docs/testing/` | Playwright (позже) |
+
+**Общие файлы** меняет одна сессия за раз (параллельная правка = конфликт или «тихая» поломка контракта):
+`LearningDbContext.cs` и `Migrations/`, `Program.cs`, `Auth/AccessRules.cs`, `Audit/AuditLog.cs` + `shared/lib/audit-labels.ts`,
+`src/shared/types/domain.ts`, `contract.ts`, `api.gen.ts`, `docs/api/openapi.json`, `src/proxy.ts`,
+`src/shared/auth/permissions.ts`, `src/shared/ui/`, `src/shared/layout/`, `src/app/globals.css`,
+`.github/`, `compose.yaml`, `package.json` и lock-файл, `docs/STATUS.md`, `AGENTS.md`, `CLAUDE.md`.
+Задачи, которым нужны одни и те же общие файлы, делаются по очереди, а не параллельно.
 
 ## Соглашения по коду
 

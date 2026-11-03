@@ -8,3 +8,7 @@ public/
 *.md
 **/bin/
 **/obj/
+
+# локальные папки, не в git: вывод /brag и логи npm run test:backend
+brag-output/
+.test-backend/
