@@ -89,6 +89,16 @@ docs/backend/     задания для бэкенда: контракты, пр
   на сервере их повторяет C# (`AccessRules`).
 - **Бренд «Ясное небо»:** токены в `src/app/globals.css`, правила — `docs/design-audit/`.
 
+## Документация для разработчика
+
+- [Архитектура проекта](docs/architecture/helios-architecture.html) — 28 разделов: пути запросов,
+  серверные сессии и права, 29 таблиц, EF Core, адаптивное обучение, файлы, трекинг и корзины.
+- [Справочник API](docs/architecture/helios-api-reference.html) — 86 операций: права, параметры,
+  JSON, ошибки, примеры cURL и 51 схема DTO.
+
+Это автономные HTML-файлы. Скачайте оба в одну папку и откройте браузером: GitHub показывает
+исходник HTML. Подробнее о версии и проверке документации — в [docs/architecture](docs/architecture/README.md).
+
 ## Как мы работаем
 
 Вдвоём и с ИИ-агентами (Claude Code, Codex). Общие правила — в [AGENTS.md](AGENTS.md).
