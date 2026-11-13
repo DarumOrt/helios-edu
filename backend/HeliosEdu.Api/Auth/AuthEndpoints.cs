@@ -13,6 +13,7 @@ public static class AuthEndpoints
     public sealed record LoginRequest(string? Email, string? Password);
     public sealed record PasswordChangeRequest(string? CurrentPassword, string? NewPassword);
     public sealed record RegisterRequest(string? Name, string? Email, string? Password, bool? Consent);
+    public sealed record ActivationRequest(string? Token, string? Password);
     private const int PasswordMin = 8;
 
     public static void MapAuthEndpoints(this WebApplication app)
@@ -61,6 +62,29 @@ public static class AuthEndpoints
             await StartSessionAsync(db, account, context, configuration);
             return Results.Ok(UserInfo.From(account));
         }).RequireRateLimiting("login");
+
+        auth.MapPost("/activate", async (ActivationRequest input, LearningDbContext db, IPasswordHasher<Account> hasher, HttpContext context) =>
+        {
+            if (input.Token is null || input.Token.Length != 64 || PasswordError(input.Password) is not null)
+                return Results.BadRequest(new { error = "Проверьте ссылку и пароль: от 8 символов, буквы и цифры" });
+            await using var transaction = await db.Database.BeginTransactionAsync(context.RequestAborted);
+            var hash = SessionAuthentication.Hash(input.Token);
+            var activation = await db.Set<Mail.AccountActivation>().AsNoTracking().SingleOrDefaultAsync(a => a.TokenHash == hash, context.RequestAborted);
+            if (activation is null || activation.ExpiresAt <= DateTimeOffset.UtcNow)
+                return Results.BadRequest(new { error = "Ссылка недействительна или срок истёк. Запросите новое приглашение у администратора." });
+            var account = await db.Accounts.FromSqlInterpolated($"SELECT * FROM \"Accounts\" WHERE \"Id\" = {activation.AccountId} FOR UPDATE").SingleAsync(context.RequestAborted);
+            if (!await db.Set<Mail.AccountActivation>().AnyAsync(a => a.TokenHash == hash && a.ExpiresAt > DateTimeOffset.UtcNow, context.RequestAborted))
+                return Results.BadRequest(new { error = "Ссылка уже использована" });
+            if (account.Status != "active") return Results.BadRequest(new { error = "Учётная запись недоступна" });
+            account.PasswordHash = hasher.HashPassword(account, input.Password!);
+            account.MustChangePassword = false;
+            await db.Set<Mail.AccountActivation>().Where(a => a.AccountId == account.Id).ExecuteDeleteAsync(context.RequestAborted);
+            await db.LoginSessions.Where(s => s.AccountId == account.Id).ExecuteDeleteAsync(context.RequestAborted);
+            AuditLog.Write(db, account, "password.changed", "user", account.Id, "Пароль установлен по одноразовой ссылке");
+            await db.SaveChangesAsync(context.RequestAborted);
+            await transaction.CommitAsync(context.RequestAborted);
+            return Results.Ok(new Mail.MailCheckResult("activated", "Пароль установлен. Войдите с вашей почтой и новым паролем."));
+        }).RequireRateLimiting("login").Produces<Mail.MailCheckResult>();
 
         auth.MapPost("/register", async (RegisterRequest input, LearningDbContext db,
             IPasswordHasher<Account> hasher, HttpContext context, IConfiguration configuration) =>

@@ -37,3 +37,4 @@ test-results/
 
 # вывод npm run test:backend
 .test-backend/
+mail-keys/

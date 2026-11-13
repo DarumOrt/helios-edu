@@ -1,0 +1,7 @@
+# Только для изолированного тестового стека. В production этот файл не подключать.
+services:
+  api:
+    environment:
+      Mail__AllowInsecure: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

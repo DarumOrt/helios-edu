@@ -56,6 +56,7 @@ services:
       Database__SeedDemoData: "true"
       Auth__DemoPassword: ${DEMO_PASSWORD:-HeliosDemo2026!}
       Auth__AllowInsecureCookies: "true"
+      Mail__PublicUrl: ${MAIL_PUBLIC_URL:-http://localhost:3000}
       Storage__ServiceUrl: http://storage:8333
       # адрес хранилища для браузера: на него выписываются временные ссылки
       Storage__PublicUrl: ${STORAGE_PUBLIC_URL:-http://127.0.0.1:8333}
@@ -66,6 +67,8 @@ services:
       Storage__AllowedOrigins: ${STORAGE_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
       - "127.0.0.1:8080:8080"
+    volumes:
+      - mail_keys:/var/helios-mail-keys
     depends_on:
       db:
         condition: service_healthy
@@ -75,3 +78,4 @@ services:
 volumes:
   postgres_data:
   storage_data:
+  mail_keys:

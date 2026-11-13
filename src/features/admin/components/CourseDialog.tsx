@@ -1,12 +1,15 @@
 "use client";
 
+import useSWR from "swr";
+import { fetcher } from "@/shared/lib/api-client";
+import { CheckList } from "./CheckList";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button, Dialog, Field, Input, Select, Textarea, describedBy } from "@/shared/ui";
 import { COURSE_STATUSES, validateCourse } from "@/shared/lib/management-validation";
 import { FACULTIES, currentAcademicYear } from "@/shared/lib/faculties";
-import type { Course, CourseStatus, User } from "@/shared/types/domain";
+import type { Cohort, Course, CourseStatus, User } from "@/shared/types/domain";
 import { adminApi, refreshManagement, type CoursePayload } from "../api";
 import { courseStatusMeta } from "../labels";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
@@ -19,21 +22,38 @@ const statusHint: Record<CourseStatus, string> = {
 
 // Создание курса и правка его карточки. Содержание (модули, материалы) — в конструкторе курса.
 // managed={false} — карточка своего курса у преподавателя: без преподавателя, факультета и года (MANAGED_COURSE_FIELDS).
-export function CourseDialog({
-  open,
-  onClose,
-  course,
-  tutors,
-  categories,
-  managed = true,
-}: {
+type CourseDialogProps = {
   open: boolean;
   onClose: () => void;
   course?: Course;
   tutors: User[];
   categories: string[];
   managed?: boolean;
-}) {
+};
+
+export function CourseDialog(props: CourseDialogProps) {
+  const { data, error } = useSWR<Cohort[]>(props.managed === false ? null : "/api/cohorts", fetcher);
+  if (props.managed !== false && !data)
+    return (
+      <Dialog open={props.open} onClose={props.onClose} title="Группы курса">
+        <p>{error ? "Не удалось загрузить группы. Закройте окно и повторите." : "Загружаем группы…"}</p>
+      </Dialog>
+    );
+  return <CourseDialogForm {...props} cohorts={data ?? []} />;
+}
+
+function CourseDialogForm({
+  open,
+  onClose,
+  course,
+  tutors,
+  categories,
+  managed = true,
+  cohorts,
+}: CourseDialogProps & { cohorts: Cohort[] }) {
+  const [cohortIds, setCohortIds] = useState(() =>
+    cohorts.filter((g) => course && g.courseIds.includes(course.id)).map((g) => g.id),
+  );
   const router = useRouter();
   const editing = Boolean(course);
   const [values, setValues] = useState({
@@ -53,7 +73,7 @@ export function CourseDialog({
   async function submit(event: FormEvent) {
     event.preventDefault();
     const { code, status, tutorId, faculty, academicYear, ...meta } = values;
-    const card = managed ? { ...meta, tutorId, faculty, academicYear } : meta;
+    const card = managed ? { ...meta, tutorId, faculty, academicYear, cohortIds } : meta;
     const payload: CoursePayload = editing ? { ...card, status } : { ...card, code: code.toUpperCase() };
     const clientErrors = validateCourse(payload, editing);
     if (Object.keys(clientErrors).length) {
@@ -190,6 +210,18 @@ export function CourseDialog({
               />
             </Field>
           </div>
+        )}
+        {managed && (
+          <>
+            <CheckList
+              label="Учебные группы"
+              items={cohorts}
+              selected={cohortIds}
+              onChange={setCohortIds}
+              disabled={pending}
+            />
+            <FormError message={fields.cohortIds ?? ""} />
+          </>
         )}
         <Field
           id="course-description"

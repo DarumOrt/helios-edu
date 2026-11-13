@@ -11,6 +11,10 @@ import type {
 } from "@/shared/lib/tracking/types";
 import type {
   Activity,
+  MailSettings,
+  MailCampaign,
+  UserImportRow,
+  UserImportReport,
   Announcement,
   CatalogCohort,
   CatalogCourse,
@@ -68,6 +72,10 @@ type SameFields<A, U> = [Exclude<keyof A, keyof U>] extends [never]
 type Assert<T extends true> = T;
 
 export type ApiContract = [
+  Assert<SameFields<Api.MailSettingsInfo, MailSettings>>,
+  Assert<SameFields<Api.CampaignInfo, MailCampaign>>,
+  Assert<SameFields<Api.ImportRow, UserImportRow>>,
+  Assert<SameFields<Api.ImportReport, UserImportReport>>,
   Assert<SameFields<Api.CourseSummary, Course>>,
   Assert<SameFields<Api.CourseDetail, Course>>,
   Assert<SameFields<Api.Section, Section>>,

@@ -25,7 +25,7 @@ export function isSelf(actor: Pick<User, "id">, target: Pick<User, "id">): boole
 }
 
 /** Поля карточки курса, которые меняет только управление (C#: CourseEndpoints.ManagedCourseFields). */
-export const MANAGED_COURSE_FIELDS = ["tutorId", "faculty", "academicYear"] as const;
+export const MANAGED_COURSE_FIELDS = ["tutorId", "faculty", "academicYear", "cohortIds"] as const;
 
 /** Содержимое и карточка курса: администратор и организатор — любой курс, преподаватель — только свой. */
 export function canEditCourse(actor: Pick<User, "id" | "role">, course: Pick<Course, "tutorId">): boolean {

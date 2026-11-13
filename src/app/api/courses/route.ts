@@ -1,4 +1,5 @@
 import { audit } from "@/mocks/audit-store";
+import { findCohort, setCourseCohorts } from "@/mocks/cohorts-store";
 import { NextResponse } from "next/server";
 import { withCover } from "@/mocks/course-cover-store";
 import { createDemoCourse, findDemoCourseByCode } from "@/mocks/course-store";
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
   const input = {
+    cohortIds: body.cohortIds as string[] | undefined,
     code: (str(body.code) ?? "").toUpperCase(),
     title: str(body.title) ?? "",
     category: str(body.category) ?? "",
@@ -55,11 +57,15 @@ export async function POST(req: Request) {
     academicYear: str(body.academicYear) || undefined,
   };
   const fields = validateCourse(input);
+  if (!fields.cohortIds && input.cohortIds?.some((id) => !findCohort(id)))
+    fields.cohortIds = "Выберите существующие группы (не более 200)";
   if (!fields.tutorId && findDemoUser(input.tutorId)?.role !== "tutor")
     fields.tutorId = "Выберите преподавателя";
   if (Object.keys(fields).length) return fail(400, "Проверьте поля формы", fields);
   if (findDemoCourseByCode(input.code))
     return fail(409, "Курс с таким кодом уже есть", { code: "Курс с таким кодом уже есть" });
   await audit("course.created", `${input.code} · ${input.title}`);
-  return NextResponse.json(createDemoCourse(input), { status: 201 });
+  const course = createDemoCourse(input);
+  if (input.cohortIds) setCourseCohorts(course.id, input.cohortIds);
+  return NextResponse.json(course, { status: 201 });
 }

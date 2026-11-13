@@ -21,7 +21,7 @@ public static partial class ManagementEndpoints
     }
 
     /// <summary>Поля карточки, которые меняет только управление: преподавателя курса, факультет и учебный год.</summary>
-    private static readonly string[] ManagedCourseFields = ["tutorId", "faculty", "academicYear"];
+    private static readonly string[] ManagedCourseFields = ["tutorId", "faculty", "academicYear", "cohortIds"];
 
     private static async Task ValidateTutor(ManagementInput input, bool partial, HttpContext context, LearningDbContext db,
         Dictionary<string, string> fields)
@@ -40,6 +40,7 @@ public static partial class ManagementEndpoints
         if (input is null) return Fail(400, "Некорректный запрос");
         var fields = ManagementValidation.Course(input, false);
         await ValidateTutor(input, false, context, db, fields);
+        await ValidateCourseGroups(input, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
         var code = input.Text("code").ToUpperInvariant();
         if (await db.Courses.Where(course => course.Code == code).Select(course => (bool?)(course.DeletedAt != null))
@@ -54,6 +55,7 @@ public static partial class ManagementEndpoints
         var position = await db.Courses.MaxAsync(item => (int?)EF.Property<int>(item, "Position"), context.RequestAborted) ?? -1;
         db.Courses.Add(course);
         db.Entry(course).Property("Position").CurrentValue = position + 1;
+        await SetCourseGroups(input, course, context, db);
         AuditLog.Write(db, context, "course.created", "course", course.Id, $"{course.Code} · {course.Title}",
             AuditLog.Diff(("Преподаватель", null, await TutorName(db, course.TutorId, context.RequestAborted))));
         await db.SaveChangesAsync(context.RequestAborted);
@@ -74,6 +76,7 @@ public static partial class ManagementEndpoints
         if (input.Has("code")) return Fail(400, "Код курса изменить нельзя", new() { ["code"] = "Код курса изменить нельзя" });
         var fields = ManagementValidation.Course(input, true);
         await ValidateTutor(input, true, context, db, fields);
+        await ValidateCourseGroups(input, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
         var before = (course.Title, course.Category, course.Description, course.Faculty, course.AcademicYear, course.Status,
             Tutor: await TutorName(db, course.TutorId, context.RequestAborted));
@@ -84,6 +87,7 @@ public static partial class ManagementEndpoints
         if (input.Has("faculty")) course.Faculty = input.OptionalText("faculty");
         if (input.Has("academicYear")) course.AcademicYear = input.OptionalText("academicYear");
         if (input.Has("status")) course.Status = input.Choice("status");
+        await SetCourseGroups(input, course, context, db);
         var changes = AuditLog.Diff(("Название", before.Title, course.Title), ("Направление", before.Category, course.Category),
             ("Описание", before.Description, course.Description),
             ("Преподаватель", before.Tutor, await TutorName(db, course.TutorId, context.RequestAborted)),

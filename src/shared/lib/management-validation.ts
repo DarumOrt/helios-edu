@@ -26,6 +26,7 @@ export interface CohortInput {
 }
 
 export interface CourseInput {
+  cohortIds?: string[];
   code: string;
   title: string;
   category: string;
@@ -86,5 +87,12 @@ export function validateCourse(input: Partial<CourseInput>, partial = false): Fi
   const academicYear = text(input.academicYear);
   if (academicYear && !isAcademicYear(academicYear)) e.academicYear = "Учебный год в формате 2026/2027";
   if (input.status !== undefined && !COURSE_STATUSES.includes(input.status)) e.status = "Неизвестный статус";
+  if (
+    input.cohortIds !== undefined &&
+    (!Array.isArray(input.cohortIds) ||
+      input.cohortIds.length > 200 ||
+      input.cohortIds.some((id) => typeof id !== "string"))
+  )
+    e.cohortIds = "Выберите существующие группы (не более 200)";
   return e;
 }

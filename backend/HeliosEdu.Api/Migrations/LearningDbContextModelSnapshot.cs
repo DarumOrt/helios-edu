@@ -775,6 +775,180 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("Submissions");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Mail.AccountActivation", b =>
+                {
+                    b.Property<string>("TokenHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccountId")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("TokenHash");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("AccountActivation");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Mail.MailCampaign", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.ToTable("MailCampaign");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Mail.MailRecipient", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CampaignId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId", "Email")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "NextAttemptAt");
+
+                    b.ToTable("MailRecipient");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Mail.MailSettings", b =>
+                {
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CheckedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ConnectionState")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("CourseAssigned")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CoursePublished")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FromEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FromName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("GroupAdded")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Invitation")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Port")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Secret")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Security")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("UserCreated")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("MailSettings");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Mail.UserImport", b =>
+                {
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Report")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("TenantId", "RequestId");
+
+                    b.ToTable("UserImport");
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Management.Cohort", b =>
                 {
                     b.Property<string>("Id")
@@ -1342,6 +1516,24 @@ namespace HeliosEdu.Api.Migrations
                     b.HasOne("HeliosEdu.Api.Auth.Account", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Mail.AccountActivation", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Mail.MailRecipient", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Mail.MailCampaign", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -25,6 +25,33 @@
         }
       }
     },
+    "/api/auth/activate": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailCheckResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": ["HeliosEdu.Api"],
@@ -1744,10 +1771,274 @@
           }
         }
       }
+    },
+    "/api/mail/settings": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailSettingsInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailSettingsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailSettingsInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/check": {
+      "post": {
+        "tags": ["MailEndpoints"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailCheckInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailCheckResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/audience": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Audience"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudienceInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/campaigns": {
+      "post": {
+        "tags": ["MailEndpoints"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CampaignInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/campaigns/{id}": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecipientInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/invite/{id}": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailCheckResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/import/preview": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/import": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ActivationRequest": {
+        "required": ["token", "password"],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": ["null", "string"]
+          },
+          "password": {
+            "type": ["null", "string"]
+          }
+        }
+      },
       "Activity": {
         "required": ["id", "type", "title"],
         "type": "object",
@@ -1844,6 +2135,39 @@
           }
         }
       },
+      "Audience": {
+        "required": ["userIds", "cohortIds"],
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "cohortIds": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "all": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "AudienceInfo": {
+        "required": ["count"],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
       "AuditChange": {
         "required": ["field", "before", "after"],
         "type": "object",
@@ -1930,6 +2254,70 @@
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": ["null", "integer", "string"],
             "format": "int64"
+          }
+        }
+      },
+      "CampaignInfo": {
+        "required": ["id", "subject", "createdAt", "status", "total", "sent", "failed", "pending"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "sent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "failed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "pending": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "CampaignInput": {
+        "required": ["requestId", "audience", "subject", "text", "html"],
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "audience": {
+            "$ref": "#/components/schemas/Audience"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "html": {
+            "type": ["null", "string"]
+          },
+          "confirmAll": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -2463,6 +2851,95 @@
           }
         }
       },
+      "ImportInput": {
+        "required": ["requestId", "csv", "columns", "group"],
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "csv": {
+            "type": "string"
+          },
+          "columns": {
+            "type": ["null", "object"],
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32"
+            }
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "updateExisting": {
+            "type": "boolean",
+            "default": false
+          },
+          "sendInvitations": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "ImportReport": {
+        "required": ["created", "updated", "skipped", "errors", "rows"],
+        "type": "object",
+        "properties": {
+          "created": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "updated": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "skipped": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "errors": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRow"
+            }
+          }
+        }
+      },
+      "ImportRow": {
+        "required": ["row", "name", "email", "group", "status", "error"],
+        "type": "object",
+        "properties": {
+          "row": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "status": {
+            "type": "string"
+          },
+          "error": {
+            "type": ["null", "string"]
+          }
+        }
+      },
       "JsonElement": {},
       "Leaderboard": {
         "required": ["courseId", "entries"],
@@ -2634,6 +3111,150 @@
           },
           "password": {
             "type": ["null", "string"]
+          }
+        }
+      },
+      "MailCheckInput": {
+        "required": ["email"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "MailCheckResult": {
+        "required": ["state", "message"],
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "MailSettingsInfo": {
+        "required": [
+          "host",
+          "port",
+          "security",
+          "username",
+          "hasPassword",
+          "fromEmail",
+          "fromName",
+          "userCreated",
+          "invitation",
+          "courseAssigned",
+          "groupAdded",
+          "coursePublished",
+          "connectionState",
+          "checkedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "security": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "hasPassword": {
+            "type": "boolean"
+          },
+          "fromEmail": {
+            "type": "string"
+          },
+          "fromName": {
+            "type": "string"
+          },
+          "userCreated": {
+            "type": "boolean"
+          },
+          "invitation": {
+            "type": "boolean"
+          },
+          "courseAssigned": {
+            "type": "boolean"
+          },
+          "groupAdded": {
+            "type": "boolean"
+          },
+          "coursePublished": {
+            "type": "boolean"
+          },
+          "connectionState": {
+            "type": ["null", "string"]
+          },
+          "checkedAt": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          }
+        }
+      },
+      "MailSettingsInput": {
+        "required": [
+          "host",
+          "port",
+          "security",
+          "username",
+          "password",
+          "fromEmail",
+          "fromName",
+          "userCreated",
+          "invitation",
+          "courseAssigned",
+          "groupAdded",
+          "coursePublished"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "security": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": ["null", "string"]
+          },
+          "fromEmail": {
+            "type": "string"
+          },
+          "fromName": {
+            "type": "string"
+          },
+          "userCreated": {
+            "type": "boolean"
+          },
+          "invitation": {
+            "type": "boolean"
+          },
+          "courseAssigned": {
+            "type": "boolean"
+          },
+          "groupAdded": {
+            "type": "boolean"
+          },
+          "coursePublished": {
+            "type": "boolean"
           }
         }
       },
@@ -2832,6 +3453,26 @@
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": ["integer", "string"],
             "format": "int32"
+          }
+        }
+      },
+      "RecipientInfo": {
+        "required": ["email", "status", "attempts", "error"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "attempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "error": {
+            "type": ["null", "string"]
           }
         }
       },
@@ -3405,6 +4046,9 @@
     },
     {
       "name": "TrackingEndpoints"
+    },
+    {
+      "name": "MailEndpoints"
     }
   ]
 }

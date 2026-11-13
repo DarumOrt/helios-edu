@@ -109,11 +109,13 @@ public static partial class ManagementEndpoints
         if (courseIds is not null)
         {
             // связь с курсом из корзины не трогаем: восстановленный курс вернётся к своим группам
-            await db.CohortCourses.Where(link => link.CohortId == id &&
+            var oldLinks = await db.CohortCourses.Where(link => link.CohortId == id &&
                     db.Courses.Any(course => course.Id == link.CourseId && course.DeletedAt == null))
-                .ExecuteDeleteAsync(context.RequestAborted);
-            db.CohortCourses.AddRange(courseIds.Select((courseId, position) => new CohortCourse
-                { CohortId = id, CourseId = courseId, Position = position }));
+                .ToListAsync(context.RequestAborted);
+            db.CohortCourses.RemoveRange(oldLinks.Where(l => !courseIds.Contains(l.CourseId)));
+            foreach (var link in oldLinks.Where(l => courseIds.Contains(l.CourseId))) link.Position = Array.IndexOf(courseIds, link.CourseId);
+            db.CohortCourses.AddRange(courseIds.Where(courseId => oldLinks.All(l => l.CourseId != courseId)).Select((courseId, position) => new CohortCourse
+                { CohortId = id, CourseId = courseId, Position = Array.IndexOf(courseIds, courseId) }));
         }
         var after = courseIds is null ? before.Courses : string.Join(", ", await db.Courses
             .Where(course => courseIds.Contains(course.Id)).Select(course => course.Code).OrderBy(code => code)

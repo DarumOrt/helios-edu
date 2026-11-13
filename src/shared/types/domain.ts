@@ -487,3 +487,46 @@ export interface LearningEvent {
   type: string;
   payload: Record<string, unknown>;
 }
+
+/** Почта: пароль SMTP и тела приглашений не входят в ответы API. */
+export interface MailSettings {
+  host: string;
+  port: number;
+  security: string;
+  username: string;
+  hasPassword: boolean;
+  fromEmail: string;
+  fromName: string;
+  userCreated: boolean;
+  invitation: boolean;
+  courseAssigned: boolean;
+  groupAdded: boolean;
+  coursePublished: boolean;
+  connectionState?: string;
+  checkedAt?: string;
+}
+export interface MailCampaign {
+  id: string;
+  subject: string;
+  createdAt: string;
+  status: string;
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
+}
+export interface UserImportRow {
+  row: number;
+  name: string;
+  email: string;
+  group?: string;
+  status: string;
+  error?: string;
+}
+export interface UserImportReport {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: number;
+  rows: UserImportRow[];
+}

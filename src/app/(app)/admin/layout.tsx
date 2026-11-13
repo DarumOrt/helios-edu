@@ -14,6 +14,7 @@ const tabs = [
   { href: "/admin/cohorts", label: "Группы" },
   // только администратору — это и отличает его от организатора
   { href: "/admin/settings", label: "Настройки", admin: true },
+  { href: "/admin/mail", label: "Рассылки и уведомления", admin: true },
   { href: "/admin/audit", label: "Журнал действий", admin: true },
 ];
 
@@ -33,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div>
-      <div className="mb-6 flex gap-1 border-b">
+      <div className="mb-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b">
         {tabs
           .filter((t) => !t.admin || can(role, "system.manage"))
           .map((t) => {
@@ -43,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={t.href}
                 href={t.href}
                 className={cn(
-                  "-mb-px border-b-2 px-4 py-2 text-sm transition",
+                  "-mb-px shrink-0 border-b-2 px-4 py-2 text-sm whitespace-nowrap transition",
                   active
                     ? "border-primary font-medium text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground",

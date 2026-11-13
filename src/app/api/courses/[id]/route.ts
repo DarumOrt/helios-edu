@@ -1,4 +1,5 @@
 import { audit, diff } from "@/mocks/audit-store";
+import { findCohort, setCourseCohorts } from "@/mocks/cohorts-store";
 import { NextResponse } from "next/server";
 import { withCover } from "@/mocks/course-cover-store";
 import { findDemoCourse, updateDemoCourse } from "@/mocks/course-store";
@@ -42,6 +43,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     return fail(403, "Преподавателя, факультет и учебный год курса меняет организатор");
 
   const patch: Partial<CourseInput> = {};
+  if (body.cohortIds !== undefined) patch.cohortIds = body.cohortIds as string[];
   for (const key of ["title", "category", "description", "tutorId"] as const)
     if (body[key] !== undefined) patch[key] = str(body[key]) ?? "";
   // пустой факультет или год — «не указан»
@@ -52,10 +54,13 @@ export async function PATCH(req: Request, { params }: Ctx) {
     return fail(400, "Код курса изменить нельзя", { code: "Код курса изменить нельзя" });
 
   const fields = validateCourse(patch, true);
+  if (!fields.cohortIds && patch.cohortIds?.some((id) => !findCohort(id)))
+    fields.cohortIds = "Выберите существующие группы (не более 200)";
   if (patch.tutorId && !fields.tutorId && findDemoUser(patch.tutorId)?.role !== "tutor")
     fields.tutorId = "Выберите преподавателя";
   if (Object.keys(fields).length) return fail(400, "Проверьте поля формы", fields);
   const course = updateDemoCourse(id, patch)!;
+  if (patch.cohortIds) setCourseCohorts(id, patch.cohortIds);
   await audit(
     "course.updated",
     `${course.code} · ${course.title}`,

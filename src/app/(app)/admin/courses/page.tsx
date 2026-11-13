@@ -22,12 +22,13 @@ import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import { CourseDialog } from "@/features/admin/components/CourseDialog";
 import { courseStatusMeta } from "@/features/admin/labels";
-import type { Course, User } from "@/shared/types/domain";
+import type { Cohort, Course, User } from "@/shared/types/domain";
 
 export default function AdminCoursesPage() {
   const role = useSession((s) => s.role);
   const { data, error, isLoading } = useSWR<Course[]>("/api/courses", fetcher);
   const { data: users } = useSWR<User[]>("/api/users", fetcher);
+  const { data: cohorts } = useSWR<Cohort[]>("/api/cohorts", fetcher);
   // undefined — окно закрыто, null — новый курс
   const [editing, setEditing] = useState<Course | null | undefined>(undefined);
   const canManage = can(role, "course.create");
@@ -57,6 +58,7 @@ export default function AdminCoursesPage() {
               <TR>
                 <TH>Курс</TH>
                 <TH>Преподаватель</TH>
+                <TH>Группы</TH>
                 <TH>Студентов</TH>
                 <TH>Статус</TH>
                 <TH>
@@ -81,6 +83,12 @@ export default function AdminCoursesPage() {
                       </Link>
                     </TD>
                     <TD>{tutorName(c.tutorId)}</TD>
+                    <TD>
+                      {cohorts
+                        ?.filter((g) => g.courseIds.includes(c.id))
+                        .map((g) => g.name)
+                        .join(", ") || "—"}
+                    </TD>
                     <TD className="font-mono tabular-nums">{c.enrolled}</TD>
                     <TD>
                       <Badge tone={status.tone}>{status.label}</Badge>

@@ -21,6 +21,7 @@ export interface UserPayload {
 }
 
 export interface CoursePayload {
+  cohortIds?: string[];
   code?: string;
   title?: string;
   category?: string;
