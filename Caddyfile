@@ -1,0 +1,42 @@
+# Вход на рабочий сервер (compose.prod.yaml). Адреса приходят из .env: SITE_URL и FILES_URL.
+{
+	servers {
+		# Кому верить в заголовках X-Forwarded-*: никому, кроме Nginx организации, если он стоит перед нами
+		# (тогда TRUSTED_PROXIES=private_ranges в .env, см. docs/deploy.md).
+		trusted_proxies static {$TRUSTED_PROXIES:127.0.0.1/32}
+	}
+}
+
+# Сайт
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	reverse_proxy web:3000 {
+		# Настоящий адрес пользователя (лимит входов). Значение, присланное снаружи, затирается.
+		header_up X-Real-IP {client_ip}
+	}
+}
+
+# Файлы курсов и работ студентов — отдельный адрес: браузер ходит в хранилище напрямую по временным ссылкам.
+# Наружу открыты только чтение и загрузка в папку проекта; остальное (список файлов, удаление) — нет.
+{$FILES_ADDRESS} {
+	header {
+		X-Content-Type-Options nosniff
+		-Server
+	}
+	@files {
+		path /helios-media/*
+		method GET HEAD PUT OPTIONS
+	}
+	handle @files {
+		reverse_proxy storage:8333
+	}
+	handle {
+		respond 404
+	}
+}

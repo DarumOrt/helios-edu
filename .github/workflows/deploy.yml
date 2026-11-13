@@ -1,0 +1,133 @@
+name: Выкладка на сервер
+
+# Запускается только кнопкой «Run workflow» (Actions → «Выкладка на сервер») из ветки main.
+# Собирает образы сайта и API с номером версии, кладёт их в GHCR и обновляет сервер (docs/deploy.md).
+# Откат: тот же запуск с прежним номером версии и выключенной сборкой.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Номер версии, например 0.1.0"
+        required: true
+        type: string
+      build:
+        description: "Собрать образы (выключить для отката на уже собранную версию)"
+        type: boolean
+        default: true
+
+# две выкладки одновременно не идут; начатую не прерываем
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  VERSION: ${{ inputs.version }}
+
+jobs:
+  images:
+    name: Образы версии
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      images: ${{ steps.names.outputs.images }}
+    steps:
+      - name: Проверка запуска
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::Выкладка — только из ветки main"; exit 1; }
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Номер версии — три числа через точку, например 0.1.0"; exit 1; }
+      - uses: actions/checkout@v7
+      - id: names
+        # имена образов в GHCR — только строчными буквами
+        run: echo "images=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Версия не занята
+        if: inputs.build
+        env:
+          IMAGES: ${{ steps.names.outputs.images }}
+        run: |
+          if docker manifest inspect "$IMAGES-web:$VERSION" >/dev/null 2>&1; then
+            echo "::error::Версия $VERSION уже собрана. Возьмите следующий номер или выключите сборку (откат)."
+            exit 1
+          fi
+      - name: Версия собрана
+        if: ${{ !inputs.build }}
+        env:
+          IMAGES: ${{ steps.names.outputs.images }}
+        run: |
+          docker manifest inspect "$IMAGES-web:$VERSION" >/dev/null && docker manifest inspect "$IMAGES-api:$VERSION" >/dev/null || {
+            echo "::error::Образов версии $VERSION нет — включите сборку."
+            exit 1
+          }
+      - uses: docker/setup-buildx-action@v4
+        if: inputs.build
+      - name: Образ API
+        if: inputs.build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.names.outputs.images }}-api:${{ inputs.version }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Образ сайта
+        if: inputs.build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.names.outputs.images }}-web:${{ inputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  server:
+    name: Обновление сервера
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # настройки среды production в GitHub: секреты сервера и, по желанию, подтверждение перед выкладкой
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    env:
+      HOST: ${{ secrets.DEPLOY_HOST }}
+      SSH_USER: ${{ secrets.DEPLOY_USER }}
+      IMAGES: ${{ needs.images.outputs.images }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Ключ для входа на сервер
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          [ -n "$HOST" ] && [ -n "$SSH_USER" ] && [ -n "$SSH_KEY" ] && [ -n "$KNOWN_HOSTS" ] || {
+            echo "::error::Не заданы секреты DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS (docs/deploy.md)"
+            exit 1
+          }
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      # На сервере руками ничего не правим: описание запуска и скрипты каждый раз берутся из репозитория.
+      - name: Файлы запуска
+        run: |
+          ssh "$SSH_USER@$HOST" "mkdir -p /opt/heliosedu/scripts/server"
+          scp compose.prod.yaml Caddyfile .env.prod.example "$SSH_USER@$HOST:/opt/heliosedu/"
+          scp scripts/server/*.sh "$SSH_USER@$HOST:/opt/heliosedu/scripts/server/"
+      - name: Выкладка
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        # Вход в GHCR — на время выкладки: токен одноразовый, после скачивания образов серверу он не нужен.
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$SSH_USER@$HOST" "docker login ghcr.io -u '$GHCR_USER' --password-stdin >/dev/null"
+          ssh "$SSH_USER@$HOST" "cd /opt/heliosedu && HELIOS_IMAGES='$IMAGES' bash scripts/server/deploy.sh '$VERSION'; code=\$?; docker logout ghcr.io >/dev/null; exit \$code"

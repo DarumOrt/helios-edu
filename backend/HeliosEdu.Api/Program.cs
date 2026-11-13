@@ -48,10 +48,10 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
     options.AddPolicy("mail", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ClientAddress.Of(context),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        ClientAddress.Of(context), _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0
         }));
@@ -92,6 +92,8 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
         db.SuppressMail = true;
         await DemoData.SeedAsync(db, app.Configuration, CancellationToken.None);
     }
+    // Чистая база (сервер организации): первый администратор из Admin__Email и Admin__Password.
+    await FirstAdmin.EnsureAsync(db, app.Configuration, app.Logger, CancellationToken.None);
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));

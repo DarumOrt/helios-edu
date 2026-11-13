@@ -1,5 +1,5 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers as requestHeaders } from "next/headers";
 import { DATA_SOURCE_COOKIE, resolveDataSource, type DataSourceState } from "./data-source";
 
 // Текущий источник данных для запроса: учитывает переключатель «Демо / Сервер».
@@ -18,6 +18,12 @@ export async function backendRequest(path: string, init?: RequestInit): Promise<
     const headers = new Headers(init?.headers);
     headers.set("X-Helios-Client", "web");
     if (token) headers.set("Cookie", `helios-auth=${token}`);
+    // Адрес пользователя — для лимита входов в C#. Берём только за своим прокси (TRUSTED_PROXY=on, Caddyfile):
+    // он сам записывает X-Real-IP; без прокси этот заголовок подставил бы кто угодно.
+    if (process.env.TRUSTED_PROXY === "on") {
+      const address = (await requestHeaders()).get("x-real-ip");
+      if (address) headers.set("X-Helios-Client-Ip", address);
+    }
     const response = await fetch(`${baseUrl.replace(/\/$/, "")}${path}`, {
       ...init,
       headers,
