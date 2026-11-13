@@ -85,8 +85,8 @@ backend/tests/          проверки API на настоящем PostgreSQL
 
 | Модуль | C# (`backend/HeliosEdu.Api/`) | Next (`src/`) | Тесты (`backend/tests/`) |
 | --- | --- | --- | --- |
-| auth | `Auth/` | `features/auth`, `app/login`, `app/register`, `app/api/auth` | auth, lifecycle, accounts |
-| admin | `Management/`, `Audit/` | `features/admin`, `app/(app)/admin`, `app/api/users·cohorts·settings·audit` | management, settings, audit |
+| auth | `Auth/` | `features/auth`, `app/login`, `app/register`, `app/activate`, `app/api/auth` | auth, lifecycle, accounts |
+| admin | `Management/`, `Mail/`, `Audit/` | `features/admin`, `app/(app)/admin`, `app/api/users·cohorts·settings·audit·mail` | management, settings, audit, bulk-mail |
 | courses | `Courses/`, `Files/` | `features/courses·course-builder·search`, `app/api/courses·catalog·files` | course-builder, catalog, files, trash, api |
 | adaptive | `Adaptive/` | `features/adaptive`, моки adaptive | adaptive |
 | grades | `Grades/`, `Notifications/` | `features/assignment·submissions·gradebook·notifications` | grades, notifications |
