@@ -42,6 +42,11 @@ describe("navForRole — меню", () => {
     for (const role of roles)
       expect(navForRole(role).some((i) => i.href === "/admin/settings")).toBe(role === "admin");
   });
+
+  it("рассылки видит только администратор", () => {
+    for (const role of roles)
+      expect(navForRole(role).some((i) => i.href === "/admin/mail")).toBe(role === "admin");
+  });
 });
 
 describe("actionForMockApi — права маршрутов на моках", () => {

@@ -38,6 +38,14 @@ describe("validateCourse", () => {
     expect(validateCourse(course)).toEqual({});
   });
 
+  it("назначения групп необязательны, принимают несколько групп и проверяют предел", () => {
+    expect(validateCourse({ ...course, cohortIds: ["co-1", "co-2", "co-3"] })).toEqual({});
+    expect(validateCourse({ cohortIds: [] }, true)).toEqual({});
+    expect(
+      validateCourse({ cohortIds: Array.from({ length: 201 }, (_, i) => `co-${i}`) }, true).cohortIds,
+    ).toBe("Выберите существующие группы (не более 200)");
+  });
+
   it("код — заглавные буквы, дефис и три цифры", () => {
     expect(validateCourse({ ...course, code: "цор-1" }).code).toBe(
       "Код — заглавные буквы, дефис и три цифры, например МАТ-101",

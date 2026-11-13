@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using HeliosEdu.Api.Adaptive;
 using HeliosEdu.Api.Grades;
 using HeliosEdu.Api.Notifications;
+using HeliosEdu.Api.Mail;
 
 namespace HeliosEdu.Api.Data;
 
-public sealed class LearningDbContext(DbContextOptions<LearningDbContext> options) : DbContext(options)
+public sealed class LearningDbContext(DbContextOptions<LearningDbContext> options, MailService mail) : DbContext(options)
 {
+    public bool SuppressMail { get; set; }
+    public bool SuppressInvitations { get; set; }
     private void ProtectLearningEvents()
     {
         if (ChangeTracker.Entries<LearningEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
@@ -24,10 +27,24 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         ProtectLearningEvents();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        var revoke = ChangeTracker.Entries<Account>().Where(e => e.State == EntityState.Modified &&
+            (e.Property(a => a.Email).IsModified || e.Property(a => a.PasswordHash).IsModified || e.Property(a => a.Status).IsModified))
+            .Select(e => e.Entity.Id).ToArray();
+        await using var transaction = revoke.Length > 0 && Database.CurrentTransaction is null
+            ? await Database.BeginTransactionAsync(cancellationToken) : null;
+        if (revoke.Length > 0)
+        {
+            foreach (var id in revoke.Order())
+                await Accounts.FromSqlInterpolated($"SELECT * FROM \"Accounts\" WHERE \"Id\" = {id} FOR UPDATE").ToListAsync(cancellationToken);
+            await Set<AccountActivation>().Where(a => revoke.Contains(a.AccountId)).ExecuteDeleteAsync(cancellationToken);
+        }
+        if (!SuppressMail) await MailEvents.Collect(this, mail, cancellationToken);
+        var count = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        if (transaction is not null) await transaction.CommitAsync(cancellationToken);
+        return count;
     }
     private static readonly System.Text.Json.JsonSerializerOptions AuditJson = new(System.Text.Json.JsonSerializerDefaults.Web);
     public DbSet<Course> Courses => Set<Course>();
@@ -61,6 +78,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ConfigureAdaptive();
+        modelBuilder.ConfigureMail();
         // одна работа на ученика и задание; id материалов уникальны только внутри курса
         modelBuilder.Entity<Submission>().HasIndex(item => new { item.CourseId, item.ActivityId, item.UserId }).IsUnique();
         modelBuilder.Entity<Submission>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)

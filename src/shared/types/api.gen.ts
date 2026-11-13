@@ -1,6 +1,11 @@
 // Сгенерировано scripts/api-types.mjs из docs/api/openapi.json — не править руками.
 // C# не пишет null в ответы (JsonIgnoreCondition.WhenWritingNull): поле «| null» на деле просто отсутствует.
 
+export type ActivationRequest = {
+  token: string | null;
+  password: string | null;
+};
+
 export type Activity = {
   id: string;
   type: string;
@@ -31,6 +36,16 @@ export type AttemptsSummary = {
   bestPercent: number | null;
 };
 
+export type Audience = {
+  userIds: string[] | null;
+  cohortIds: string[] | null;
+  all?: boolean;
+};
+
+export type AudienceInfo = {
+  count: number;
+};
+
 export type AuditChange = {
   field: string;
   before: string | null;
@@ -54,6 +69,26 @@ export type AuditEntryInfo = {
 export type AuditPage = {
   items: AuditEntryInfo[];
   nextCursor: number | null;
+};
+
+export type CampaignInfo = {
+  id: string;
+  subject: string;
+  createdAt: string;
+  status: string;
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
+};
+
+export type CampaignInput = {
+  requestId: string;
+  audience: Audience;
+  subject: string;
+  text: string;
+  html: string | null;
+  confirmAll?: boolean;
 };
 
 export type CatalogCohort = {
@@ -201,6 +236,32 @@ export type GradeRow = {
   total: number;
 };
 
+export type ImportInput = {
+  requestId: string;
+  csv: string;
+  columns: Record<string, number> | null;
+  group: string | null;
+  updateExisting?: boolean;
+  sendInvitations?: boolean;
+};
+
+export type ImportReport = {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: number;
+  rows: ImportRow[];
+};
+
+export type ImportRow = {
+  row: number;
+  name: string;
+  email: string;
+  group: string | null;
+  status: string;
+  error: string | null;
+};
+
 export type JsonElement = unknown;
 
 export type Leaderboard = {
@@ -244,6 +305,47 @@ export type LessonStats = {
 export type LoginRequest = {
   email: string | null;
   password: string | null;
+};
+
+export type MailCheckInput = {
+  email: string | null;
+};
+
+export type MailCheckResult = {
+  state: string;
+  message: string;
+};
+
+export type MailSettingsInfo = {
+  host: string;
+  port: number;
+  security: string;
+  username: string;
+  hasPassword: boolean;
+  fromEmail: string;
+  fromName: string;
+  userCreated: boolean;
+  invitation: boolean;
+  courseAssigned: boolean;
+  groupAdded: boolean;
+  coursePublished: boolean;
+  connectionState: string | null;
+  checkedAt: string | null;
+};
+
+export type MailSettingsInput = {
+  host: string;
+  port: number;
+  security: string;
+  username: string;
+  password: string | null;
+  fromEmail: string;
+  fromName: string;
+  userCreated: boolean;
+  invitation: boolean;
+  courseAssigned: boolean;
+  groupAdded: boolean;
+  coursePublished: boolean;
 };
 
 export type MySubmission = {
@@ -297,6 +399,13 @@ export type ProgressInfo = {
   firstAt: number;
   lastAt: number;
   sessions: number;
+};
+
+export type RecipientInfo = {
+  email: string;
+  status: string;
+  attempts: number;
+  error: string | null;
 };
 
 export type RegisterRequest = {

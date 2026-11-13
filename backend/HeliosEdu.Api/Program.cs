@@ -13,6 +13,8 @@ using HeliosEdu.Api.Notifications;
 using HeliosEdu.Api.Files;
 using HeliosEdu.Api.Audit;
 using HeliosEdu.Api.Tracking;
+using HeliosEdu.Api.Mail;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database")
@@ -22,6 +24,10 @@ builder.Services.AddDbContext<LearningDbContext>(options => options.UseNpgsql(co
 builder.Services.AddScoped<AdaptiveEngine>();
 builder.Services.AddSingleton<FileStorage>();
 builder.Services.AddHostedService<FileJanitor>();
+builder.Services.AddDataProtection().SetApplicationName("HeliosEDU")
+    .PersistKeysToFileSystem(new DirectoryInfo(builder.Configuration["Mail:KeyDirectory"] ?? "./mail-keys"));
+builder.Services.AddScoped<MailService>();
+builder.Services.AddHostedService<MailWorker>();
 // Описание API для генерации типов фронтенда (npm run api:types, docs/api/openapi.json).
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -41,6 +47,9 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
+    options.AddPolicy("mail", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
         {
@@ -54,8 +63,8 @@ app.Use(async (context, next) =>
     context.Response.Headers.CacheControl = "no-store";
     await next(context);
 });
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapManagementEndpoints();
@@ -68,6 +77,8 @@ app.MapFilesEndpoints();
 app.MapAuditEndpoints();
 app.MapTrackingEndpoints();
 app.MapCourseTrashEndpoints();
+app.MapMailEndpoints();
+app.MapImportEndpoints();
 app.MapOpenApi();
 
 // Миграции и моки включаются явно: production не должен заполняться демоданными.
@@ -77,7 +88,10 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
     var db = scope.ServiceProvider.GetRequiredService<LearningDbContext>();
     await db.Database.MigrateAsync();
     if (app.Configuration.GetValue<bool>("Database:SeedDemoData"))
+    {
+        db.SuppressMail = true;
         await DemoData.SeedAsync(db, app.Configuration, CancellationToken.None);
+    }
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));

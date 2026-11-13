@@ -13,6 +13,7 @@ import {
   UsersRound,
   SlidersHorizontal,
   History,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 
@@ -125,6 +126,7 @@ export function navForRole(role: Role): NavItem[] {
 
   if (role === "admin") {
     items.push(A("/admin/settings", "Настройки системы", SlidersHorizontal));
+    items.push(A("/admin/mail", "Рассылки и уведомления", Mail));
     items.push(A("/admin/audit", "Журнал действий", History));
     items.push(M("/courses", "Курсы", BookOpen));
     items.push(M("/submissions", "Проверка работ", ClipboardCheck));

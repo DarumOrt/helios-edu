@@ -10,6 +10,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /out .
 ENV ASPNETCORE_HTTP_PORTS=8080
+ENV Mail__KeyDirectory=/var/helios-mail-keys
+RUN mkdir -p /var/helios-mail-keys && chown $APP_UID:$APP_UID /var/helios-mail-keys
 USER $APP_UID
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "HeliosEdu.Api.dll"]

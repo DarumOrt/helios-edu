@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 import { Plus, Edit2, Search } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
@@ -59,12 +60,22 @@ export default function AdminUsersPage() {
         title="Пользователи"
         subtitle={data ? `${data.length} учётных записей` : undefined}
         actions={
-          canCreate && (
-            <Button onClick={() => setEditing(null)}>
-              <Plus size={16} aria-hidden />
-              Добавить пользователя
-            </Button>
-          )
+          <>
+            {can(actor.role, "system.manage") && (
+              <Link
+                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+                href="/admin/users/import"
+              >
+                Импорт из CSV
+              </Link>
+            )}
+            {canCreate && (
+              <Button onClick={() => setEditing(null)}>
+                <Plus size={16} aria-hidden />
+                Добавить пользователя
+              </Button>
+            )}
+          </>
         }
       />
       <div className="mb-4 flex flex-wrap gap-3">

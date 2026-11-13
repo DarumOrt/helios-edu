@@ -16,14 +16,14 @@ wait_api() {
   for _ in $(seq 1 90); do curl -fsS http://127.0.0.1:8080/api/health/ready >/dev/null 2>&1 && return 0; sleep 1; done
   echo "API не поднялся"; return 1
 }
-restart_api() { docker compose --profile backend restart api >/dev/null 2>&1; wait_api; }
+restart_api() { docker compose -f compose.yaml -f compose.testing.yaml --profile backend restart api >/dev/null 2>&1; wait_api; }
 
 if [ ! -f .next/standalone/server.js ]; then echo "Сначала: npm run build"; exit 1; fi
 
 echo "== останавливаю ваш стек и поднимаю тестовый"
 COMPOSE_PROJECT_NAME=heliosedu docker compose --profile backend stop api storage db >/dev/null 2>&1
-docker compose --profile backend down -v >/dev/null 2>&1
-docker compose --profile backend up -d --build db storage api 2>&1 | grep -iE " error" || true
+docker compose -f compose.yaml -f compose.testing.yaml --profile backend down -v >/dev/null 2>&1
+docker compose -f compose.yaml -f compose.testing.yaml --profile backend up -d --build db storage api 2>&1 | grep -iE " error" || true
 wait_api || exit 1
 
 echo "== типы из описания API"
@@ -65,10 +65,12 @@ run tracking.test.mjs
 restart_api
 run trash.test.mjs
 run accounts.test.mjs
+restart_api
+run bulk-mail.test.mjs
 run api.test.mjs
 
 kill $NEXT_PID 2>/dev/null
-docker compose --profile backend down -v >/dev/null 2>&1
+docker compose -f compose.yaml -f compose.testing.yaml --profile backend down -v >/dev/null 2>&1
 COMPOSE_PROJECT_NAME=heliosedu docker compose --profile backend start db storage api >/dev/null 2>&1
 echo "== ваш стек снова запущен"
 if [ ${#failed[@]} -eq 0 ]; then echo "ИТОГ: всё зелёное"; else echo "ИТОГ: упали — ${failed[*]} (подробно в $LOGS/)"; exit 1; fi

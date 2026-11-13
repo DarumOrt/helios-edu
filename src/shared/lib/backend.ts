@@ -23,7 +23,7 @@ export async function backendRequest(path: string, init?: RequestInit): Promise<
       headers,
       cache: "no-store",
       redirect: "manual",
-      signal: AbortSignal.timeout(5000),
+      signal: init?.signal ?? AbortSignal.timeout(5000),
     });
     const responseHeaders = new Headers({
       "Content-Type": response.headers.get("Content-Type") ?? "application/json",
@@ -77,6 +77,9 @@ export async function backendForward(request: Request, path: string): Promise<Re
     return Response.json({ error: "Недостаточно прав" }, { status: 403 });
   const hasBody = !["GET", "HEAD", "DELETE"].includes(request.method);
   const response = await backendRequest(path, {
+    signal: AbortSignal.timeout(
+      path.startsWith("/api/users/import") ? 120000 : path === "/api/mail/check" ? 30000 : 5000,
+    ),
     method: request.method,
     headers: hasBody ? { "Content-Type": "application/json" } : undefined,
     body: hasBody ? await request.text() : undefined,

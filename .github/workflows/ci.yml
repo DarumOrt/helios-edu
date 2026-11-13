@@ -33,7 +33,7 @@ jobs:
       # Сборка без BACKEND_API_URL: подключение API должно работать во время запуска.
       - run: npm ci --no-audit --no-fund
       - run: npm run build
-      - run: docker compose --profile backend up -d --build db api
+      - run: docker compose -f compose.yaml -f compose.testing.yaml --profile backend up -d --build db api
       - name: Wait for database and API
         run: |
           for i in $(seq 1 60); do
@@ -72,7 +72,7 @@ jobs:
       # с одного адреса. Перезапуск API обнуляет счётчик — дальше тесты не упираются в 429.
       - name: Reset login rate limit
         run: |
-          docker compose --profile backend restart api
+          docker compose -f compose.yaml -f compose.testing.yaml --profile backend restart api
           for i in $(seq 1 60); do
             curl -fsS http://127.0.0.1:8080/api/health/ready && break
             sleep 1
@@ -84,7 +84,7 @@ jobs:
       # настройки и журнал снова много раз входят под разными ролями — ещё раз обнуляем счётчик входов
       - name: Reset login rate limit again
         run: |
-          docker compose --profile backend restart api
+          docker compose -f compose.yaml -f compose.testing.yaml --profile backend restart api
           for i in $(seq 1 60); do
             curl -fsS http://127.0.0.1:8080/api/health/ready && break
             sleep 1
@@ -96,7 +96,7 @@ jobs:
       # корзины и пароли — снова много входов под разными ролями
       - name: Reset login rate limit before trash and accounts
         run: |
-          docker compose --profile backend restart api
+          docker compose -f compose.yaml -f compose.testing.yaml --profile backend restart api
           for i in $(seq 1 60); do
             curl -fsS http://127.0.0.1:8080/api/health/ready && break
             sleep 1
@@ -105,15 +105,23 @@ jobs:
       - run: node --test backend/tests/trash.test.mjs
       - run: node --test backend/tests/accounts.test.mjs
       - run: node --test backend/tests/api.test.mjs
+      - name: Reset limits before bulk import and SMTP tests
+        run: |
+          docker compose -f compose.yaml -f compose.testing.yaml --profile backend restart api
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8080/api/health/ready && break
+            sleep 1
+          done
+      - run: node --test backend/tests/bulk-mail.test.mjs
       - name: Backend logs
         if: failure()
-        run: docker compose --profile backend logs db storage api
+        run: docker compose -f compose.yaml -f compose.testing.yaml --profile backend logs db storage api
       - name: Next.js logs
         if: failure()
         run: cat next.log
       - name: Stop backend
         if: always()
-        run: docker compose --profile backend down
+        run: docker compose -f compose.yaml -f compose.testing.yaml --profile backend down
 
   quality:
     name: Typecheck · Lint · Format

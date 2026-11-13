@@ -89,3 +89,12 @@ export function courseIdsForGroup(group: string | undefined): Set<string> {
   const c = group ? store.find((x) => x.name === group) : undefined;
   return new Set(c?.courseIds ?? []);
 }
+
+/** Назначение общего курса группам без копирования содержания. */
+export function setCourseCohorts(courseId: string, cohortIds: string[]) {
+  for (const group of listCohorts()) {
+    const ids = group.courseIds.filter((id) => id !== courseId);
+    if (cohortIds.includes(group.id)) ids.push(courseId);
+    updateCohort(group.id, { courseIds: ids });
+  }
+}
