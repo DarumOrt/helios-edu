@@ -1,0 +1,2112 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HeliosEDU — наглядная архитектура · 14.11.2026</title>
+    <style>
+      :root {
+        --bg: #f3f5fa;
+        --paper: #fff;
+        --ink: #17223b;
+        --muted: #58657a;
+        --line: #dce3ee;
+        --blue: #255bdb;
+        --soft: #edf2ff;
+        --green: #096a58;
+        --gs: #e6f5ef;
+        --amber: #835015;
+        --as: #fff3dd;
+        --nav: #14213d;
+        --shadow: 0 10px 30px #17223b08;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          15px/1.6 "Segoe UI",
+          Arial,
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      a {
+        touch-action: manipulation;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+      }
+      a {
+        color: var(--blue);
+        text-underline-offset: 3px;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #88adff;
+        outline-offset: 4px;
+      }
+      button {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 14px;
+        background: var(--paper);
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+      aside {
+        background: var(--nav);
+        color: #fff;
+        padding: 30px 20px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .brand {
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+      .brand b {
+        display: inline-grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: #4675f2;
+        margin-right: 8px;
+      }
+      .subbrand {
+        color: #b8c6e2;
+        font-size: 12px;
+        margin: 5px 0 30px 50px;
+      }
+      nav {
+        display: grid;
+        gap: 6px;
+      }
+      nav button {
+        text-align: left;
+        border: 0;
+        background: transparent;
+        color: #c8d2e8;
+        padding: 12px;
+      }
+      nav button span {
+        display: inline-block;
+        width: 26px;
+        font-size: 12px;
+        color: #9fb2da;
+      }
+      nav button[aria-selected="true"] {
+        background: #31466d;
+        color: white;
+      }
+      nav button:hover {
+        background: #233757;
+      }
+      .sidefoot {
+        margin-top: auto;
+        padding-top: 22px;
+        color: #b8c6e2;
+        font-size: 12px;
+      }
+      .sidefoot strong {
+        color: white;
+        display: block;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 38px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+        gap: 16px;
+      }
+      .top small {
+        color: var(--muted);
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .pill {
+        display: inline-block;
+        border-radius: 30px;
+        padding: 5px 12px;
+        font-size: 12px;
+        background: var(--gs);
+        color: var(--green);
+        font-weight: 600;
+      }
+      .pill.warn {
+        background: var(--as);
+        color: var(--amber);
+      }
+      main {
+        padding: 34px 38px 50px;
+        max-width: 1550px;
+        margin: auto;
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        color: var(--blue);
+      }
+      h1 {
+        font-size: clamp(30px, 3.3vw, 47px);
+        line-height: 1.12;
+        letter-spacing: -1.5px;
+        margin: 10px 0 16px;
+      }
+      h2 {
+        font-size: 23px;
+        line-height: 1.3;
+        letter-spacing: -0.6px;
+        margin: 0 0 10px;
+      }
+      h3 {
+        font-size: 16px;
+        line-height: 1.35;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      .lead {
+        max-width: 860px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .panel[hidden] {
+        display: none;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--paper);
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+      .gap {
+        margin-top: 22px;
+      }
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+      .two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .four {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      small {
+        font-size: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .seg {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 12px;
+        background: var(--bg);
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--blue);
+        color: white;
+      }
+      .diagram {
+        display: grid;
+        grid-template-columns: 1fr 28px 1.25fr 28px 1.3fr 28px 1fr;
+        align-items: center;
+        gap: 8px;
+        padding: 30px 0 16px;
+      }
+      .node {
+        text-align: left;
+        min-width: 0;
+        padding: 20px 16px;
+        position: relative;
+        min-height: 185px;
+      }
+      .node strong {
+        display: block;
+        font-size: 19px;
+        margin: 14px 0 8px;
+        line-height: 1.2;
+      }
+      .node small {
+        display: block;
+      }
+      .node.selected {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px var(--soft);
+      }
+      .icon {
+        display: inline-grid;
+        place-items: center;
+        font:
+          600 12px/1.3 Consolas,
+          monospace;
+        background: var(--soft);
+        color: var(--blue);
+        min-width: 34px;
+        height: 32px;
+        border-radius: 9px;
+        padding: 0 8px;
+      }
+      .arrow {
+        color: var(--blue);
+        font-size: 24px;
+        text-align: center;
+      }
+      .lane {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+      .aux {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 10px;
+      }
+      .aux div {
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: var(--bg);
+        font-size: 13px;
+      }
+      .note {
+        padding: 15px 18px;
+        border-radius: 12px;
+        background: var(--soft);
+        color: #274680;
+        font-size: 14px;
+      }
+      .note.warn {
+        background: var(--as);
+        color: var(--amber);
+      }
+      .note.good {
+        background: var(--gs);
+        color: var(--green);
+      }
+      .detail {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 24px;
+        min-height: 120px;
+      }
+      .path,
+      code,
+      pre {
+        font-family: Consolas, monospace;
+        font-size: 12px;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .path {
+        margin-top: 14px;
+        padding: 9px 12px;
+        background: var(--bg);
+        border-radius: 8px;
+        overflow-wrap: anywhere;
+      }
+      ul {
+        padding-left: 20px;
+        margin: 10px 0 0;
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      .minihead {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .num {
+        font-weight: 700;
+        font-size: 13px;
+        background: var(--soft);
+        color: var(--blue);
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .steps {
+        display: grid;
+        gap: 14px;
+        list-style: none;
+        padding: 0;
+        margin: 20px 0 0;
+      }
+      .steps li {
+        display: flex;
+        gap: 14px;
+        padding: 14px;
+        background: var(--bg);
+        border-radius: 12px;
+        margin: 0;
+      }
+      .steps p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 4px 0 0;
+      }
+      .pipeline {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+        margin: 20px 0;
+      }
+      .pipeline > div {
+        flex: 1;
+        background: var(--soft);
+        border-radius: 12px;
+        padding: 18px;
+        min-width: 0;
+      }
+      .pipeline b {
+        display: block;
+        margin-bottom: 8px;
+      }
+      .pipeline small {
+        display: block;
+      }
+      .pipeline > span {
+        align-self: center;
+        color: var(--blue);
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 13px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      .ok {
+        color: var(--green);
+        font-weight: 600;
+      }
+      .no {
+        color: var(--muted);
+      }
+      .entity {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .entity h3 {
+        background: var(--soft);
+        padding: 12px 16px;
+        margin: 0;
+      }
+      .entity p {
+        padding: 13px 16px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .relation-svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .relation-svg text {
+        font-family: "Segoe UI", Arial, sans-serif;
+        fill: var(--ink);
+      }
+      .module {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .module .path {
+        margin-top: auto;
+      }
+      .tag {
+        font-size: 11px;
+        display: inline-block;
+        background: var(--soft);
+        color: var(--blue);
+        border-radius: 6px;
+        padding: 3px 8px;
+        width: fit-content;
+      }
+      .module p {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .testcase {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .testcase:last-child {
+        border: 0;
+      }
+      .testcase p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 5px 0 0;
+      }
+      .testcase label {
+        display: flex;
+        align-items: start;
+        gap: 10px;
+        font-weight: 600;
+      }
+      .testcase input {
+        width: 18px;
+        height: 18px;
+        margin-top: 4px;
+        accent-color: var(--blue);
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: var(--nav);
+        color: #e3ebff;
+        padding: 20px;
+        border-radius: 12px;
+        line-height: 1.8;
+        margin: 12px 0;
+      }
+      .port {
+        font:
+          600 24px Consolas,
+          monospace;
+        letter-spacing: -1px;
+        margin: 10px 0;
+        color: var(--blue);
+      }
+      .login {
+        position: relative;
+      }
+      .login strong {
+        font-size: 14px;
+        overflow-wrap: anywhere;
+        display: block;
+        margin: 14px 0;
+      }
+      .login .copy {
+        width: 100%;
+      }
+      .password {
+        font:
+          600 23px Consolas,
+          monospace;
+        color: var(--blue);
+        overflow-wrap: anywhere;
+      }
+      .footer {
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 20px;
+        justify-content: space-between;
+      }
+      .source-list {
+        display: grid;
+        gap: 8px;
+      }
+      .source-list code {
+        display: block;
+      }
+      .copy {
+        font-size: 12px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 12px 20px;
+        background: var(--nav);
+        color: white;
+        border-radius: 12px;
+        z-index: 5;
+      }
+      .toast[hidden] {
+        display: none;
+      }
+      select {
+        padding: 9px 12px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--paper);
+        color: var(--ink);
+        max-width: 100%;
+      }
+      .spacer {
+        height: 6px;
+      }
+      .step-controls {
+        display: flex;
+        gap: 8px;
+      }
+      .statusline {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 12px;
+      }
+      @media (min-width: 1500px) {
+        .node {
+          min-height: 190px;
+        }
+      }
+      @media (max-width: 1150px) {
+        .shell {
+          grid-template-columns: 210px minmax(0, 1fr);
+        }
+        main {
+          padding: 28px 24px;
+        }
+        .top {
+          padding: 18px 24px;
+        }
+        .four {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .three {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .diagram {
+          grid-template-columns: 1fr 22px 1fr;
+          gap: 12px;
+        }
+        .diagram .arrow:nth-child(4) {
+          grid-column: 1/-1;
+          transform: rotate(90deg);
+        }
+        .diagram .node {
+          min-height: 150px;
+        }
+        .pipeline {
+          flex-wrap: wrap;
+        }
+        .pipeline > div {
+          flex-basis: 40%;
+        }
+      }
+      @media (max-width: 760px) {
+        .shell {
+          display: block;
+        }
+        aside {
+          position: static;
+          height: auto;
+          padding: 18px;
+        }
+        .brand {
+          font-size: 21px;
+        }
+        .subbrand,
+        .sidefoot {
+          display: none;
+        }
+        nav {
+          display: flex;
+          overflow-x: auto;
+          margin-top: 16px;
+          gap: 6px;
+        }
+        nav button {
+          white-space: nowrap;
+          padding: 9px;
+        }
+        nav button span {
+          width: 22px;
+        }
+        .top {
+          padding: 14px 18px;
+        }
+        .top small {
+          font-size: 11px;
+        }
+        .top .pill {
+          display: none;
+        }
+        main {
+          padding: 26px 18px;
+        }
+        .three,
+        .two,
+        .four,
+        .detail,
+        .aux {
+          grid-template-columns: 1fr;
+        }
+        .card {
+          padding: 20px;
+        }
+        .diagram {
+          gap: 10px;
+        }
+        .node {
+          padding: 15px 12px;
+        }
+        .node strong {
+          font-size: 17px;
+        }
+        .pipeline {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+        .pipeline > span {
+          transform: rotate(90deg);
+          text-align: center;
+        }
+        .footer {
+          display: block;
+        }
+        .footer span {
+          display: block;
+          margin-top: 7px;
+        }
+        .password {
+          font-size: 21px;
+        }
+        .row select {
+          width: 100%;
+        }
+      }
+      @media print {
+        @page {
+          size: A4 landscape;
+          margin: 12mm;
+        }
+        body {
+          background: white;
+          font-size: 12px;
+        }
+        .shell {
+          display: block;
+        }
+        aside,
+        .top-actions,
+        .seg,
+        .copy,
+        .step-controls,
+        select,
+        .toast {
+          display: none !important;
+        }
+        .top {
+          padding: 0 0 12px;
+        }
+        .top .pill {
+          display: inline-block;
+        }
+        main {
+          padding: 20px 0;
+        }
+        .panel[hidden] {
+          display: block !important;
+        }
+        .panel {
+          break-before: page;
+        }
+        .panel:first-child {
+          break-before: auto;
+        }
+        .card {
+          box-shadow: none;
+          break-inside: avoid;
+          padding: 18px;
+        }
+        .three {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .four {
+          grid-template-columns: repeat(4, 1fr);
+        }
+        .two,
+        .detail {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        h1 {
+          font-size: 32px;
+        }
+        .diagram {
+          grid-template-columns: 1fr 25px 1fr 25px 1fr 25px 1fr;
+        }
+        .diagram .arrow:nth-child(4) {
+          grid-column: auto;
+          transform: none;
+        }
+        .node {
+          min-height: 160px;
+        }
+        .pipeline {
+          display: flex;
+        }
+        .footer {
+          font-size: 10px;
+        }
+        * {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media print {
+        .panel[hidden] {
+          display: block !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand"><b>H</b>HeliosEDU</div>
+        <div class="subbrand">КАРТА ПРОЕКТА / 2026</div>
+        <nav role="tablist" aria-label="Разделы документа" aria-orientation="vertical">
+          <button role="tab" id="tab-map" aria-controls="map" aria-selected="true">
+            <span>01</span>Общая схема
+          </button>
+          <button role="tab" id="tab-data" aria-controls="data" aria-selected="false" tabindex="-1">
+            <span>02</span>Данные и группы
+          </button>
+          <button role="tab" id="tab-modules" aria-controls="modules" aria-selected="false" tabindex="-1">
+            <span>03</span>Модули обучения
+          </button>
+          <button role="tab" id="tab-access" aria-controls="access" aria-selected="false" tabindex="-1">
+            <span>04</span>Вход и права
+          </button>
+          <button role="tab" id="tab-mail" aria-controls="mail" aria-selected="false" tabindex="-1">
+            <span>05</span>CSV и почта
+          </button>
+          <button role="tab" id="tab-docker" aria-controls="docker" aria-selected="false" tabindex="-1">
+            <span>06</span>Запуск в Docker
+          </button>
+          <button role="tab" id="tab-demo" aria-controls="demo" aria-selected="false" tabindex="-1">
+            <span>07</span>Вход для показа
+          </button>
+          <button role="tab" id="tab-check" aria-controls="check" aria-selected="false" tabindex="-1">
+            <span>08</span>Как проверить
+          </button>
+          <button role="tab" id="tab-status" aria-controls="status" aria-selected="false" tabindex="-1">
+            <span>09</span>Готовность и источники
+          </button>
+        </nav>
+        <div class="sidefoot">
+          <strong>Срез · 14 ноября 2026</strong>Локальная версия проекта<br />Коммит 0021a94<br />Работает без
+          интернета
+        </div>
+      </aside>
+      <div>
+        <header class="top">
+          <div>
+            <strong>Паспорт проекта HeliosEDU</strong><br /><small
+              >От действия пользователя до сохранённых данных</small
+            >
+          </div>
+          <div class="top-actions">
+            <span class="pill">Актуально на 14.11.2026</span><button id="print">Печать / PDF</button>
+          </div>
+        </header>
+        <main>
+          <section class="panel" id="map" role="tabpanel" aria-labelledby="tab-map">
+            <div class="eyebrow">01 / Вся система на одном экране</div>
+            <h1>Как устроен HeliosEDU</h1>
+            <p class="lead">
+              Учебная платформа с четырьмя ролями. Интерфейс отправляет запросы через Next.js; сервер C#
+              проверяет доступ и сохраняет учебные данные в PostgreSQL. Большие файлы хранятся отдельно.
+            </p>
+            <div class="card gap">
+              <div class="row">
+                <div>
+                  <h2>Куда идёт запрос</h2>
+                  <small>Нажмите на блок, чтобы раскрыть его назначение.</small>
+                </div>
+                <div class="seg" aria-label="Источник данных">
+                  <button data-mode="server" aria-pressed="true">Сервер</button
+                  ><button data-mode="demo" aria-pressed="false">Демо</button>
+                </div>
+              </div>
+              <div class="diagram" aria-label="Браузер → Next.js → C# API → PostgreSQL">
+                <button class="node" data-node="browser">
+                  <span class="icon">UI</span><strong>Браузер</strong
+                  ><small>Страницы, формы,<br />плеер и графики</small></button
+                ><span class="arrow" aria-hidden="true">→</span>
+                <button class="node selected" data-node="next">
+                  <span class="icon">NEXT</span><strong>Next.js</strong
+                  ><small>Интерфейс + /api/*<br />Один адрес для браузера</small></button
+                ><span class="arrow" aria-hidden="true">→</span>
+                <button class="node" data-node="api">
+                  <span class="icon" id="service-icon">C#</span
+                  ><strong id="service-title">ASP.NET Core</strong
+                  ><small id="service-sub">Сессия, права,<br />правила обучения</small></button
+                ><span class="arrow" aria-hidden="true">→</span>
+                <button class="node" data-node="db">
+                  <span class="icon" id="store-icon">DB</span><strong id="store-title">PostgreSQL</strong
+                  ><small id="store-sub">Пользователи, курсы,<br />результаты, почтовая очередь</small>
+                </button>
+              </div>
+              <div class="aux" id="server-aux">
+                <div>
+                  <b>Файлы → SeaweedFS / S3</b><br />Браузер загружает файл напрямую по временной ссылке,
+                  выданной API.
+                </div>
+                <div>
+                  <b>Письма → SMTP-провайдер</b><br />Фоновый обработчик API читает очередь из PostgreSQL и
+                  отправляет письма.
+                </div>
+              </div>
+              <div class="note gap" id="mode-note">
+                Сервер — основной режим: данные сохраняются между перезапусками. При сбое API приложение
+                показывает ошибку, а не подменяет данные моками.
+              </div>
+            </div>
+            <div class="card gap detail">
+              <div>
+                <div class="eyebrow">Выбранный компонент</div>
+                <h2 id="detail-title">Next.js — единая точка входа</h2>
+                <p id="detail-text" class="muted"></p>
+              </div>
+              <div>
+                <ul id="detail-list"></ul>
+                <div class="path" id="detail-path"></div>
+              </div>
+            </div>
+            <div class="card gap">
+              <div class="row">
+                <h2>Путь конкретного действия</h2>
+                <label
+                  >Сценарий
+                  <select id="scenario">
+                    <option value="course">Открыть курс</option>
+                    <option value="login">Войти в систему</option>
+                    <option value="file">Загрузить файл</option>
+                    <option value="grade">Проверить работу</option>
+                    <option value="tracking">Продолжить видео</option>
+                  </select></label
+                >
+              </div>
+              <ol class="steps" id="scenario-steps"></ol>
+            </div>
+          </section>
+          <section class="panel" id="data" role="tabpanel" aria-labelledby="tab-data" hidden>
+            <div class="eyebrow">02 / Кто с кем связан</div>
+            <h1>Один курс — несколько групп</h1>
+            <p class="lead">
+              Курс хранится в одном экземпляре. Группы получают доступ к нему через назначения. У каждого
+              студента остаются собственные работы, оценки и прогресс.
+            </p>
+            <div class="card gap">
+              <div class="row">
+                <h2>Пример назначения общего курса</h2>
+                <span class="pill">Реализовано</span>
+              </div>
+              <svg
+                class="relation-svg"
+                viewBox="0 0 1000 300"
+                role="img"
+                aria-label="Группы М1227, 1237 и 1247 связаны через назначения с одним курсом. Каждый студент имеет собственные результаты."
+              >
+                <defs>
+                  <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8" fill="#255bdb" />
+                  </marker>
+                </defs>
+                <g fill="none" stroke="#255bdb" stroke-width="2" marker-end="url(#arr)">
+                  <path d="M220 65 H290 V150 H360" />
+                  <path d="M220 150 H360" />
+                  <path d="M220 235 H290 V150 H360" />
+                  <path d="M610 150 H730" />
+                </g>
+                <g fill="#edf2ff" stroke="#dce3ee">
+                  <rect x="20" y="30" width="200" height="70" rx="14" />
+                  <rect x="20" y="115" width="200" height="70" rx="14" />
+                  <rect x="20" y="200" width="200" height="70" rx="14" />
+                  <rect x="360" y="100" width="250" height="100" rx="16" />
+                  <rect x="730" y="75" width="250" height="150" rx="16" fill="#e6f5ef" />
+                </g>
+                <g text-anchor="middle" font-size="18" font-weight="600">
+                  <text x="120" y="73">М1227</text>
+                  <text x="120" y="158">1237</text>
+                  <text x="120" y="243">1247</text>
+                  <text x="485" y="140">Общий курс</text>
+                  <text x="855" y="116">Личные результаты</text>
+                </g>
+                <g font-size="14" text-anchor="middle">
+                  <text x="485" y="169">Один набор материалов</text>
+                  <text x="855" y="149">Студент А → свой прогресс</text>
+                  <text x="855" y="177">Студент Б → своя оценка</text>
+                  <text x="485" y="240">Связующая таблица CohortCourses</text>
+                </g>
+              </svg>
+              <div class="two grid">
+                <div class="note good">
+                  <b>Несколько групп у курса</b><br />Выбираются в карточке курса администратором или
+                  организатором. Изменение материала видно всем назначенным группам.
+                </div>
+                <div class="note warn">
+                  <b>Одна учебная группа у студента</b><br />Перевод меняет доступ к курсам. Прежние
+                  результаты сохраняются; старые оценки остаются в «Моих оценках» по правилам удаления курса.
+                </div>
+              </div>
+            </div>
+            <div class="three gap grid">
+              <div class="entity">
+                <h3>Аккаунт → сессии</h3>
+                <p>
+                  Accounts · LoginSessions<br />Роль, группа, статус, хеш пароля. Токен сессии хранится в БД в
+                  виде SHA-256.
+                </p>
+              </div>
+              <div class="entity">
+                <h3>Группы ↔ курсы</h3>
+                <p>
+                  Cohorts · CohortCourses · Courses<br />У группы много курсов; курс может быть общим для
+                  нескольких групп.
+                </p>
+              </div>
+              <div class="entity">
+                <h3>Курс → материалы</h3>
+                <p>
+                  Разделы и материалы принадлежат курсу. Материал определяется парой
+                  <code>courseId + activityId</code>.
+                </p>
+              </div>
+              <div class="entity">
+                <h3>Студент → результаты</h3>
+                <p>
+                  Submissions · Grades · QuizAttempts<br />Работы, оценки и попытки тестирования привязаны к
+                  студенту и материалу курса.
+                </p>
+              </div>
+              <div class="entity">
+                <h3>Студент → изучение</h3>
+                <p>
+                  ActivityProgress · TrackingEvents<br />Прогресс материала, позиция видео, события. Данные
+                  используются в аналитике и лидерборде.
+                </p>
+              </div>
+              <div class="entity">
+                <h3>Почта и импорт</h3>
+                <p>
+                  MailSettings · MailCampaign · MailRecipient · AccountActivation · UserImport<br />Настройки,
+                  очередь, активации и отчёты импорта.
+                </p>
+              </div>
+            </div>
+            <div class="card gap">
+              <h2>Что где хранится</h2>
+              <div class="tablewrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Место</th>
+                      <th>Содержимое</th>
+                      <th>Что будет после перезапуска</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>PostgreSQL</td>
+                      <td>
+                        Аккаунты, курсы, связи групп, результаты, события, настройки, аудит, почтовая очередь
+                      </td>
+                      <td>Сохраняется в томе postgres_data</td>
+                    </tr>
+                    <tr>
+                      <td>SeaweedFS</td>
+                      <td>Загруженные видео, PDF, обложки и файлы работ</td>
+                      <td>Сохраняется в storage_data</td>
+                    </tr>
+                    <tr>
+                      <td>Ключи Data Protection</td>
+                      <td>Ключи защиты пароля SMTP и тел писем в очереди</td>
+                      <td>Сохраняются в mail_keys; резервировать вместе с БД</td>
+                    </tr>
+                    <tr>
+                      <td>Память Next.js / демо</td>
+                      <td>Моки и изменения демонстрационного режима</td>
+                      <td>Изменения могут сброситься; это не постоянное хранилище</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+          <section class="panel" id="modules" role="tabpanel" aria-labelledby="tab-modules" hidden>
+            <div class="eyebrow">03 / Из чего состоит платформа</div>
+            <h1>Модули обучения и управления</h1>
+            <p class="lead">
+              Каждый модуль соединяет экран, API и данные. Основные учебные функции уже работают в C# и
+              PostgreSQL.
+            </p>
+            <div class="three gap grid" id="module-grid"></div>
+            <div class="card gap">
+              <h2>Как разделён код</h2>
+              <div class="pipeline">
+                <div><b>app</b><small>Страницы и API-маршруты собирают сценарий.</small></div>
+                <span>→</span>
+                <div><b>features</b><small>Формы, плеер, журнал, аналитика, управление.</small></div>
+                <span>→</span>
+                <div><b>shared</b><small>Общие элементы, типы, права, валидация и запросы.</small></div>
+              </div>
+              <div class="note">
+                Серверные данные в интерфейсе получает SWR. Zustand хранит клиентское состояние. Компоненты не
+                импортируют моки напрямую: данные проходят через /api/*.
+              </div>
+              <div class="path">
+                C#: Program.cs → endpoint модуля → AccessRules / правила → LearningDbContext → PostgreSQL
+              </div>
+            </div>
+            <div class="two gap grid">
+              <div class="card">
+                <h3>Адаптивность — понятный цикл</h3>
+                <ol class="steps">
+                  <li>
+                    <span class="num">1</span>
+                    <div>
+                      <b>Ответ студента</b>
+                      <p>Попытка и ответ записываются на сервере.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">2</span>
+                    <div>
+                      <b>Обновление освоения навыков</b>
+                      <p>
+                        BKT оценивает вероятность освоения с учётом ответа, угадывания, ошибки и обучения.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">3</span>
+                    <div>
+                      <b>Рекомендация следующего шага</b>
+                      <p>Учитываются навыки и зависимости; преподаватель может вмешаться вручную.</p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+              <div class="card">
+                <h3>Оценивание и трекинг</h3>
+                <ul>
+                  <li>В журнале приоритет имеет оценка преподавателя, иначе — лучшая попытка теста.</li>
+                  <li>Видео можно продолжить с сохранённой позиции.</li>
+                  <li>Лидерборд строится по данным группы: тесты, завершённые материалы и серия дней.</li>
+                  <li>
+                    PDF пока представлен упрощённым просмотрщиком со счётчиком страниц; PDF.js и продолжение с
+                    места ещё не сделаны.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+          <section class="panel" id="access" role="tabpanel" aria-labelledby="tab-access" hidden>
+            <div class="eyebrow">04 / Доступ определяется сервером</div>
+            <h1>Кто что может делать</h1>
+            <p class="lead">
+              Интерфейс скрывает недоступные действия, а C# повторно проверяет роль и доступ к конкретному
+              объекту. Изменение роли в браузере не даёт серверных прав.
+            </p>
+            <div class="card gap">
+              <h2>Как работает вход в режиме «Сервер»</h2>
+              <div class="pipeline">
+                <div><b>1. Почта + пароль</b><small>Форма → Next.js → C# API.</small></div>
+                <span>→</span>
+                <div><b>2. Проверка аккаунта</b><small>Хеш пароля, статус пользователя.</small></div>
+                <span>→</span>
+                <div><b>3. Cookie сессии</b><small>helios-auth · HttpOnly · срок 8 часов.</small></div>
+                <span>→</span>
+                <div><b>4. Каждый запрос</b><small>Сессия → роль → доступ к курсу.</small></div>
+              </div>
+              <div class="note">
+                Пользователь и роль берутся из серверной сессии. В PostgreSQL хранится хеш токена. Выход и
+                блокировка отзывают сессии; демо-вход выбором роли — отдельный сценарий.
+              </div>
+            </div>
+            <div class="card gap">
+              <h2>Матрица основных действий</h2>
+              <div class="tablewrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Действие</th>
+                      <th>Студент</th>
+                      <th>Преподаватель</th>
+                      <th>Организатор</th>
+                      <th>Администратор</th>
+                    </tr>
+                  </thead>
+                  <tbody id="role-rows"></tbody>
+                </table>
+              </div>
+              <small
+                >«Свой курс» — преподаватель назначен его TutorId. Проверки конкретного курса, пользователя и
+                организации дополняют общую матрицу.</small
+              >
+            </div>
+            <div class="three gap grid">
+              <div class="card">
+                <h3>Доступ студента</h3>
+                <p class="muted">
+                  Только опубликованные курсы своей группы. Самозаписи на курс нет. Чужой или недоступный курс
+                  возвращает 404.
+                </p>
+              </div>
+              <div class="card">
+                <h3>Регистрация</h3>
+                <p class="muted">
+                  Самостоятельно создаётся только студент без группы. Роль и группу назначает сотрудник с
+                  правом управления.
+                </p>
+              </div>
+              <div class="card">
+                <h3>Ограничения организатора</h3>
+                <p class="muted">
+                  Не назначает роль администратора и не управляет администраторами. SMTP, рассылки, импорт и
+                  журнал действий доступны администратору.
+                </p>
+              </div>
+            </div>
+          </section>
+          <section class="panel" id="mail" role="tabpanel" aria-labelledby="tab-mail" hidden>
+            <div class="eyebrow">05 / Новое в управлении</div>
+            <h1>От CSV до письма пользователю</h1>
+            <p class="lead">
+              Импорт и рассылки доступны администратору в режиме «Сервер». Получатели и очередь сохраняются в
+              PostgreSQL — отправка не зависит от открытой вкладки.
+            </p>
+            <div class="card gap">
+              <h2>Путь массового добавления</h2>
+              <div class="pipeline">
+                <div><b>CSV-файл</b><small>Имя, почта; группа и факультет необязательны.</small></div>
+                <span>→</span>
+                <div>
+                  <b>Предпросмотр</b><small>Сопоставление колонок, проверка строк и дубликатов.</small>
+                </div>
+                <span>→</span>
+                <div><b>Импорт</b><small>Аккаунты студентов + отчёт + при выборе приглашения.</small></div>
+                <span>→</span>
+                <div><b>Активация</b><small>Письмо со ссылкой → пользователь задаёт пароль.</small></div>
+              </div>
+              <div class="two grid">
+                <div class="note">
+                  <b>Правила файла</b><br />UTF-8 · до 1 МБ · до 1000 пользователей · разделитель «,» или «;».
+                  Группа должна существовать. Выбранная в форме группа важнее группы из CSV.
+                </div>
+                <div class="note warn">
+                  <b>Повтор и ошибки</b><br />Дубликаты по email не создаются. Ошибочные строки попадают в
+                  отчёт. Перевод существующего студента требует отдельного флажка. Незакрытая кавычка
+                  отклоняет файл целиком.
+                </div>
+              </div>
+              <pre>
+name;email;group;faculty
+Иван Примеров;ivan@example.org;М1227;ИНЭК
+Анна Примерова;anna@example.org;М1227;ИНЭК</pre>
+              <small
+                >Адреса example.org — образец структуры, для проверки писем замените их своими тестовыми
+                адресами.</small
+              >
+            </div>
+            <div class="card gap">
+              <div class="row">
+                <h2>Что происходит с письмом</h2>
+                <div class="step-controls">
+                  <button id="mail-prev" aria-label="Предыдущий этап">←</button
+                  ><button id="mail-next">Следующий этап →</button>
+                </div>
+              </div>
+              <div class="pipeline" id="mail-stages"></div>
+              <div class="note" id="mail-stage-detail" aria-live="polite"></div>
+              <div class="statusline">Это схема процесса, она не запускает реальную отправку.</div>
+            </div>
+            <div class="two gap grid">
+              <div class="card">
+                <h2>Что настроить в SMTP</h2>
+                <ol class="steps">
+                  <li>
+                    <span class="num">1</span>
+                    <div>
+                      <b>Реквизиты провайдера</b>
+                      <p>Host, порт, логин, пароль, email и имя отправителя.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">2</span>
+                    <div>
+                      <b>Шифрование</b>
+                      <p>STARTTLS обычно 587; SSL/TLS обычно 465. Используйте значения своего провайдера.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">3</span>
+                    <div>
+                      <b>Проверка</b>
+                      <p>Сохранить → проверить подключение → отправить письмо на собственный адрес.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">4</span>
+                    <div>
+                      <b>События</b>
+                      <p>
+                        Включить нужные уведомления: создание аккаунта, приглашение, группа, назначение или
+                        публикация курса.
+                      </p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+              <div class="card">
+                <h2>Важные свойства очереди</h2>
+                <ul>
+                  <li>Письмо и бизнес-изменение сохраняются одной транзакцией.</li>
+                  <li>Фоновый MailWorker отправляет не чаще одного письма в секунду на БД.</li>
+                  <li>Временные ошибки: до трёх попыток с паузами 30 и 60 секунд.</li>
+                  <li>Повтор операции с тем же UUID и содержимым возвращает прежний результат.</li>
+                  <li>
+                    После аварии с неизвестным исходом отправка автоматически не повторяется: нужна проверка
+                    почтового журнала.
+                  </li>
+                  <li>«Принято SMTP» не подтверждает попадание в ящик; проверьте входящие и спам.</li>
+                </ul>
+                <div class="note warn gap">
+                  Настоящий SMTP-провайдер ещё не настроен. Локальный SMTP проверен тестами. До настройки
+                  нельзя утверждать, что письма доставляются на внешнюю почту.
+                </div>
+              </div>
+            </div>
+            <div class="note gap">
+              Ссылка активации действует 48 часов. Без отправки приглашений новые CSV-аккаунты создаются без
+              известного пароля: для входа нужно отправить приглашение позднее. MAIL_PUBLIC_URL должен
+              указывать на адрес платформы, доступный получателю.
+            </div>
+          </section>
+          <section class="panel" id="docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
+            <div class="eyebrow">06 / Локальный стенд</div>
+            <h1>Четыре контейнера для показа</h1>
+            <p class="lead">
+              Сайт и сервер запускаются вместе. База и файлы сохраняются в Docker-томах. Пересборка контейнера
+              не означает удаление данных.
+            </p>
+            <div class="four gap grid">
+              <div class="card">
+                <span class="icon">WEB</span>
+                <h3 class="gap">Next.js</h3>
+                <div class="port">:3000</div>
+                <p class="muted">Интерфейс и маршруты /api/*</p>
+                <small>Открывать в браузере</small>
+              </div>
+              <div class="card">
+                <span class="icon">API</span>
+                <h3 class="gap">C# / .NET 10</h3>
+                <div class="port">:8080</div>
+                <p class="muted">Сессии, права и бизнес-логика</p>
+                <small>На хосте: 127.0.0.1</small>
+              </div>
+              <div class="card">
+                <span class="icon">DB</span>
+                <h3 class="gap">PostgreSQL 17</h3>
+                <div class="port">:5432</div>
+                <p class="muted">Постоянные данные</p>
+                <small>Только внутренняя сеть Docker</small>
+              </div>
+              <div class="card">
+                <span class="icon">S3</span>
+                <h3 class="gap">SeaweedFS</h3>
+                <div class="port">:8333</div>
+                <p class="muted">Объектное хранилище</p>
+                <small>Просмотр filer: 127.0.0.1:8888</small>
+              </div>
+            </div>
+            <div class="card gap">
+              <div class="row">
+                <h2>Запуск сайта и сервера</h2>
+                <button
+                  class="copy"
+                  data-copy="docker compose -f compose.yaml -f compose.backend.yaml --profile web --profile backend up -d --build"
+                >
+                  Скопировать команду
+                </button>
+              </div>
+              <p class="muted">Выполнить из папки helios-edu при работающем Docker Desktop.</p>
+              <pre>
+docker compose -f compose.yaml -f compose.backend.yaml --profile web --profile backend up -d --build</pre>
+              <div class="two grid">
+                <div class="note">
+                  <b>Открыть сайт</b><br /><a
+                    href="http://localhost:3000/login"
+                    target="_blank"
+                    rel="noopener"
+                    >http://localhost:3000/login</a
+                  ><br />При подключённом API по умолчанию выбирается «Сервер».
+                </div>
+                <div class="note">
+                  <b>Проверить готовность API</b><br /><a
+                    href="http://127.0.0.1:8080/api/health/ready"
+                    target="_blank"
+                    rel="noopener"
+                    >http://127.0.0.1:8080/api/health/ready</a
+                  ><br />Ожидаемый ответ: <code>{"status":"ok"}</code>.
+                </div>
+              </div>
+            </div>
+            <div class="two gap grid">
+              <div class="card">
+                <h3>Как связаны контейнеры</h3>
+                <pre>
+Браузер → localhost:3000
+Next.js → http://api:8080
+C# API → db:5432
+C# API → http://storage:8333
+Браузер → 127.0.0.1:8333 (временная ссылка)</pre>
+                <small>compose.backend.yaml задаёт BACKEND_API_URL для контейнера web.</small>
+              </div>
+              <div class="card">
+                <h3>Для показа с другого компьютера</h3>
+                <p class="muted">
+                  localhost относится к компьютеру посетителя. Нужен доступный сетевой адрес хоста и
+                  разрешённый порт 3000.
+                </p>
+                <ul>
+                  <li>
+                    Для файлов задайте STORAGE_PUBLIC_URL и STORAGE_ALLOWED_ORIGINS с доступным адресом.
+                  </li>
+                  <li>Для приглашений задайте MAIL_PUBLIC_URL с тем же доступным адресом сайта.</li>
+                  <li>
+                    Текущие порты API и хранилища привязаны к 127.0.0.1; внешнюю публикацию нужно настроить
+                    отдельно.
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="note warn gap">
+              Резервная копия: postgres_data + storage_data + mail_keys. Команда удаления томов уничтожит
+              сохранённые данные. Для обычной остановки достаточно остановить контейнеры.
+            </div>
+          </section>
+          <section class="panel" id="demo" role="tabpanel" aria-labelledby="tab-demo" hidden>
+            <div class="eyebrow">07 / Быстрый доступ</div>
+            <h1>Логины и пароль для показа</h1>
+            <p class="lead">
+              Откройте страницу входа, выберите «Сервер» и войдите под нужной ролью. Это локальные
+              демонстрационные аккаунты из набора проекта.
+            </p>
+            <div class="card gap">
+              <div class="row">
+                <div>
+                  <h2>Адрес входа</h2>
+                  <a href="http://localhost:3000/login" target="_blank" rel="noopener"
+                    >http://localhost:3000/login</a
+                  >
+                </div>
+                <button data-copy="http://localhost:3000/login" class="copy">Скопировать адрес</button>
+              </div>
+            </div>
+            <div class="four gap grid" id="login-grid"></div>
+            <div class="card gap">
+              <div class="row">
+                <div>
+                  <h2>Общий демонстрационный пароль</h2>
+                  <div class="password">HeliosDemo2026!</div>
+                </div>
+                <button class="copy" data-copy="HeliosDemo2026!">Скопировать пароль</button>
+              </div>
+              <p class="muted gap">
+                Этот пароль используется при первоначальном создании демоаккаунтов. Если пароль уже меняли в
+                базе или задавали другой DEMO_PASSWORD до создания аккаунтов, используйте новое значение.
+                Перезапуск Docker не сбрасывает пароли.
+              </p>
+            </div>
+            <div class="two gap grid">
+              <div class="card">
+                <h3>С чего начать показ</h3>
+                <ol class="steps">
+                  <li>
+                    <span class="num">1</span>
+                    <div>
+                      <b>Администратор</b>
+                      <p>Группы курса → импорт CSV → настройки SMTP → история рассылок.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">2</span>
+                    <div>
+                      <b>Преподаватель</b>
+                      <p>Свой курс → конструктор → проверка работ → журнал и аналитика.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="num">3</span>
+                    <div>
+                      <b>Студент</b>
+                      <p>Мои курсы → видео → тест → оценки → хаб группы.</p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+              <div class="card">
+                <h3>Если не получается войти</h3>
+                <ul>
+                  <li>Проверьте, что выбран именно «Сервер».</li>
+                  <li>Убедитесь, что четыре контейнера работают.</li>
+                  <li>Проверьте /api/health/ready — ожидается status: ok.</li>
+                  <li>Не перепутайте студенческий домен: <code>student@student.pspu.ru</code>.</li>
+                  <li>Если пароль меняли, используйте актуальный или сброс через администратора.</li>
+                </ul>
+                <div class="note gap">
+                  Для просмотра интерфейса без сервера можно выбрать «Демо». В этом режиме вход выполняется
+                  выбором роли; CSV, SMTP и реальные загрузки файлов недоступны.
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="panel" id="check" role="tabpanel" aria-labelledby="tab-check" hidden>
+            <div class="eyebrow">08 / Приёмка через интерфейс</div>
+            <h1>Как проверить, что всё работает</h1>
+            <p class="lead">
+              Проводите проверки в режиме «Сервер» на тестовых данных. Флажки ниже — ваш личный список
+              проверки в открытой вкладке; это не результаты автоматического тестирования.
+            </p>
+            <div class="two gap grid" id="check-grid"></div>
+            <div class="card gap">
+              <h2>Автоматические проверки проекта</h2>
+              <pre>
+npm run check
+npm run build
+npm run test:backend</pre>
+              <p class="muted">
+                check объединяет TypeScript, ESLint, форматирование и модульные тесты. Серверные тесты
+                используют отдельный стек; запускайте один набор на машину.
+              </p>
+              <div class="note">
+                В журнале доработки зафиксированы 55 модульных и 150 серверных тестов, успешный check и сборка
+                в Linux Docker. При подготовке этого документа полный набор заново не запускался; текущая
+                сборка Docker и доступность сайта/API проверены в этой сессии.
+              </div>
+            </div>
+          </section>
+          <section class="panel" id="status" role="tabpanel" aria-labelledby="tab-status" hidden>
+            <div class="eyebrow">09 / Честный срез проекта</div>
+            <h1>Что готово, что осталось</h1>
+            <p class="lead">
+              Документ описывает локальные исходники на 14 ноября 2026, а не гарантирует готовность сервиса к
+              промышленной эксплуатации.
+            </p>
+            <div class="two gap grid">
+              <div class="card">
+                <span class="pill">Есть в текущем коде</span>
+                <h2 class="gap">Основной контур платформы</h2>
+                <ul>
+                  <li>Серверные сессии, регистрация и четыре роли.</li>
+                  <li>Пользователи, группы, общий курс для нескольких групп.</li>
+                  <li>Конструктор, каталог, файлы и корзины.</li>
+                  <li>Работы, оценки, адаптивные тесты и рекомендации.</li>
+                  <li>Трекинг видео, аналитика, лидерборд и расписание.</li>
+                  <li>Уведомления внутри платформы, настройки и аудит.</li>
+                  <li>CSV-импорт, активация, SMTP-настройки и очередь писем.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <span class="pill warn">Ограничения и следующий шаг</span>
+                <h2 class="gap">Что требует продолжения</h2>
+                <ul>
+                  <li>Реальный SMTP-провайдер и доставка во входящие ещё не проверены.</li>
+                  <li>PDF.js и восстановление позиции PDF не реализованы.</li>
+                  <li>SSE для уведомлений и аналитики без перезагрузки — позже.</li>
+                  <li>Полные сценарии четырёх ролей в Playwright — следующий этап.</li>
+                  <li>Не все динамические ответы адаптивного API покрыты генерируемыми DTO.</li>
+                  <li>Незавершённые локальные изменения других веток не входят в этот срез.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="card gap">
+              <h2>Технологии текущей версии</h2>
+              <div class="tablewrap">
+                <table>
+                  <tbody>
+                    <tr>
+                      <th>Интерфейс</th>
+                      <td>Node 24 · Next.js 16.4.2 · React 19.3.1 · TypeScript 6.0.3 · Tailwind CSS 4.3.3</td>
+                    </tr>
+                    <tr>
+                      <th>Состояние</th>
+                      <td>SWR 2.5.1 — серверные данные; Zustand 5.0.16 — клиентское состояние</td>
+                    </tr>
+                    <tr>
+                      <th>Сервер</th>
+                      <td>.NET 10 · ASP.NET Core · EF Core · PostgreSQL 17</td>
+                    </tr>
+                    <tr>
+                      <th>Файлы и почта</th>
+                      <td>SeaweedFS 4.48 / S3 · MailKit 5.0.0 · ASP.NET Data Protection</td>
+                    </tr>
+                    <tr>
+                      <th>Контракт</th>
+                      <td>C# .Produces&lt;T&gt; → OpenAPI → api.gen.ts → contract.ts ↔ domain.ts</td>
+                    </tr>
+                    <tr>
+                      <th>Срез исходников</th>
+                      <td>main · коммит 0021a94 · доработки CSV и почты включены в #41</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card gap">
+              <h2>На чём основан документ</h2>
+              <p class="muted">
+                Схемы сверены с исходниками, конфигурацией и заметками модулей. Старый файл от 25 октября
+                использован как образец формата, но не как источник текущего состояния.
+              </p>
+              <div class="two source-list grid">
+                <div>
+                  <h3>Логика и инфраструктура</h3>
+                  <code>compose.yaml · compose.backend.yaml</code><code>backend/HeliosEdu.Api/Program.cs</code
+                  ><code>Auth/AccessRules.cs · Data/LearningDbContext.cs</code
+                  ><code>Management/CourseGroups.cs · CsvImport.cs</code
+                  ><code>Mail/* · Files/* · Adaptive/* · Tracking/*</code
+                  ><code>src/shared/auth/permissions.ts</code
+                  ><code>src/shared/lib/backend.ts · data-source.ts</code>
+                </div>
+                <div>
+                  <h3>Контракты и состояние</h3>
+                  <code>docs/STATUS.md · docs/modules/*.md</code><code>docs/backend/bulk-import-mail.md</code
+                  ><code>docs/adr/0001-object-storage.md</code><code>docs/adr/0002-mail-outbox.md</code
+                  ><code>docs/api/openapi.json</code><code>package.json · HeliosEdu.Api.csproj</code>
+                </div>
+              </div>
+            </div>
+          </section>
+          <footer class="footer">
+            <span>HeliosEDU · Наглядная архитектура · 14.11.2026</span
+            ><span>Автономный документ · Демоаккаунты включены по запросу владельца</span>
+          </footer>
+        </main>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      let mode = "server";
+      const tabs = [...document.querySelectorAll('[role="tab"]')];
+      function showTab(tab, focus = false) {
+        tabs.forEach((t) => {
+          const active = t === tab;
+          t.setAttribute("aria-selected", String(active));
+          t.tabIndex = active ? 0 : -1;
+          $(t.getAttribute("aria-controls")).hidden = !active;
+        });
+        history.replaceState(null, "", "#" + tab.getAttribute("aria-controls"));
+        if (focus) tab.focus();
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
+      tabs.forEach((tab, i) => {
+        tab.addEventListener("click", () => showTab(tab));
+        tab.addEventListener("keydown", (e) => {
+          let n;
+          if (["ArrowDown", "ArrowRight"].includes(e.key)) n = (i + 1) % tabs.length;
+          if (["ArrowUp", "ArrowLeft"].includes(e.key)) n = (i - 1 + tabs.length) % tabs.length;
+          if (e.key === "Home") n = 0;
+          if (e.key === "End") n = tabs.length - 1;
+          if (n !== undefined) {
+            e.preventDefault();
+            showTab(tabs[n], true);
+          }
+        });
+      });
+      const initial = tabs.find((t) => t.getAttribute("aria-controls") === location.hash.slice(1));
+      if (initial) showTab(initial);
+      $("print").onclick = () => window.print();
+      let toastTimer;
+      function toast(text) {
+        $("toast").textContent = text;
+        $("toast").hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => ($("toast").hidden = true), 2600);
+      }
+      async function copy(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          toast("Скопировано");
+        } catch {
+          const area = document.createElement("textarea");
+          area.value = text;
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.append(area);
+          area.select();
+          const done = document.execCommand("copy");
+          area.remove();
+          toast(done ? "Скопировано" : "Копирование недоступно — выделите текст вручную");
+        }
+      }
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-copy]");
+        if (b) copy(b.dataset.copy);
+      });
+      const details = {
+        browser: [
+          "Браузер — рабочее место пользователя",
+          "Показывает страницы под ролью: студент учится, преподаватель проверяет, сотрудники управляют.",
+          [
+            "React 19: формы, страницы и взаимодействия.",
+            "SWR: запросы и кэш серверных данных.",
+            "Zustand: состояние интерфейса; права подтверждает сервер.",
+          ],
+          "src/features/ · src/stores/",
+        ],
+        next: [
+          "Next.js — единая точка входа",
+          "Браузер обращается к /api/* того же сайта. Next.js выбирает источник данных и передаёт запросы серверу.",
+          [
+            "getDataSource() учитывает cookie helios-data-source.",
+            "Cookie сессии передаётся в C#; ответы и Set-Cookie возвращаются браузеру.",
+            "Для изменений проверяется Origin; при сбое API — 503.",
+          ],
+          "src/app/api/ · src/shared/lib/backend.ts · src/proxy.ts",
+        ],
+        api: [
+          "C# API — правила и проверка доступа",
+          "Обрабатывает реальные аккаунты, содержание курсов и учебные результаты.",
+          [
+            "Берёт пользователя из серверной сессии.",
+            "AccessRules проверяет роль и доступ к курсу.",
+            "EF Core сохраняет изменения; MailWorker и FileJanitor выполняют фоновую работу.",
+          ],
+          "backend/HeliosEdu.Api/Program.cs · Auth/ · Management/ · Courses/",
+        ],
+        db: [
+          "PostgreSQL — постоянная память",
+          "Хранит связанные данные обучения, управления и очереди отправки.",
+          [
+            "Аккаунты, назначения групп, курсы, оценки и прогресс.",
+            "Аудит и события обучения допускают только добавление.",
+            "Файлы — в SeaweedFS; в БД хранятся их метаданные и права.",
+          ],
+          "Data/LearningDbContext.cs · Migrations/",
+        ],
+        mocks: [
+          "Моки — данные для демонстрации",
+          "Демо позволяет посмотреть интерфейс без запуска C# и PostgreSQL.",
+          [
+            "Данные доступны через Next Route Handlers.",
+            "In-memory stores живут в globalThis и переживают HMR, но не заменяют БД.",
+            "CSV, SMTP и реальные загрузки требуют режима «Сервер».",
+          ],
+          "src/mocks/ · src/app/api/",
+        ],
+        memory: [
+          "Память процесса — временные изменения",
+          "Демонстрационные изменения не являются сохранёнными серверными данными.",
+          [
+            "Перезапуск процесса может сбросить изменения.",
+            "Нет обращения к C# и PostgreSQL.",
+            "Выбор роли в демо не даёт серверную сессию.",
+          ],
+          "src/mocks/*-store.ts",
+        ],
+      };
+      function nodeDetail(key) {
+        const actual =
+          mode === "demo" && key === "api" ? "mocks" : mode === "demo" && key === "db" ? "memory" : key;
+        const d = details[actual];
+        $("detail-title").textContent = d[0];
+        $("detail-text").textContent = d[1];
+        $("detail-list").replaceChildren(
+          ...d[2].map((t) => {
+            const li = document.createElement("li");
+            li.textContent = t;
+            return li;
+          }),
+        );
+        $("detail-path").textContent = d[3];
+        document
+          .querySelectorAll("[data-node]")
+          .forEach((b) => b.classList.toggle("selected", b.dataset.node === key));
+      }
+      document.querySelectorAll("[data-node]").forEach((b) => (b.onclick = () => nodeDetail(b.dataset.node)));
+      const flows = {
+        course: [
+          ["Браузер запрашивает курс", "GET /api/courses/{id} идёт в Next.js."],
+          ["API проверяет доступ", "Сессия и роль; студенту нужен опубликованный курс его группы."],
+          ["Возвращаются данные курса", "C# читает PostgreSQL и добавляет персональный прогресс."],
+        ],
+        login: [
+          ["Пользователь вводит почту и пароль", "Next.js пересылает данные в /api/auth/login."],
+          ["Сервер проверяет аккаунт", "Сравнивает хеш пароля и статус, создаёт сессию."],
+          [
+            "Cookie возвращается в браузер",
+            "Следующие запросы используют helios-auth; роль берётся из сессии.",
+          ],
+        ],
+        file: [
+          ["Запросить разрешение", "POST /api/files: API проверяет курс, роль, тип и размер."],
+          ["Загрузить напрямую в S3", "Браузер передаёт файл в SeaweedFS по временной ссылке."],
+          [
+            "Подтвердить завершение",
+            "POST /api/files/{id}/complete проверяет размер и отмечает файл готовым.",
+          ],
+        ],
+        grade: [
+          ["Преподаватель открывает работу", "API проверяет доступ к курсу и сданной работе."],
+          ["Выставляет оценку", "Работа и оценка сохраняются в PostgreSQL."],
+          ["Студент видит результат", "Обновляется журнал, появляется уведомление внутри платформы."],
+        ],
+        tracking: [
+          ["Открыть материал", "API возвращает персональный прогресс."],
+          ["Продолжить с позиции", "Плеер использует сохранённую позицию видео."],
+          ["Записывать изучение", "События и прогресс идут в PostgreSQL; их использует аналитика."],
+        ],
+      };
+      function flow() {
+        const key = $("scenario").value;
+        let steps = flows[key];
+        if (mode === "demo")
+          steps =
+            key === "file"
+              ? [["Требуется сервер", "Реальная загрузка файлов в демонстрационном режиме недоступна."]]
+              : [
+                  ["Демо-запрос", "Браузер обращается к тому же /api/* в Next.js."],
+                  [
+                    "Обработка моками",
+                    key === "login"
+                      ? "Вход выполняется выбором демонстрационной роли / пользователя."
+                      : "Next.js использует демонстрационные данные без обращения к C#.",
+                  ],
+                  ["Временный результат", "Изменения остаются в памяти; не сохраняются в PostgreSQL."],
+                ];
+        $("scenario-steps").replaceChildren(
+          ...steps.map(([title, text], i) => {
+            const li = document.createElement("li");
+            const n = document.createElement("span");
+            n.className = "num";
+            n.textContent = i + 1;
+            const div = document.createElement("div");
+            const b = document.createElement("b");
+            b.textContent = title;
+            const p = document.createElement("p");
+            p.textContent = text;
+            div.append(b, p);
+            li.append(n, div);
+            return li;
+          }),
+        );
+      }
+      function setMode(value) {
+        mode = value;
+        document
+          .querySelectorAll("[data-mode]")
+          .forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+        $("service-title").textContent = mode === "server" ? "ASP.NET Core" : "Мок-обработчики";
+        $("service-icon").textContent = mode === "server" ? "C#" : "MOCK";
+        $("service-sub").innerHTML =
+          mode === "server"
+            ? "Сессия, права,<br>правила обучения"
+            : "Демонстрационные<br>данные через /api/*";
+        $("store-title").textContent = mode === "server" ? "PostgreSQL" : "Память Next.js";
+        $("store-icon").textContent = mode === "server" ? "DB" : "RAM";
+        $("store-sub").innerHTML =
+          mode === "server"
+            ? "Пользователи, курсы,<br>результаты, почтовая очередь"
+            : "Временные изменения<br>без постоянного хранения";
+        $("server-aux").hidden = mode === "demo";
+        $("mode-note").textContent =
+          mode === "server"
+            ? "Сервер — основной режим: данные сохраняются между перезапусками. При сбое API приложение показывает ошибку, а не подменяет данные моками."
+            : "Демо — быстрый просмотр без C# и PostgreSQL. Источник выбирается cookie helios-data-source; без BACKEND_API_URL доступно только демо. DEMO_MODE=off запрещает доступ к демо.";
+        nodeDetail("next");
+        flow();
+      }
+      document.querySelectorAll("[data-mode]").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+      $("scenario").onchange = flow;
+      nodeDetail("next");
+      flow();
+      const modules = [
+        [
+          "auth",
+          "Вход и аккаунты",
+          "Сессии, регистрация студента без группы, роли, пароли и активация.",
+          "Auth/ ↔ features/auth",
+        ],
+        [
+          "admin",
+          "Управление",
+          "Пользователи, состав групп, назначения курсов, настройки и журнал действий.",
+          "Management/ · Audit/ ↔ features/admin",
+        ],
+        [
+          "courses",
+          "Курсы и файлы",
+          "Каталог, конструктор, обложки, S3-загрузки и корзины на 7 дней.",
+          "Courses/ · Files/ ↔ courses · course-builder · search",
+        ],
+        [
+          "adaptive",
+          "Тесты и рекомендации",
+          "Навыки, зависимости, BKT, попытки, подсказки и решения преподавателя.",
+          "Adaptive/ ↔ features/adaptive",
+        ],
+        [
+          "grades",
+          "Работы и оценки",
+          "Сдача работ с файлами, проверка, журнал, персональные оценки и уведомления.",
+          "Grades/ · Notifications/ ↔ assignment · gradebook",
+        ],
+        [
+          "learning",
+          "Изучение и аналитика",
+          "Видео, прогресс, события, дашборд, расписание и лидерборд группы.",
+          "Tracking/ ↔ player · analytics · hub · dashboard",
+        ],
+        [
+          "mail",
+          "Письма и массовый импорт",
+          "CSV с отчётом, приглашения, SMTP, аудитория рассылок и сохраняемая очередь.",
+          "Management/CsvImport.cs · Mail/ ↔ features/admin",
+        ],
+      ];
+      $("module-grid").innerHTML = modules
+        .map(
+          ([tag, title, text, path]) =>
+            `<article class="card module"><span class="tag">${tag}</span><h2>${title}</h2><p>${text}</p><div class="path">${path}</div></article>`,
+        )
+        .join("");
+      const roles = [
+        ["Изучать и сдавать работы", "Свои курсы", "—", "—", "—"],
+        ["Создавать курсы", "—", "—", "Да", "Да"],
+        ["Править содержание курса", "—", "Свой курс", "Да", "Да"],
+        ["Назначать курс группам", "—", "—", "Да", "Да"],
+        ["Проверять работы, ставить оценки", "—", "Свой курс", "—", "Да"],
+        ["Смотреть аналитику", "—", "Свои курсы", "Да", "Да"],
+        ["Управлять группами и пользователями", "—", "—", "С ограничением роли admin", "Да"],
+        ["CSV, SMTP и рассылки", "—", "—", "—", "Да"],
+        ["Настройки системы и аудит", "—", "—", "—", "Да"],
+      ];
+      $("role-rows").innerHTML = roles
+        .map(
+          (r) =>
+            "<tr>" +
+            r.map((v, i) => `<td class="${i && v !== "—" ? "ok" : i ? "no" : ""}">${v}</td>`).join("") +
+            "</tr>",
+        )
+        .join("");
+      const accounts = [
+        ["Администратор", "admin@pspu.ru", "Все разделы, импорт и SMTP"],
+        ["Организатор", "organizer@pspu.ru", "Пользователи, группы и курсы"],
+        ["Преподаватель", "tutor@pspu.ru", "Свои курсы, работы и журнал"],
+        ["Студент", "student@student.pspu.ru", "Курсы группы, тесты и оценки"],
+      ];
+      $("login-grid").innerHTML = accounts
+        .map(
+          ([role, email, desc]) =>
+            `<article class="card login"><span class="icon">${role[0]}</span><h2 class="gap">${role}</h2><small>${desc}</small><strong>${email}</strong><button class="copy" data-copy="${email}">Скопировать логин</button></article>`,
+        )
+        .join("");
+      const mailStages = [
+        [
+          "Очередь",
+          "queued",
+          "Получатели и зашифрованные тела писем записаны в PostgreSQL. Закрытие страницы не отменяет очередь.",
+        ],
+        [
+          "Отправка",
+          "sending",
+          "MailWorker выбирает письмо и передаёт его SMTP-серверу. Временные отказы обрабатываются с ограниченными повторами.",
+        ],
+        ["Принято SMTP", "sent", "Почтовый сервер принял письмо. Это ещё не подтверждение доставки в ящик."],
+        [
+          "Проверка ящика",
+          "внешний этап",
+          "Получатель проверяет входящие и спам. Подтверждение фактической доставки приложение не получает.",
+        ],
+      ];
+      let mailStage = 0;
+      function renderMail() {
+        $("mail-stages").innerHTML = mailStages
+          .map(
+            ([title, label], i) =>
+              `<div style="${i === mailStage ? "box-shadow:inset 0 0 0 2px var(--blue)" : ""}"><b>${i + 1}. ${title}</b><small>${label}</small></div>`,
+          )
+          .join('<span aria-hidden="true">→</span>');
+        $("mail-stage-detail").textContent = mailStages[mailStage][2];
+        $("mail-prev").disabled = mailStage === 0;
+        $("mail-next").disabled = mailStage === 3;
+      }
+      $("mail-prev").onclick = () => {
+        mailStage--;
+        renderMail();
+      };
+      $("mail-next").onclick = () => {
+        mailStage++;
+        renderMail();
+      };
+      renderMail();
+      const checks = [
+        [
+          "Общий курс для групп",
+          [
+            [
+              "Назначить две группы",
+              "Администратор → Управление курсами → карточка курса → выбрать две существующие группы → сохранить.",
+            ],
+            [
+              "Проверить доступ",
+              "Открыть опубликованный курс студентами обеих групп. Ожидание: один и тот же курс и материалы.",
+            ],
+            ["Проверить изоляцию", "Оценка или прогресс одного студента не меняет результаты другого."],
+          ],
+        ],
+        [
+          "CSV-импорт",
+          [
+            [
+              "Проверить файл",
+              "Пользователи → Импорт из CSV → шаблон → загрузка → сопоставление → предпросмотр.",
+            ],
+            [
+              "Добавить ошибку и повтор",
+              "Одна неверная почта и одна повторная строка. Ожидание: ошибки и пропуски в отчёте, корректные строки импортируются.",
+            ],
+            ["Повторить загрузку", "Ожидание: существующие email пропускаются; дубликатов нет."],
+          ],
+        ],
+        [
+          "SMTP и активация",
+          [
+            [
+              "Настроить подключение",
+              "Рассылки → Настройки SMTP → реквизиты провайдера → сохранить → проверить подключение.",
+            ],
+            ["Отправить себе тест", "Проверить входящие и спам. Ожидание: письмо пришло на указанный адрес."],
+            [
+              "Проверить приглашение",
+              "Импортировать свой новый тестовый email с отправкой приглашения → открыть ссылку → задать пароль → войти.",
+            ],
+          ],
+        ],
+        [
+          "Рассылки и события",
+          [
+            [
+              "Выбрать тестовую аудиторию",
+              "Рассылки → выбрать пользователя или группу → тема и текст → предпросмотр.",
+            ],
+            [
+              "Проверить историю",
+              "Отправить и дождаться результата очереди. Ожидание: адресат один раз в списке, счётчики обновляются.",
+            ],
+            [
+              "Проверить автособытие",
+              "Включить уведомление о группе или курсе, выполнить соответствующее изменение на тестовых данных и проверить письмо.",
+            ],
+          ],
+        ],
+        [
+          "Обучение и результаты",
+          [
+            [
+              "Продолжить видео",
+              "Студент → видео → посмотреть часть → выйти и вернуться. Ожидание: сохранённая позиция.",
+            ],
+            [
+              "Сдать и проверить работу",
+              "Студент сдаёт работу; преподаватель своего курса выставляет оценку. Ожидание: оценка и уведомление у студента.",
+            ],
+            [
+              "Проверить тест и аналитику",
+              "Пройти тест; проверить результат, навыки и аналитику преподавателя.",
+            ],
+          ],
+        ],
+        [
+          "Доступ и сохранность",
+          [
+            [
+              "Проверить разные роли",
+              "Студент не видит управление, организатор не видит SMTP. API также должен отказывать в запрещённых действиях.",
+            ],
+            [
+              "Проверить перезапуск",
+              "Создать тестовое изменение → перезапустить контейнеры без удаления томов. Ожидание: данные сохранены.",
+            ],
+            [
+              "Проверить демо",
+              "Переключить на «Демо». Ожидание: интерфейс доступен, CSV/SMTP/реальные загрузки требуют сервер.",
+            ],
+          ],
+        ],
+      ];
+      $("check-grid").innerHTML = checks
+        .map(
+          ([title, items]) =>
+            `<article class="card"><h2>${title}</h2>${items.map(([t, p]) => `<div class="testcase"><label><input type="checkbox"><span>${t}</span></label><p>${p}</p></div>`).join("")}</article>`,
+        )
+        .join("");
+    </script>
+  </body>
+</html>
