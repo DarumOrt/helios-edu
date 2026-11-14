@@ -213,7 +213,7 @@ public static class AuthEndpoints
     }
 
     /// <summary>Правило пароля — как shared/lib/registration.ts (регистрация и смена пароля).</summary>
-    private static string? PasswordError(string? password)
+    internal static string? PasswordError(string? password)
     {
         password ??= "";
         if (password.Length == 0) return "Придумайте пароль";
@@ -223,7 +223,7 @@ public static class AuthEndpoints
         return null;
     }
 
-    private static bool LooksLikeEmail(string email)
+    internal static bool LooksLikeEmail(string email)
     {
         var at = email.IndexOf('@');
         return at > 0 && at == email.LastIndexOf('@') && !email.Any(char.IsWhiteSpace) &&

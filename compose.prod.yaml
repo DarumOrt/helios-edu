@@ -1,0 +1,109 @@
+# Рабочий сервер (Timeweb или сервер организации). Инструкция — docs/deploy.md.
+# Образы собирает GitHub Actions («Выкладка на сервер»), сервер их только скачивает.
+# Настройки и пароли — в файле .env рядом (образец — .env.prod.example), номер версии — в .version.
+# Запускать через scripts/server/compose.sh: он подставляет оба файла.
+name: helios-prod
+
+x-defaults: &defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  # Единственный вход снаружи: HTTPS-сертификаты получает сам, сайт и файлы — на разных адресах.
+  caddy:
+    <<: *defaults
+    image: caddy:2-alpine
+    ports:
+      - "${HTTP_BIND:-80}:80"
+      - "${HTTPS_BIND:-443}:443"
+    environment:
+      SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-${SITE_URL:?Задайте SITE_URL в .env}}
+      FILES_ADDRESS: ${CADDY_FILES_ADDRESS:-${FILES_URL:?Задайте FILES_URL в .env}}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1/32}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - storage
+
+  web:
+    <<: *defaults
+    image: ${HELIOS_IMAGES:-ghcr.io/darumort/helios-edu}-web:${HELIOS_VERSION:?Нет номера версии — запускайте через scripts/server/deploy.sh}
+    environment:
+      BACKEND_API_URL: http://api:8080
+      # только настоящие данные: переключателя «Демо» на рабочем сервере нет
+      DEMO_MODE: "off"
+      # адрес пользователя берём из заголовка Caddy (лимит входов)
+      TRUSTED_PROXY: "on"
+    depends_on:
+      - api
+
+  api:
+    <<: *defaults
+    image: ${HELIOS_IMAGES:-ghcr.io/darumort/helios-edu}-api:${HELIOS_VERSION:?Нет номера версии — запускайте через scripts/server/deploy.sh}
+    environment:
+      ConnectionStrings__Database: Host=db;Database=helios_edu;Username=helios;Password=${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env}
+      Database__ApplyMigrations: "true"
+      # демо-данных нет: чистая база и первый администратор
+      Admin__Email: ${ADMIN_EMAIL:-}
+      Admin__Password: ${ADMIN_PASSWORD:-}
+      Auth__TrustClientAddressHeader: "true"
+      # журнал без текста каждого запроса к базе: только предупреждения и ошибки
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Mail__PublicUrl: ${SITE_URL}
+      Storage__ServiceUrl: http://storage:8333
+      Storage__PublicUrl: ${FILES_URL}
+      Storage__AccessKey: ${STORAGE_ACCESS_KEY:?Задайте STORAGE_ACCESS_KEY в .env}
+      Storage__SecretKey: ${STORAGE_SECRET_KEY:?Задайте STORAGE_SECRET_KEY в .env}
+      Storage__Bucket: helios-media
+      Storage__AllowedOrigins: ${SITE_URL}
+    volumes:
+      - mail_keys:/var/helios-mail-keys
+    depends_on:
+      db:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+
+  db:
+    <<: *defaults
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: helios_edu
+      POSTGRES_USER: helios
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helios -d helios_edu"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  storage:
+    <<: *defaults
+    image: chrislusf/seaweedfs:4.48
+    command: server -s3 -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY}
+    volumes:
+      - storage_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres_data:
+  storage_data:
+  mail_keys:
+  caddy_data:
+  caddy_config:

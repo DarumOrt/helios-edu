@@ -23,6 +23,7 @@ npm run dev
 
 Собранный сайт в Docker (только демо, для показа без Node.js): `docker compose --profile web up --build`.
 Для разработки он не нужен — сайт запускается через `npm run dev`.
+Рабочий сервер (HTTPS, чистая база, выкладка кнопкой, копии) — [docs/deploy.md](docs/deploy.md).
 
 ## Два режима данных
 

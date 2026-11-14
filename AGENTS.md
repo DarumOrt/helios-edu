@@ -91,6 +91,7 @@ backend/tests/          проверки API на настоящем PostgreSQL
 | adaptive | `Adaptive/` | `features/adaptive`, моки adaptive | adaptive |
 | grades | `Grades/`, `Notifications/` | `features/assignment·submissions·gradebook·notifications` | grades, notifications |
 | learning | `Tracking/` | `features/player·analytics·hub·dashboard`, `shared/lib/tracking` | tracking |
+| deploy | запуск на сервере | `compose.prod.yaml`, `Caddyfile`, `scripts/`, `docs/deploy.md` | — |
 | e2e | — | `e2e/`, `docs/testing/` | Playwright (позже) |
 
 **Общие файлы** меняет одна сессия за раз (параллельная правка = конфликт или «тихая» поломка контракта):
