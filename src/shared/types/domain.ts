@@ -59,6 +59,21 @@ export interface Announcement {
   body: string;
   authorName: string;
   createdAt: string;
+  canDelete: boolean;
+}
+
+export interface EnrolledStudent {
+  id: string;
+  name: string;
+  email: string;
+  group?: string;
+  source: "group" | "manual" | "self";
+}
+
+export interface EnrollmentInfo {
+  keyEnabled: boolean;
+  cohortIds: string[];
+  students: EnrolledStudent[];
 }
 
 export interface Section {
@@ -315,6 +330,8 @@ export interface Notification {
   createdAt: string;
   read: boolean;
   link?: string;
+  courseId?: string;
+  courseTitle?: string;
 }
 
 /** Поиск курсов (GET /api/catalog): карточка без материалов. accessible — курс открывается пользователю */
@@ -342,6 +359,7 @@ export interface CatalogCourse {
   cohorts: CatalogCohort[];
   sections: { title: string; activities: number }[];
   accessible: boolean;
+  selfEnrollment: boolean;
 }
 
 // ---- Адаптивное обучение (P5). Контракт — docs/backend/p5-adaptive.md, один для моков и C# ----

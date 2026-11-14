@@ -1,7 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { getDemoActor } from "@/mocks/demo-actor";
-import { courseIdsForGroup } from "@/mocks/cohorts-store";
+import { isEnrolled } from "@/mocks/enrollment-store";
 import { allDemoUsers } from "@/mocks/users-store";
 import { canEditCourse } from "@/shared/auth/management";
 import { backendForward } from "@/shared/lib/backend";
@@ -53,7 +53,7 @@ async function scope(courseId: string, need: Need, mine: boolean): Promise<Scope
   const course = courseById(courseId);
   if (!course) return fail(404, "Курс не найден");
   if (actor.role === "student") {
-    const enrolled = course.status === "published" && courseIdsForGroup(actor.group).has(course.id);
+    const enrolled = course.status === "published" && isEnrolled(course.id, actor);
     if (!enrolled) return mine ? fail(403, "Вы не записаны на этот курс") : fail(404, "Курс не найден");
     return { actor, course, teacher: false };
   }
@@ -63,7 +63,7 @@ async function scope(courseId: string, need: Need, mine: boolean): Promise<Scope
 
 function studentsOf(course: Course): User[] {
   return allDemoUsers()
-    .filter((u) => u.role === "student" && courseIdsForGroup(u.group).has(course.id))
+    .filter((u) => u.role === "student" && isEnrolled(course.id, u))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 }
 

@@ -23,12 +23,18 @@ public static class NotificationsEndpoints
         var group = app.MapGroup("/api").RequireAuthorization().AddEndpointFilter<ManagementWriteFilter>();
         group.MapGet("/courses/{id}/announcements", ListAnnouncementsAsync).Produces<AnnouncementInfo[]>();
         group.MapPost("/courses/{id}/announcements", CreateAnnouncementAsync).Produces<AnnouncementInfo>(201);
+        group.MapDelete("/courses/{id}/announcements/{announcementId}", DeleteAnnouncementAsync)
+            .RequireAuthorization(AccessRules.EditCourse);
         group.MapGet("/notifications", ListNotificationsAsync).Produces<NotificationInfo[]>();
         group.MapPost("/notifications/{id}/read", MarkReadAsync);
+        group.MapPost("/notifications/read", MarkManyReadAsync);
     }
 
-    private static AnnouncementInfo Info(Announcement a) =>
-        new(a.Id, a.CourseId, a.Title, a.Body, a.AuthorName, a.CreatedAt);
+    private static bool CanDelete(Account actor, Announcement a) =>
+        actor.Role is "admin" or "organizer" || actor.Role == "tutor" && a.AuthorId == actor.Id;
+
+    private static AnnouncementInfo Info(Announcement a, Account actor) =>
+        new(a.Id, a.CourseId, a.Title, a.Body, a.AuthorName, a.CreatedAt, CanDelete(actor, a));
 
     private static async Task<IResult> ListAnnouncementsAsync(string id, HttpContext context, LearningDbContext db)
     {
@@ -36,7 +42,7 @@ public static class NotificationsEndpoints
             return Fail(404, "not found");
         var items = await db.Announcements.AsNoTracking().Where(a => a.CourseId == id)
             .OrderByDescending(a => a.CreatedAt).ToListAsync(context.RequestAborted);
-        return Results.Ok(items.Select(Info));
+        return Results.Ok(items.Select(a => Info(a, Actor(context))));
     }
 
     // Объявление пишет тот, кто правит курс: преподаватель своего курса, организатор, администратор.
@@ -65,7 +71,21 @@ public static class NotificationsEndpoints
         db.Announcements.Add(announcement);
         AuditLog.Write(db, context, "announcement.created", "announcement", announcement.Id, $"{course.Code} · {title}");
         await db.SaveChangesAsync(context.RequestAborted);
-        return Results.Json(Info(announcement), statusCode: 201);
+        return Results.Json(Info(announcement, actor), statusCode: 201);
+    }
+
+    private static async Task<IResult> DeleteAnnouncementAsync(string id, string announcementId, HttpContext context, LearningDbContext db)
+    {
+        var course = await AccessRules.VisibleCourses(db, context.User).SingleOrDefaultAsync(c => c.Id == id, context.RequestAborted);
+        if (course is null || !AccessRules.CanEditCourse(Actor(context), course)) return Fail(404, "not found");
+        var item = await db.Announcements.SingleOrDefaultAsync(a => a.CourseId == id && a.Id == announcementId, context.RequestAborted);
+        if (item is null) return Fail(404, "not found");
+        if (!CanDelete(Actor(context), item)) return Fail(403, "Можно удалить только своё объявление");
+        db.Announcements.Remove(item);
+        await db.NotificationReads.Where(r => r.NotificationId == item.Id).ExecuteDeleteAsync(context.RequestAborted);
+        AuditLog.Write(db, context, "announcement.deleted", "announcement", item.Id, $"{course.Code} · {item.Title}");
+        await db.SaveChangesAsync(context.RequestAborted);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> ListNotificationsAsync(HttpContext context, LearningDbContext db) =>
@@ -79,16 +99,19 @@ public static class NotificationsEndpoints
         var courses = await AccessRules.VisibleCourses(db, context.User).AsNoTracking().AsSplitQuery()
             .Include(course => course.Sections).ThenInclude(section => section.Activities).ToListAsync(token);
         var codes = courses.ToDictionary(course => course.Id, course => course.Code);
+        var titles = courses.ToDictionary(course => course.Id, course => course.Title);
         var courseIds = codes.Keys.ToList();
         var read = (await db.NotificationReads.AsNoTracking().Where(item => item.UserId == actor.Id)
             .Select(item => item.NotificationId).ToListAsync(token)).ToHashSet();
 
         var result = new List<NotificationInfo>();
-        foreach (var a in await db.Announcements.AsNoTracking().Where(a => courseIds.Contains(a.CourseId)).ToListAsync(token))
-            result.Add(new NotificationInfo(a.Id, "announcement", $"{codes[a.CourseId]}: {a.Title}",
-                $"{a.Body} — {a.AuthorName}", a.CreatedAt, read.Contains(a.Id), $"/courses/{a.CourseId}"));
+        if (actor.Role == "student")
+            foreach (var a in await db.Announcements.AsNoTracking().Where(a => courseIds.Contains(a.CourseId)).ToListAsync(token))
+                result.Add(new NotificationInfo(a.Id, "announcement", $"{codes[a.CourseId]}: {a.Title}",
+                    $"{a.Body} — {a.AuthorName}", a.CreatedAt, read.Contains(a.Id), $"/courses/{a.CourseId}", a.CourseId, titles[a.CourseId]));
         foreach (var n in await db.Notifications.AsNoTracking().Where(n => n.UserId == actor.Id).ToListAsync(token))
-            result.Add(new NotificationInfo(n.Id, n.Type, n.Title, n.Body, n.CreatedAt, read.Contains(n.Id), n.Link));
+            result.Add(new NotificationInfo(n.Id, n.Type, n.Title, n.Body, n.CreatedAt, read.Contains(n.Id), n.Link,
+                n.CourseId, n.CourseId is { } courseId ? titles.GetValueOrDefault(courseId) : null));
         if (actor.Role == "student") result.AddRange(await Deadlines(db, actor, courses, read, token));
         return result.OrderByDescending(item => item.CreatedAt).ToList();
     }
@@ -115,7 +138,7 @@ public static class NotificationsEndpoints
                 var id = $"due-{course.Id}-{activity.Id}";
                 result.Add(new NotificationInfo(id, "deadline", "Скоро дедлайн",
                     $"{activity.Title} — до {due.ToString("d MMMM", Russian)}", due - DeadlineWindow, read.Contains(id),
-                    $"/courses/{course.Id}"));
+                    $"/courses/{course.Id}", course.Id, course.Title));
             }
         return result;
     }
@@ -130,6 +153,23 @@ public static class NotificationsEndpoints
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO "NotificationReads" ("UserId", "NotificationId", "ReadAt")
             VALUES ({actor.Id}, {id}, {DateTimeOffset.UtcNow}) ON CONFLICT DO NOTHING
+            """, context.RequestAborted);
+        return Results.Ok(new { ok = true });
+    }
+
+    private static async Task<IResult> MarkManyReadAsync(HttpContext context, LearningDbContext db)
+    {
+        var input = await ManagementInput.ReadAsync(context.Request);
+        var ids = input?.Ids("ids");
+        if (ids is null || ids.Length is < 1 or > 200 || ids.Any(id => id.Length is < 1 or > 200))
+            return Fail(400, "Выберите от 1 до 200 уведомлений");
+        var visible = (await Collect(context, db)).Select(n => n.Id).ToHashSet();
+        if (ids.Any(id => !visible.Contains(id))) return Fail(404, "not found");
+        var actor = Actor(context);
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "NotificationReads" ("UserId", "NotificationId", "ReadAt")
+            SELECT {actor.Id}, item.id, {DateTimeOffset.UtcNow} FROM unnest({ids}) AS item(id)
+            ON CONFLICT DO NOTHING
             """, context.RequestAborted);
         return Results.Ok(new { ok = true });
     }

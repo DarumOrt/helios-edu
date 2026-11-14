@@ -27,6 +27,7 @@ export type AnnouncementInfo = {
   body: string;
   authorName: string;
   createdAt: string;
+  canDelete: boolean;
 };
 
 export type AttemptsSummary = {
@@ -115,6 +116,7 @@ export type CatalogCourse = {
   cohorts: CatalogCohort[];
   sections: CatalogSection[];
   accessible: boolean;
+  selfEnrollment: boolean;
 };
 
 export type CatalogSection = {
@@ -220,6 +222,20 @@ export type DeletedCourseInfo = {
   deletedByName: string;
   purgeAt: string;
   impact: CourseImpact;
+};
+
+export type EnrolledStudent = {
+  id: string;
+  name: string;
+  email: string;
+  group: string | null;
+  source: string;
+};
+
+export type EnrollmentInfo = {
+  keyEnabled: boolean;
+  cohortIds: string[];
+  students: EnrolledStudent[];
 };
 
 export type GradeItem = {
@@ -360,6 +376,8 @@ export type NotificationInfo = {
   createdAt: string;
   read: boolean;
   link: string | null;
+  courseId?: string | null;
+  courseTitle?: string | null;
 };
 
 export type PairTimeInfo = {

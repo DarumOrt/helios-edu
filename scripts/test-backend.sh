@@ -55,6 +55,7 @@ run course-builder.test.mjs
 run adaptive.test.mjs
 run catalog.test.mjs
 restart_api
+run enrollment.test.mjs
 run grades.test.mjs
 run notifications.test.mjs
 run files.test.mjs

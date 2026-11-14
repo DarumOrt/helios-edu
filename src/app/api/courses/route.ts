@@ -46,13 +46,15 @@ export async function POST(req: Request) {
   if (actor instanceof NextResponse) return actor;
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
+  if (actor.role === "tutor" && body.tutorId !== undefined && body.tutorId !== actor.id)
+    return fail(403, "Преподаватель создаёт курс только для себя");
   const input = {
     cohortIds: body.cohortIds as string[] | undefined,
     code: (str(body.code) ?? "").toUpperCase(),
     title: str(body.title) ?? "",
     category: str(body.category) ?? "",
     description: str(body.description) ?? "",
-    tutorId: str(body.tutorId) ?? "",
+    tutorId: actor.role === "tutor" ? actor.id : (str(body.tutorId) ?? ""),
     faculty: str(body.faculty) || undefined,
     academicYear: str(body.academicYear) || undefined,
   };

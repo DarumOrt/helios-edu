@@ -13,7 +13,7 @@ public sealed record CatalogCohort(string Id, string Name, int? Year, string? Le
 public sealed record CatalogSection(string Title, int Activities);
 public sealed record CatalogCourse(string Id, string Code, string Title, string Description, string? Cover,
     string? CoverColor, string Category, string? Faculty, string? AcademicYear, CatalogTutor Tutor,
-    IReadOnlyList<CatalogCohort> Cohorts, IReadOnlyList<CatalogSection> Sections, bool Accessible);
+    IReadOnlyList<CatalogCohort> Cohorts, IReadOnlyList<CatalogSection> Sections, bool Accessible, bool SelfEnrollment);
 
 public static class CatalogEndpoints
 {
@@ -49,7 +49,7 @@ public static class CatalogEndpoints
                 links.Where(link => link.CourseId == course.Id).Select(link => link.Cohort).ToList(),
                 course.Sections.OrderBy(section => section.Order)
                     .Select(section => new CatalogSection(section.Title, section.Activities.Count)).ToList(),
-                accessible.Contains(course.Id))));
+                accessible.Contains(course.Id), course.EnrollmentKeyHash is not null)));
         }).RequireAuthorization().Produces<CatalogCourse[]>();
     }
 }

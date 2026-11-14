@@ -172,7 +172,7 @@ public static class GradesEndpoints
             AuditLog.Diff(("Оценка", previous?.ToString("0.#"), $"{grade:0.#} из {max}"),
                 ("Комментарий", null, submission.Feedback)));
         // ученик узнаёт об оценке в колокольчике
-        db.Notifications.Add(new Notifications.Notification { Id = $"n-{Guid.NewGuid().ToString("N")[..8]}",
+        db.Notifications.Add(new Notifications.Notification { Id = $"n-{Guid.NewGuid().ToString("N")[..8]}", CourseId = submission.CourseId,
             UserId = submission.UserId, Type = "grade", Title = "Оценка выставлена",
             Body = $"{info.AssignmentTitle}: {grade:0.#} из {max}", Link = "/gradebook", CreatedAt = DateTimeOffset.UtcNow });
         await db.SaveChangesAsync(context.RequestAborted);

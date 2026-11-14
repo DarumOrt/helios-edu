@@ -41,6 +41,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     title: "Оценка выставлена",
     body: `${submission.assignmentTitle}: ${grade} из ${submission.maxGrade}`,
     link: "/gradebook",
+    courseId: submission.courseId,
   });
   // оценка за работу — в журнал, как SaveGrade в C#
   setGrade(submission.courseId, submission.userId, submission.assignmentId, grade as number);

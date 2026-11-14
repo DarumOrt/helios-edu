@@ -27,6 +27,7 @@ import {
   Button,
 } from "@/shared/ui";
 import { CourseSection } from "@/features/courses/components/CourseSection";
+import { EnrollmentPanel } from "@/features/courses/components/EnrollmentPanel";
 import { CourseStatsPanel } from "@/features/analytics/components/CourseStatsPanel";
 import { CoverEditor } from "@/features/courses/components/CoverEditor";
 import { can } from "@/shared/auth/permissions";
@@ -52,7 +53,9 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const learner = can(role, "quiz.take");
   // преподаватель правит только свой курс; администратор и организатор — любой
   const canEdit = course ? canEditCourse(user, course) : false;
-  const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive" | "trash">("content");
+  const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive" | "trash" | "enrollment">(
+    "content",
+  );
   const [building, setBuilding] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [editingCard, setEditingCard] = useState(false);
@@ -127,7 +130,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {learner && <AdaptiveRoute course={course} />}
 
             {/* Табы */}
-            <div className="mb-5 flex gap-1 border-b">
+            <div className="mb-5 flex flex-wrap gap-1 border-b">
               <Tab active={tab === "content"} onClick={() => setTab("content")} icon={ListTree}>
                 Содержание
               </Tab>
@@ -138,6 +141,9 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               )}
               {canEdit && (
                 <>
+                  <Tab active={tab === "enrollment"} onClick={() => setTab("enrollment")} icon={Users}>
+                    Участники
+                  </Tab>
                   <Tab active={tab === "skills"} onClick={() => setTab("skills")} icon={Target}>
                     Навыки
                   </Tab>
@@ -197,6 +203,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             )}
 
             {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
+            {tab === "enrollment" && canEdit && <EnrollmentPanel courseId={course.id} />}
             {tab === "skills" && canEdit && <SkillsEditor course={course} />}
             {tab === "adaptive" && canEdit && <AdaptivePanel course={course} />}
             {tab === "trash" && canEdit && <CourseTrashPanel course={course} />}
