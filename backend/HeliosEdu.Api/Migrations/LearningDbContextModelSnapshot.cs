@@ -564,6 +564,9 @@ namespace HeliosEdu.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("EnrollmentKeyHash")
+                        .HasColumnType("text");
+
                     b.Property<string>("Faculty")
                         .HasColumnType("text");
 
@@ -590,6 +593,28 @@ namespace HeliosEdu.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CourseEnrollment", b =>
+                {
+                    b.Property<string>("CourseId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("CourseId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CourseEnrollments");
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Courses.TrashItem", b =>
@@ -1459,6 +1484,21 @@ namespace HeliosEdu.Api.Migrations
                         });
 
                     b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CourseEnrollment", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Courses.TrashItem", b =>

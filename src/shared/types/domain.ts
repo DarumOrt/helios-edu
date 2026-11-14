@@ -61,6 +61,20 @@ export interface Announcement {
   createdAt: string;
 }
 
+export interface EnrolledStudent {
+  id: string;
+  name: string;
+  email: string;
+  group?: string;
+  source: "group" | "manual" | "self";
+}
+
+export interface EnrollmentInfo {
+  keyEnabled: boolean;
+  cohortIds: string[];
+  students: EnrolledStudent[];
+}
+
 export interface Section {
   id: string;
   title: string;
@@ -342,6 +356,7 @@ export interface CatalogCourse {
   cohorts: CatalogCohort[];
   sections: { title: string; activities: number }[];
   accessible: boolean;
+  selfEnrollment: boolean;
 }
 
 // ---- Адаптивное обучение (P5). Контракт — docs/backend/p5-adaptive.md, один для моков и C# ----

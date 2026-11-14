@@ -32,6 +32,7 @@ public static class AuditLog
             ["cohort.members"] = ("Изменён состав группы", "cohorts"),
             ["cohort.deleted"] = ("Удалена группа", "cohorts"),
             ["course.created"] = ("Создан курс", "courses"),
+            ["course.enrolled"] = ("Запись на курс", "courses"),
             ["course.updated"] = ("Изменён курс", "courses"),
             ["course.cover"] = ("Изменена обложка", "courses"),
             ["course.deleted"] = ("Курс в корзине", "courses"),

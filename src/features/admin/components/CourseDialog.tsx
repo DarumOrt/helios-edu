@@ -16,7 +16,7 @@ import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 
 const statusHint: Record<CourseStatus, string> = {
   draft: "Студенты курс не видят — можно спокойно наполнять",
-  published: "Студенты групп курса видят его в кабинете",
+  published: "Записанные студенты видят курс в кабинете",
   archived: "Курс закрыт: студенты его не видят, оценки сохраняются",
 };
 
@@ -73,7 +73,11 @@ function CourseDialogForm({
   async function submit(event: FormEvent) {
     event.preventDefault();
     const { code, status, tutorId, faculty, academicYear, ...meta } = values;
-    const card = managed ? { ...meta, tutorId, faculty, academicYear, cohortIds } : meta;
+    const card = managed
+      ? { ...meta, tutorId, faculty, academicYear, cohortIds }
+      : editing
+        ? meta
+        : { ...meta, tutorId };
     const payload: CoursePayload = editing ? { ...card, status } : { ...card, code: code.toUpperCase() };
     const clientErrors = validateCourse(payload, editing);
     if (Object.keys(clientErrors).length) {

@@ -115,6 +115,7 @@ export type CatalogCourse = {
   cohorts: CatalogCohort[];
   sections: CatalogSection[];
   accessible: boolean;
+  selfEnrollment: boolean;
 };
 
 export type CatalogSection = {
@@ -220,6 +221,20 @@ export type DeletedCourseInfo = {
   deletedByName: string;
   purgeAt: string;
   impact: CourseImpact;
+};
+
+export type EnrolledStudent = {
+  id: string;
+  name: string;
+  email: string;
+  group: string | null;
+  source: string;
+};
+
+export type EnrollmentInfo = {
+  keyEnabled: boolean;
+  cohortIds: string[];
+  students: EnrolledStudent[];
 };
 
 export type GradeItem = {

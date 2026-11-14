@@ -10,9 +10,13 @@ describe("can — матрица прав", () => {
     expect(roles.filter((r) => can(r, "assignment.submit"))).toEqual(["student"]);
   });
 
-  it("курсы создаёт управление, правит ещё и преподаватель", () => {
-    expect(roles.filter((r) => can(r, "course.create"))).toEqual(["organizer", "admin"]);
+  it("курсы создаёт и правит управление и преподаватель", () => {
+    expect(roles.filter((r) => can(r, "course.create"))).toEqual(["tutor", "organizer", "admin"]);
     expect(roles.filter((r) => can(r, "course.edit"))).toEqual(["tutor", "organizer", "admin"]);
+  });
+
+  it("самостоятельная запись доступна только студентам", () => {
+    expect(roles.filter((r) => can(r, "course.enroll"))).toEqual(["student"]);
   });
 
   it("оценки ставят преподаватель и администратор, но не организатор", () => {
