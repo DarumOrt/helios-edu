@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Golos_Text, JetBrains_Mono, Literata } from "next/font/google";
 import Script from "next/script";
 import { Toaster } from "sonner";
@@ -26,7 +26,17 @@ const literata = Literata({
 
 export const metadata: Metadata = {
   title: "HeliosEDU",
-  description: "Электронная образовательная среда ПГГПУ (мокап)",
+  description: "Электронная образовательная среда: курсы, задания и оценки в одном месте",
+  applicationName: "HeliosEDU",
+  // номера телефонов и адреса в текстах курсов браузер не превращает в ссылки
+  formatDetection: { telephone: false, email: false, address: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F3F7FC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F1522" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
