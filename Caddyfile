@@ -14,6 +14,11 @@
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
+		# сайт нельзя встроить в чужую страницу (защита от подмены нажатий)
+		X-Frame-Options DENY
+		Content-Security-Policy "frame-ancestors 'none'"
+		# камера, микрофон и геолокация сайту не нужны
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		-Server
 	}
 	reverse_proxy web:3000 {
