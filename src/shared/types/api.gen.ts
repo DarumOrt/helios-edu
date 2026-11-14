@@ -27,6 +27,7 @@ export type AnnouncementInfo = {
   body: string;
   authorName: string;
   createdAt: string;
+  canDelete: boolean;
 };
 
 export type AttemptsSummary = {
@@ -375,6 +376,8 @@ export type NotificationInfo = {
   createdAt: string;
   read: boolean;
   link: string | null;
+  courseId?: string | null;
+  courseTitle?: string | null;
 };
 
 export type PairTimeInfo = {

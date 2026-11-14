@@ -30,6 +30,7 @@ export const AUDIT_ACTIONS = {
   "course.deleted": ["Курс в корзине", "courses"],
   "course.restored": ["Восстановлен курс", "courses"],
   "announcement.created": ["Объявление", "courses"],
+  "announcement.deleted": ["Удалено объявление", "courses"],
   "section.created": ["Добавлен модуль", "content"],
   "section.renamed": ["Переименован модуль", "content"],
   "section.deleted": ["Удалён модуль", "content"],

@@ -59,6 +59,7 @@ export interface Announcement {
   body: string;
   authorName: string;
   createdAt: string;
+  canDelete: boolean;
 }
 
 export interface EnrolledStudent {
@@ -329,6 +330,8 @@ export interface Notification {
   createdAt: string;
   read: boolean;
   link?: string;
+  courseId?: string;
+  courseTitle?: string;
 }
 
 /** Поиск курсов (GET /api/catalog): карточка без материалов. accessible — курс открывается пользователю */
