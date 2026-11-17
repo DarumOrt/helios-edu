@@ -24,6 +24,7 @@ const course = (id: string, patch: Partial<CatalogCourse> = {}): CatalogCourse =
   ],
   sections: [],
   accessible: true,
+  selfEnrollment: false,
   ...patch,
 });
 

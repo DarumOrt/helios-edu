@@ -1,6 +1,6 @@
 import "server-only";
 import { allDemoUsers } from "@/mocks/users-store";
-import { courseIdsForGroup } from "@/mocks/cohorts-store";
+import { isEnrolled } from "@/mocks/enrollment-store";
 import { completed, progress } from "@/mocks/adaptive-store";
 import type { Course, User } from "@/shared/types/domain";
 
@@ -8,9 +8,7 @@ import type { Course, User } from "@/shared/types/domain";
 // участники — студенты групп курса; прогресс по формуле P5 (ученику — свой, остальным — средний);
 // «пройдено» у материалов — только ученику и только своё.
 export function withViewerStats(course: Course, viewer: User): Course {
-  const students = allDemoUsers().filter(
-    (u) => u.role === "student" && courseIdsForGroup(u.group).has(course.id),
-  );
+  const students = allDemoUsers().filter((u) => u.role === "student" && isEnrolled(course.id, u));
   const sections = (course.sections ?? []).map((s) => ({
     ...s,
     activities: s.activities.map(({ completed: _static, ...a }) => a),

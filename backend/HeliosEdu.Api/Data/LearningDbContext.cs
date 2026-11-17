@@ -52,6 +52,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
     public DbSet<Cohort> Cohorts => Set<Cohort>();
     public DbSet<CohortCourse> CohortCourses => Set<CohortCourse>();
+    public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
     public DbSet<Skill> Skills => Set<Skill>();
     public DbSet<SkillPrerequisite> SkillPrerequisites => Set<SkillPrerequisite>();
     public DbSet<ActivitySkill> ActivitySkills => Set<ActivitySkill>();
@@ -79,6 +80,10 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     {
         modelBuilder.ConfigureAdaptive();
         modelBuilder.ConfigureMail();
+        var enrollment = modelBuilder.Entity<CourseEnrollment>();
+        enrollment.HasKey(item => new { item.CourseId, item.UserId });
+        enrollment.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        enrollment.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
         // одна работа на ученика и задание; id материалов уникальны только внутри курса
         modelBuilder.Entity<Submission>().HasIndex(item => new { item.CourseId, item.ActivityId, item.UserId }).IsUnique();
         modelBuilder.Entity<Submission>().HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId)

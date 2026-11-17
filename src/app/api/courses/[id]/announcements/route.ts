@@ -15,7 +15,9 @@ export async function GET(req: Request, { params }: Ctx) {
   const courses = await visibleCourses();
   if (courses instanceof Response) return courses;
   if (!courses.some((c) => c.id === id)) return fail(404, "not found");
-  return NextResponse.json(listAnnouncements([id]));
+  const actor = await currentUser();
+  if (actor instanceof Response) return actor;
+  return NextResponse.json(listAnnouncements([id], actor));
 }
 
 // POST { title, body } — объявление всем, кто видит курс (студентам его групп)
@@ -37,7 +39,10 @@ export async function POST(req: Request, { params }: Ctx) {
   if (title.length < 3 || title.length > 120) fields.title = "Заголовок — от 3 до 120 символов";
   if (!text || text.length > 2000) fields.body = "Текст — от 1 до 2000 символов";
   if (Object.keys(fields).length) return fail(400, "Проверьте поля формы", fields);
-  return NextResponse.json(addAnnouncement({ courseId: id, title, body: text, authorName: author.name }), {
-    status: 201,
-  });
+  return NextResponse.json(
+    addAnnouncement({ courseId: id, title, body: text, authorName: author.name, authorId: author.id }),
+    {
+      status: 201,
+    },
+  );
 }

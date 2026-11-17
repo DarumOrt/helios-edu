@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HeliosEdu.Api.Courses;
 
 /// <summary>Числа карточки курса для того, кто смотрит: участники, прогресс, пройденные материалы.</summary>
-/// <param name="Enrolled">студенты групп, которым назначен курс</param>
+/// <param name="Enrolled">студенты назначенных групп и индивидуально записанные, без дублей</param>
 /// <param name="Progress">ученику — свой прогресс; преподавателю и управлению — средний по ученикам (нет учеников — null)</param>
 /// <param name="Completed">только ученику — какие материалы он прошёл</param>
 public sealed record CourseStats(int Enrolled, int? Progress, IReadOnlySet<string>? Completed)
@@ -45,16 +45,21 @@ public static class CourseProgress
         return result;
     }
 
-    /// <summary>Ученики курса — студенты групп, которым он назначен (как AccessRules.VisibleCourses).</summary>
+    /// <summary>Объединение групп и индивидуальных записей, как AccessRules.VisibleCourses.</summary>
     private static async Task<Dictionary<string, List<string>>> StudentsByCourse(LearningDbContext db,
         IReadOnlyCollection<string> courseIds, CancellationToken token)
     {
-        var rows = await (from link in db.CohortCourses
+        var grouped = from link in db.CohortCourses
                           join cohort in db.Cohorts on link.CohortId equals cohort.Id
                           join account in db.Accounts on new { cohort.TenantId, Group = cohort.Name }
                               equals new { account.TenantId, Group = account.Group! }
                           where courseIds.Contains(link.CourseId) && account.Role == "student"
-                          select new { link.CourseId, account.Id }).Distinct().ToListAsync(token);
+                          select new { link.CourseId, account.Id };
+        var individual = from link in db.CourseEnrollments
+                         join account in db.Accounts on link.UserId equals account.Id
+                         where courseIds.Contains(link.CourseId) && account.Role == "student"
+                         select new { link.CourseId, account.Id };
+        var rows = await grouped.Union(individual).ToListAsync(token);
         return rows.GroupBy(row => row.CourseId).ToDictionary(group => group.Key, group => group.Select(row => row.Id).ToList());
     }
 

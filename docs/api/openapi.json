@@ -788,6 +788,156 @@
         }
       }
     },
+    "/api/courses/{id}/enrollment": {
+      "get": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/enrollment/students": {
+      "get": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnrolledStudent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/enrollment/key": {
+      "put": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/enrollment/students/{userId}": {
+      "delete": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/courses/{id}/enroll": {
+      "post": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/courses/{id}/skills": {
       "get": {
         "tags": ["HeliosEdu.Api"],
@@ -1392,6 +1542,34 @@
         }
       }
     },
+    "/api/courses/{id}/announcements/{announcementId}": {
+      "delete": {
+        "tags": ["NotificationsEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "announcementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/notifications": {
       "get": {
         "tags": ["NotificationsEndpoints"],
@@ -1425,6 +1603,16 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/read": {
+      "post": {
+        "tags": ["NotificationsEndpoints"],
         "responses": {
           "200": {
             "description": "OK"
@@ -2087,7 +2275,7 @@
         }
       },
       "AnnouncementInfo": {
-        "required": ["id", "courseId", "title", "body", "authorName", "createdAt"],
+        "required": ["id", "courseId", "title", "body", "authorName", "createdAt", "canDelete"],
         "type": "object",
         "properties": {
           "id": {
@@ -2108,6 +2296,9 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "canDelete": {
+            "type": "boolean"
           }
         }
       },
@@ -2364,7 +2555,8 @@
           "tutor",
           "cohorts",
           "sections",
-          "accessible"
+          "accessible",
+          "selfEnrollment"
         ],
         "type": "object",
         "properties": {
@@ -2411,6 +2603,9 @@
             }
           },
           "accessible": {
+            "type": "boolean"
+          },
+          "selfEnrollment": {
             "type": "boolean"
           }
         }
@@ -2803,6 +2998,51 @@
           },
           "impact": {
             "$ref": "#/components/schemas/CourseImpact"
+          }
+        }
+      },
+      "EnrolledStudent": {
+        "required": ["id", "name", "email", "group", "sources"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "group": {
+            "type": ["null", "string"]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EnrollmentInfo": {
+        "required": ["keyEnabled", "cohortIds", "students"],
+        "type": "object",
+        "properties": {
+          "keyEnabled": {
+            "type": "boolean"
+          },
+          "cohortIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrolledStudent"
+            }
           }
         }
       },
@@ -3298,6 +3538,12 @@
             "type": "boolean"
           },
           "link": {
+            "type": ["null", "string"]
+          },
+          "courseId": {
+            "type": ["null", "string"]
+          },
+          "courseTitle": {
             "type": ["null", "string"]
           }
         }
@@ -4031,6 +4277,9 @@
     },
     {
       "name": "CourseBuilderEndpoints"
+    },
+    {
+      "name": "EnrollmentEndpoints"
     },
     {
       "name": "AdaptiveEndpoints"

@@ -1,9 +1,9 @@
-import type { Announcement, Notification } from "@/shared/types/domain";
+import type { Announcement, Notification, User } from "@/shared/types/domain";
 
-// Объявления курсов. Получатели не хранятся: объявление видят все, кому виден курс
-// (так приватность совпадает с правами на курс). Прочитанность — по пользователю.
+// В ленте объявления видят все участники курса, в колокольчике — только студенты.
+// Прочитанность — по пользователю; автора храним для проверки удаления.
 interface Store {
-  items: Announcement[];
+  items: (Omit<Announcement, "canDelete"> & { authorId: string })[];
   read: Set<string>; // userId::announcementId
   /** личные уведомления («оценка выставлена»), как таблица Notifications в C# */
   personal: (Notification & { userId: string })[];
@@ -14,21 +14,40 @@ const store: Store =
 // состояние могло быть создано прежней версией модуля (HMR) — без personal
 store.personal ??= [];
 
-export function listAnnouncements(courseIds: Iterable<string>): Announcement[] {
+export function listAnnouncements(
+  courseIds: Iterable<string>,
+  actor?: Pick<User, "id" | "role">,
+): Announcement[] {
   const ids = new Set(courseIds);
   return store.items
     .filter((a) => ids.has(a.courseId))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map(({ authorId, ...a }) => ({
+      ...a,
+      canDelete:
+        !!actor &&
+        (actor.role === "admin" ||
+          actor.role === "organizer" ||
+          (actor.role === "tutor" && authorId === actor.id)),
+    }));
 }
 
-export function addAnnouncement(input: Omit<Announcement, "id" | "createdAt">): Announcement {
-  const item: Announcement = {
+export function addAnnouncement(
+  input: Omit<Announcement, "id" | "createdAt" | "canDelete"> & { authorId: string },
+): Announcement {
+  const item = {
     ...input,
     id: `an-${crypto.randomUUID().slice(0, 8)}`,
     createdAt: new Date().toISOString(),
   };
   store.items.push(item);
-  return item;
+  const { authorId: _author, ...a } = item;
+  return { ...a, canDelete: true };
+}
+
+export function removeAnnouncement(courseId: string, id: string) {
+  store.items = store.items.filter((a) => a.courseId !== courseId || a.id !== id);
+  for (const key of store.read) if (key.endsWith(`::${id}`)) store.read.delete(key);
 }
 
 export const isRead = (userId: string, id: string) => store.read.has(`${userId}::${id}`);

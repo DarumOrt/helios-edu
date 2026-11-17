@@ -42,11 +42,16 @@ builder.Services.AddAuthorization(options =>
         options.AddPolicy(permission, policy => policy.RequireRole("admin", "organizer"));
     options.AddPolicy(AccessRules.ReadCohorts, policy => policy.RequireRole("admin", "organizer", "tutor"));
     options.AddPolicy(AccessRules.EditCourse, policy => policy.RequireRole("admin", "organizer", "tutor"));
+    options.AddPolicy(AccessRules.CreateCourses, policy => policy.RequireRole("admin", "organizer", "tutor"));
+    options.AddPolicy(AccessRules.EnrollSelf, policy => policy.RequireRole("student"));
     options.AddPolicy(AccessRules.ManageSystem, policy => policy.RequireRole("admin"));
 });
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
+    options.AddPolicy("enrollment", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 15, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("mail", context => RateLimitPartition.GetFixedWindowLimiter(
         context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ClientAddress.Of(context),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -70,6 +75,7 @@ app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();
 app.MapCatalogEndpoints();
+app.MapEnrollmentEndpoints();
 app.MapAdaptiveEndpoints();
 app.MapGradesEndpoints();
 app.MapNotificationsEndpoints();

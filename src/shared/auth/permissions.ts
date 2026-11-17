@@ -20,6 +20,7 @@ import {
 export type Action =
   | "course.create"
   | "course.edit"
+  | "course.enroll"
   | "course.view"
   | "user.manage"
   | "cohort.manage"
@@ -32,7 +33,8 @@ export type Action =
   | "system.manage";
 
 const matrix: Record<Action, Role[]> = {
-  "course.create": ["admin", "organizer"],
+  "course.create": ["admin", "organizer", "tutor"],
+  "course.enroll": ["student"],
   "course.edit": ["admin", "organizer", "tutor"],
   "course.view": ["admin", "organizer", "tutor", "student"],
   "user.manage": ["admin", "organizer"],

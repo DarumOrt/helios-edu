@@ -12,7 +12,7 @@ public static partial class ManagementEndpoints
 {
     private static void MapCourses(WebApplication app)
     {
-        var courses = app.MapGroup("/api/courses").RequireAuthorization(AccessRules.ManageCourses)
+        var courses = app.MapGroup("/api/courses").RequireAuthorization(AccessRules.CreateCourses)
             .AddEndpointFilter<ManagementWriteFilter>();
         courses.MapPost("", CreateCourseAsync);
         // карточку правит и преподаватель — только своего курса и без полей управления (ManagedCourseFields)
@@ -21,7 +21,7 @@ public static partial class ManagementEndpoints
     }
 
     /// <summary>Поля карточки, которые меняет только управление: преподавателя курса, факультет и учебный год.</summary>
-    private static readonly string[] ManagedCourseFields = ["tutorId", "faculty", "academicYear", "cohortIds"];
+    private static readonly string[] ManagedCourseFields = ["tutorId", "faculty", "academicYear"];
 
     private static async Task ValidateTutor(ManagementInput input, bool partial, HttpContext context, LearningDbContext db,
         Dictionary<string, string> fields)
@@ -38,8 +38,14 @@ public static partial class ManagementEndpoints
     {
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");
-        var fields = ManagementValidation.Course(input, false);
-        await ValidateTutor(input, false, context, db, fields);
+        var actor = Actor(context);
+        if (actor.Role == "tutor")
+        {
+            if (input.Has("tutorId") && input.Text("tutorId") != actor.Id)
+                return Fail(403, "Преподаватель создаёт курс только для себя");
+        }
+        var fields = ManagementValidation.Course(input, false, actor.Role == "tutor" ? actor.Id : null);
+        if (actor.Role != "tutor") await ValidateTutor(input, false, context, db, fields);
         await ValidateCourseGroups(input, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
         var code = input.Text("code").ToUpperInvariant();
@@ -49,7 +55,7 @@ public static partial class ManagementEndpoints
                 ? "Курс с таким кодом в корзине — восстановите его или выберите другой код"
                 : "Курс с таким кодом уже есть");
         var course = new Course { Id = $"c-{Guid.NewGuid():N}", Code = code, Title = input.Text("title"),
-            Category = input.Text("category"), Description = input.Text("description"), TutorId = input.Text("tutorId"),
+            Category = input.Text("category"), Description = input.Text("description"), TutorId = actor.Role == "tutor" ? actor.Id : input.Text("tutorId"),
             Status = "draft", CoverColor = CoverColors[RandomNumberGenerator.GetInt32(CoverColors.Length)],
             Faculty = input.OptionalText("faculty"), AcademicYear = input.OptionalText("academicYear") };
         var position = await db.Courses.MaxAsync(item => (int?)EF.Property<int>(item, "Position"), context.RequestAborted) ?? -1;

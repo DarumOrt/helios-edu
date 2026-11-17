@@ -75,7 +75,7 @@ public static class ManagementValidation
         return fields;
     }
 
-    public static Dictionary<string, string> Course(ManagementInput input, bool partial)
+    public static Dictionary<string, string> Course(ManagementInput input, bool partial, string? assignedTutor = null)
     {
         var fields = new Dictionary<string, string>();
         // Как в моках: перед проверкой новый код приводится к верхнему регистру.
@@ -87,7 +87,7 @@ public static class ManagementValidation
             fields["category"] = "Укажите направление, например Математика";
         if ((!partial || input.Has("description")) && input.Text("description").Length > 1000)
             fields["description"] = "Описание — до 1000 символов";
-        if ((!partial || input.Has("tutorId")) && input.Text("tutorId").Length == 0)
+        if (assignedTutor is null && (!partial || input.Has("tutorId")) && input.Text("tutorId").Length == 0)
             fields["tutorId"] = "Назначьте преподавателя";
         // Факультет и учебный год необязательны: по ним курс находят в поиске.
         if (input.OptionalText("faculty") is { } faculty && !Faculties.Codes.Contains(faculty))

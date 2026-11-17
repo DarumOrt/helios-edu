@@ -23,6 +23,9 @@ for (const [name, baseUrl] of [
     const student = await login(baseUrl, "student10@student.pspu.ru");
     const outsider = await login(baseUrl, "student4@student.pspu.ru");
     const tutor = await login(baseUrl, "tutor@pspu.ru");
+    const organizer = await login(baseUrl, "organizer@pspu.ru");
+    const admin = await login(baseUrl, "admin@pspu.ru");
+    const stranger = await login(baseUrl, "tutor2@pspu.ru");
     const root = "/api/courses/c-dor-ai";
 
     // объявление пишет преподаватель курса; поля проверяются, ученику писать нельзя
@@ -45,16 +48,27 @@ for (const [name, baseUrl] of [
     assert.equal(created.status, 201);
     const announcement = await created.json();
     assert.equal(announcement.authorName, "Казаринова Н.Л.");
+    assert.equal(announcement.canDelete, true);
 
     // объявление видят ученики курса — в ленте курса и в уведомлениях; чужой группе курс не виден
     const list = await (await get(baseUrl, `${root}/announcements`, student.cookie)).json();
     assert.equal(list[0].id, announcement.id);
+    assert.equal(list[0].canDelete, false);
+    for (const actor of [tutor, organizer, admin, stranger]) {
+      const staff = await (await get(baseUrl, "/api/notifications", actor.cookie)).json();
+      assert.ok(
+        !staff.some((n) => n.id === announcement.id),
+        "сотрудники не получают объявления курса в колокольчик",
+      );
+    }
     assert.equal((await get(baseUrl, `${root}/announcements`, outsider.cookie)).status, 404);
     const unread = async () =>
       (await (await get(baseUrl, "/api/notifications", student.cookie)).json()).find(
         (n) => n.id === announcement.id,
       );
     const item = await unread();
+    assert.equal(item.courseId, "c-dor-ai");
+    assert.ok(item.courseTitle);
     assert.deepEqual(
       [item.type, item.title, item.read, item.link],
       ["announcement", `ЦОР-201: ${title}`, false, "/courses/c-dor-ai"],
@@ -75,6 +89,20 @@ for (const [name, baseUrl] of [
       200,
     );
     assert.equal((await unread()).read, true);
+    assert.equal(
+      (await send(student.cookie, "POST", "/api/notifications/read", { ids: [announcement.id] })).status,
+      200,
+    );
+    assert.equal((await send(student.cookie, "POST", "/api/notifications/read", { ids: [] })).status, 400);
+    assert.equal(
+      (await send(student.cookie, "POST", "/api/notifications/read", { ids: [announcement.id, "missing"] }))
+        .status,
+      404,
+    );
+    assert.equal(
+      (await send(outsider.cookie, "POST", "/api/notifications/read", { ids: [announcement.id] })).status,
+      404,
+    );
     // несуществующее и чужое уведомление отметить нельзя
     assert.equal((await send(student.cookie, "POST", "/api/notifications/no-such/read", {})).status, 404);
     assert.equal(
@@ -107,6 +135,42 @@ for (const [name, baseUrl] of [
     } finally {
       assert.equal((await send(tutor.cookie, "DELETE", `${root}/activities/${activity.id}`)).status, 204);
     }
+    // Преподаватель удаляет свои объявления; чужие в своём курсе — только управление.
+    const byOrganizer = await (
+      await send(organizer.cookie, "POST", `${root}/announcements`, {
+        title: "От организатора",
+        body: "Для студентов",
+      })
+    ).json();
+    assert.equal((await send(tutor.cookie, "DELETE", `${root}/announcements/${byOrganizer.id}`)).status, 403);
+    assert.equal(
+      (await send(student.cookie, "DELETE", `${root}/announcements/${announcement.id}`)).status,
+      403,
+    );
+    assert.equal(
+      (await send(stranger.cookie, "DELETE", `${root}/announcements/${announcement.id}`)).status,
+      404,
+    );
+    assert.equal(
+      (await send(tutor.cookie, "DELETE", "/api/courses/c-philosophy/announcements/" + announcement.id))
+        .status,
+      404,
+    );
+    assert.equal(
+      (await send(tutor.cookie, "DELETE", `${root}/announcements/${announcement.id}`)).status,
+      204,
+    );
+    assert.equal(
+      (await send(tutor.cookie, "DELETE", `${root}/announcements/${announcement.id}`)).status,
+      404,
+    );
+    assert.equal(await unread(), undefined);
+    assert.ok(
+      !(await (await get(baseUrl, `${root}/announcements`, student.cookie)).json()).some(
+        (a) => a.id === announcement.id,
+      ),
+    );
+    assert.equal((await send(admin.cookie, "DELETE", `${root}/announcements/${byOrganizer.id}`)).status, 204);
   });
 
   test(`${name}: проверка работы присылает ученику «Оценка выставлена»`, async () => {
@@ -140,6 +204,7 @@ for (const [name, baseUrl] of [
       (n) => n.type === "grade" && n.body.endsWith(": 76 из 100"),
     );
     assert.ok(grade, "уведомление об оценке");
+    assert.equal(grade.courseId, "c-dor-ai");
     assert.deepEqual([grade.title, grade.read, grade.link], ["Оценка выставлена", false, "/gradebook"]);
   });
 }

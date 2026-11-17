@@ -32,6 +32,8 @@ export const builderApi = {
     api.post<unknown>(`${c(courseId)}/trash/${itemId}/restore`, {}),
   announce: (courseId: string, title: string, body: string) =>
     api.post<Announcement>(`${c(courseId)}/announcements`, { title, body }),
+  deleteAnnouncement: (courseId: string, id: string) =>
+    api.del<void>(`${c(courseId)}/announcements/${encodeURIComponent(id)}`),
 };
 
 /** После правок обновляем курс, списки курсов (дашборд берёт ?sections=1) и уведомления */

@@ -160,7 +160,11 @@ test("общие курсы, CSV, активация и SMTP с очередью
       }
       const after = await expect(await get(apiUrl, "/api/cohorts/co-1", admin.cookie));
       assert.deepEqual(after.courseIds, before.courseIds);
-      assert.equal((await send("PATCH", `/api/courses/${course.id}`, { cohortIds: [] }, tutor)).status, 403);
+      assert.equal(
+        (await send("PATCH", `/api/courses/${course.id}`, { cohortIds: groups.map((g) => g.id) }, tutor))
+          .status,
+        200,
+      );
       await expect(
         await send("PATCH", `/api/courses/${course.id}`, { cohortIds: groups.slice(0, 2).map((g) => g.id) }),
       );

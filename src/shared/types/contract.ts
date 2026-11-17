@@ -20,6 +20,8 @@ import type {
   CatalogCourse,
   Cohort,
   Course,
+  EnrollmentInfo,
+  EnrolledStudent,
   GradeRow,
   Notification,
   Section,
@@ -72,6 +74,8 @@ type SameFields<A, U> = [Exclude<keyof A, keyof U>] extends [never]
 type Assert<T extends true> = T;
 
 export type ApiContract = [
+  Assert<SameFields<Api.EnrollmentInfo, EnrollmentInfo>>,
+  Assert<SameFields<Api.EnrolledStudent, EnrolledStudent>>,
   Assert<SameFields<Api.MailSettingsInfo, MailSettings>>,
   Assert<SameFields<Api.CampaignInfo, MailCampaign>>,
   Assert<SameFields<Api.ImportRow, UserImportRow>>,

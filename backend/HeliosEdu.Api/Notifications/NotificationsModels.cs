@@ -1,6 +1,6 @@
 namespace HeliosEdu.Api.Notifications;
 
-// Объявление курса. Получатели не хранятся: объявление видят все, кому виден курс (как в моках Next).
+// Объявление видно в курсе всем его участникам; в колокольчик приходит только студентам курса.
 public sealed class Announcement
 {
     public string Id { get; set; } = "";
@@ -22,6 +22,7 @@ public sealed class Notification
     public string Title { get; set; } = "";
     public string Body { get; set; } = "";
     public string? Link { get; set; }
+    public string? CourseId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 
@@ -35,6 +36,6 @@ public sealed class NotificationRead
 
 // Ответы — как Announcement и Notification в src/shared/types/domain.ts.
 public sealed record AnnouncementInfo(string Id, string CourseId, string Title, string Body, string AuthorName,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt, bool CanDelete);
 public sealed record NotificationInfo(string Id, string Type, string Title, string Body, DateTimeOffset CreatedAt,
-    bool Read, string? Link);
+    bool Read, string? Link, string? CourseId = null, string? CourseTitle = null);

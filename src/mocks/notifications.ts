@@ -9,18 +9,29 @@ export async function userNotifications(user: User): Promise<Notification[] | Re
   const courses = await visibleCourses();
   if (courses instanceof Response) return courses;
   const byId = new Map(courses.map((c) => [c.id, c]));
-  const announcements: Notification[] = listAnnouncements(byId.keys()).map((a) => ({
-    id: a.id,
-    type: "announcement",
-    title: `${byId.get(a.courseId)?.code ?? "Курс"}: ${a.title}`,
-    body: `${a.body} — ${a.authorName}`,
-    createdAt: a.createdAt,
-    read: isRead(user.id, a.id),
-    link: `/courses/${a.courseId}`,
-  }));
+  const announcements: Notification[] = (user.role === "student" ? listAnnouncements(byId.keys()) : []).map(
+    (a) => ({
+      id: a.id,
+      type: "announcement",
+      title: `${byId.get(a.courseId)?.code ?? "Курс"}: ${a.title}`,
+      body: `${a.body} — ${a.authorName}`,
+      createdAt: a.createdAt,
+      read: isRead(user.id, a.id),
+      link: `/courses/${a.courseId}`,
+      courseId: a.courseId,
+      courseTitle: byId.get(a.courseId)?.title,
+    }),
+  );
   return [
     ...announcements,
-    ...listPersonal(user.id).map((n) => ({ ...n, read: isRead(user.id, n.id) })),
-    ...notifications.map((n) => ({ ...n, read: n.read || isRead(user.id, n.id) })),
+    ...listPersonal(user.id).map((n) => ({
+      ...n,
+      courseTitle: n.courseId ? byId.get(n.courseId)?.title : undefined,
+      read: isRead(user.id, n.id),
+    })),
+    ...(user.role === "student" ? notifications : []).map((n) => ({
+      ...n,
+      read: n.read || isRead(user.id, n.id),
+    })),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

@@ -1,7 +1,7 @@
 import type { Activity, Course, GradeRow, StudentCourseGrades } from "@/shared/types/domain";
 import { gradebook as seedGradebook } from "./data";
 import { allDemoUsers } from "./users-store";
-import { courseIdsForGroup } from "./cohorts-store";
+import { isEnrolled } from "./enrollment-store";
 import { findDemoCourse, listDemoCourses } from "./course-store";
 import { listSubmissions } from "./submissions-store";
 import { submittedAttempts } from "./adaptive-store";
@@ -41,7 +41,7 @@ function columns(course: Course): Activity[] {
 /** Ученики курса — студенты групп, которым он назначен (AccessRules.CourseStudents) */
 function students(courseId: string) {
   return allDemoUsers()
-    .filter((u) => u.role === "student" && courseIdsForGroup(u.group).has(courseId))
+    .filter((u) => u.role === "student" && isEnrolled(courseId, u))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 }
 
@@ -108,11 +108,10 @@ export function setGrade(
 export function getStudentGrades(userId: string): StudentCourseGrades[] {
   seed();
   const user = allDemoUsers().find((u) => u.id === userId);
-  const mine = courseIdsForGroup(user?.group);
   return listDemoCourses()
     .filter(
       (c) =>
-        (mine.has(c.id) && c.status !== "draft" && c.status !== "archived") ||
+        (user && isEnrolled(c.id, user) && c.status !== "draft" && c.status !== "archived") ||
         (c.status !== "draft" && marks(c.id, userId).size > 0),
     )
     .map((c) => ({ course: c, cols: columns(c) }))

@@ -44,7 +44,10 @@ for (const [name, baseUrl] of [
       await t.test("права, запрет собственной роли и блокировки, CSRF", async () => {
         for (const actor of [student, tutor])
           for (const path of ["/api/users", "/api/cohorts", "/api/courses"])
-            assert.equal((await send("POST", path, {}, actor)).status, 403);
+            assert.equal(
+              (await send("POST", path, {}, actor)).status,
+              actor === tutor && path === "/api/courses" ? 400 : 403,
+            );
         assert.equal((await get(baseUrl, "/api/cohorts", student.cookie)).status, 403);
         assert.equal((await get(baseUrl, "/api/cohorts", tutor.cookie)).status, 200);
         await expect(

@@ -8,11 +8,15 @@ import { facultyName } from "@/shared/lib/faculties";
 import { Badge, Breadcrumbs, Card, CardBody, CourseCover, DataState, buttonVariants } from "@/shared/ui";
 import type { CatalogCourse } from "@/shared/types/domain";
 import { directionOf, studyYearOf } from "../filters";
+import { EnrollByKeyword } from "./EnrollByKeyword";
+import { useSession } from "@/shared/auth/session";
+import { can } from "@/shared/auth/permissions";
 
 // Карточка курса из поиска: описание, преподаватель, группы и модули — без материалов.
 export function CatalogPreview({ courseId }: { courseId: string }) {
   const { data, error, isLoading } = useSWR<CatalogCourse[]>("/api/catalog", fetcher);
   const course = data?.find((c) => c.id === courseId);
+  const role = useSession((s) => s.role);
 
   return (
     <DataState
@@ -88,12 +92,14 @@ export function CatalogPreview({ courseId }: { courseId: string }) {
             <Link href={`/courses/${course.id}`} className={buttonVariants()}>
               Перейти к курсу <ArrowRight size={16} aria-hidden />
             </Link>
+          ) : course.selfEnrollment && can(role, "course.enroll") ? (
+            <EnrollByKeyword courseId={course.id} />
           ) : (
             <p className="flex items-start gap-2 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
               <Lock size={16} className="mt-0.5 shrink-0" aria-hidden />
               {course.cohorts.length
-                ? `Материалы открыты слушателям групп ${course.cohorts.map((g) => g.name).join(", ")}. Если вы должны учиться на этом курсе — обратитесь к организатору.`
-                : "Курс пока не назначен ни одной группе."}
+                ? `Материалы доступны участникам курса. Для записи обратитесь к преподавателю.`
+                : "Для записи на курс обратитесь к преподавателю."}
             </p>
           )}
           <Link href="/search" className={buttonVariants({ variant: "ghost", size: "sm" })}>

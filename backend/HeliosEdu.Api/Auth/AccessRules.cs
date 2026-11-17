@@ -8,13 +8,14 @@ namespace HeliosEdu.Api.Auth;
 public static class AccessRules
 {
     /// <summary>
-    /// Ученики курса — студенты групп, которым он назначен. Та же связь, что в VisibleCourses:
-    /// курс в новой группе сразу доступен её студентам, после перевода в другую группу — нет.
+    /// Ученики курса — объединение назначенных групп и индивидуальных записей, как в VisibleCourses.
+    /// Перевод в другую группу не отменяет индивидуальную запись.
     /// </summary>
     public static IQueryable<Account> CourseStudents(LearningDbContext db, string courseId) =>
-        db.Accounts.Where(account => account.Role == "student" && db.CohortCourses.Any(link =>
+        db.Accounts.Where(account => account.Role == "student" && (db.CourseEnrollments.Any(link =>
+            link.CourseId == courseId && link.UserId == account.Id) || db.CohortCourses.Any(link =>
             link.CourseId == courseId && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
-                cohort.TenantId == account.TenantId && cohort.Name == account.Group)));
+                cohort.TenantId == account.TenantId && cohort.Name == account.Group))));
 
     public static Task<bool> IsCourseStudent(LearningDbContext db, Account actor, string courseId, CancellationToken token) =>
         actor.Role == "student" ? CourseStudents(db, courseId).AnyAsync(account => account.Id == actor.Id, token) : Task.FromResult(false);
@@ -22,6 +23,8 @@ public static class AccessRules
     public const string ManageCohorts = "cohort.manage";
     public const string ReadCohorts = "cohort.read";
     public const string ManageCourses = "course.manage";
+    public const string CreateCourses = "course.create";
+    public const string EnrollSelf = "course.enroll";
     public const string EditCourse = "course.edit";
     /// <summary>настройки системы и журнал действий — только администратор</summary>
     public const string ManageSystem = "system.manage";
@@ -47,9 +50,10 @@ public static class AccessRules
         var accountId = user.FindFirstValue(ClaimTypes.NameIdentifier);
         if (user.IsInRole("tutor")) return active.Where(course => course.TutorId == accountId);
         // Эталон — visibleDemoCourses.
-        return active.Where(course => course.Status == "published" && db.CohortCourses.Any(link =>
+        return active.Where(course => course.Status == "published" && (db.CourseEnrollments.Any(link =>
+            link.CourseId == course.Id && link.UserId == accountId) || db.CohortCourses.Any(link =>
             link.CourseId == course.Id && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
                 db.Accounts.Any(account => account.Id == accountId && account.Role == "student" &&
-                    account.TenantId == cohort.TenantId && account.Group == cohort.Name))));
+                    account.TenantId == cohort.TenantId && account.Group == cohort.Name)))));
     }
 }

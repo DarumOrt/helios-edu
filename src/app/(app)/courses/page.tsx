@@ -16,10 +16,12 @@ export default function CoursesPage() {
   const { data, error, isLoading } = useSWR<Course[]>("/api/courses", fetcher);
   const [q, setQ] = useState("");
   const role = useSession((s) => s.role);
+  const user = useSession((s) => s.user);
   const canCreate = can(role, "course.create");
   const [creating, setCreating] = useState(false);
   // список преподавателей нужен только тем, кто создаёт курсы
-  const { data: users } = useSWR<User[]>(canCreate ? "/api/users" : null, fetcher);
+  const managed = can(role, "user.manage");
+  const { data: users } = useSWR<User[]>(canCreate && managed ? "/api/users" : null, fetcher);
 
   const filtered = (data ?? []).filter(
     (c) =>
@@ -80,7 +82,10 @@ export default function CoursesPage() {
         <CourseDialog
           open
           onClose={() => setCreating(false)}
-          tutors={(users ?? []).filter((u) => u.role === "tutor" && u.status !== "blocked")}
+          tutors={
+            managed ? (users ?? []).filter((u) => u.role === "tutor" && u.status !== "blocked") : [user]
+          }
+          managed={managed}
           categories={[...new Set((data ?? []).map((c) => c.category))]}
         />
       )}
