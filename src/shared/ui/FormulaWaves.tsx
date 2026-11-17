@@ -7,8 +7,6 @@ import { cn } from "@/shared/lib/utils";
 // Поле — сумма синусов, изолинии — места, где дробная часть высоты близка к ½ (как горизонтали на карте).
 // Цвета — токены --waves-* из globals.css (светлая тема — «небо», тёмная — «ночь»).
 // Подробно — docs/design/formula-waves.md.
-//
-// Один статичный кадр на холсте низкого разрешения, с перерисовкой при смене темы и размера.
 
 /** css-пикселей блока на пиксель холста */
 const DOWNSCALE = 3;
@@ -16,6 +14,8 @@ const DOWNSCALE = 3;
 const UNIT = 220;
 const MAX_SIDE = 640;
 const START_T = 7.3;
+const FRAME_MS = 100;
+const PHASE_STEP = 0.025;
 
 type Palette = { from: number[]; to: number[]; depth: number[]; line: number[] };
 
@@ -33,9 +33,7 @@ function readPalette(el: Element): Palette {
   };
 }
 
-function draw(canvas: HTMLCanvasElement, img: ImageData, scale: number, t: number, p: Palette) {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+function draw(ctx: CanvasRenderingContext2D, img: ImageData, scale: number, t: number, p: Palette) {
   const { width: W, height: H, data } = img;
   const [f0, f1, f2] = p.from;
   const [t0, t1, t2] = p.to;
@@ -73,14 +71,37 @@ export function FormulaWaves({ className }: { className?: string }) {
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const root = document.documentElement;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let palette = readPalette(root);
     let img: ImageData | null = null;
     let scale = DOWNSCALE / UNIT;
 
+    let phase = START_T;
+    let inView = false;
+    let timer: number | undefined;
+
     const render = () => {
-      if (img) draw(canvas, img, scale, START_T, palette);
+      if (img) draw(ctx, img, scale, phase, palette);
+    };
+
+    const stop = () => {
+      window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    const updateAnimation = () => {
+      if (reducedMotion.matches || document.hidden || !inView) {
+        stop();
+      } else if (timer === undefined) {
+        timer = window.setInterval(() => {
+          phase += PHASE_STEP;
+          render();
+        }, FRAME_MS);
+      }
     };
 
     // Размер холста — по размеру блока, без искажения пропорций
@@ -110,7 +131,19 @@ export function FormulaWaves({ className }: { className?: string }) {
     });
     themeObserver.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
 
+    const viewObserver = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      updateAnimation();
+    });
+    viewObserver.observe(canvas);
+    document.addEventListener("visibilitychange", updateAnimation);
+    reducedMotion.addEventListener("change", updateAnimation);
+
     return () => {
+      stop();
+      viewObserver.disconnect();
+      document.removeEventListener("visibilitychange", updateAnimation);
+      reducedMotion.removeEventListener("change", updateAnimation);
       sizeObserver.disconnect();
       themeObserver.disconnect();
     };
