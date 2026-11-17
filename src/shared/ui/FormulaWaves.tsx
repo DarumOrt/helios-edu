@@ -14,8 +14,8 @@ const DOWNSCALE = 3;
 const UNIT = 220;
 const MAX_SIDE = 640;
 const START_T = 7.3;
-const FRAME_MS = 100;
-const PHASE_STEP = 0.025;
+const PHASE_PER_MS = 0.00025;
+const MAX_FRAME_GAP_MS = 50;
 
 type Palette = { from: number[]; to: number[]; depth: number[]; line: number[] };
 
@@ -33,29 +33,104 @@ function readPalette(el: Element): Palette {
   };
 }
 
-function draw(ctx: CanvasRenderingContext2D, img: ImageData, scale: number, t: number, p: Palette) {
-  const { width: W, height: H, data } = img;
+function createField(width: number, height: number, scale: number) {
+  const radialSin = new Float32Array(width * height);
+  const radialCos = new Float32Array(width * height);
+  // Пространственная часть радиальной волны зависит только от размеров.
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pixel = y * width + x;
+      const angle = Math.hypot(x * scale - 3.3, y * scale - 2.6) * 2.3;
+      radialSin[pixel] = Math.sin(angle);
+      radialCos[pixel] = Math.cos(angle);
+    }
+  }
+  return {
+    img: new ImageData(width, height),
+    scale,
+    radialSin,
+    radialCos,
+    levels: new Float32Array(width * height),
+    horizontal: new Float64Array(width),
+    verticalSin: new Float64Array(width),
+    verticalCos: new Float64Array(width),
+    diagonalSin: new Float64Array(width),
+    diagonalCos: new Float64Array(width),
+  };
+}
+
+function draw(ctx: CanvasRenderingContext2D, field: ReturnType<typeof createField>, t: number, p: Palette) {
+  const {
+    img,
+    scale,
+    radialSin,
+    radialCos,
+    levels,
+    horizontal,
+    verticalSin,
+    verticalCos,
+    diagonalSin,
+    diagonalCos,
+  } = field;
+  const { width, height, data } = img;
+  const radialTimeSin = 0.7 * Math.sin(-t * 0.55);
+  const radialTimeCos = 0.7 * Math.cos(-t * 0.55);
+
+  // sin(a + b) позволяет вынести тригонометрию из цикла по пикселям.
+  for (let x = 0; x < width; x++) {
+    const u = x * scale;
+    const vertical = Math.sin(u * 0.55 + t * 0.1);
+    const diagonal = u * 0.85 + t * 0.2;
+    horizontal[x] = Math.sin(u * 1.25 + t * 0.32);
+    verticalSin[x] = Math.sin(vertical);
+    verticalCos[x] = Math.cos(vertical);
+    diagonalSin[x] = Math.sin(diagonal);
+    diagonalCos[x] = Math.cos(diagonal);
+  }
+  for (let y = 0; y < height; y++) {
+    const v = y * scale;
+    const vertical = v * 1.8 - t * 0.25;
+    const diagonal = v * 0.85;
+    const vs = Math.sin(vertical);
+    const vc = Math.cos(vertical);
+    const ds = Math.sin(diagonal);
+    const dc = Math.cos(diagonal);
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      const w =
+        horizontal[x] +
+        vs * verticalCos[x] +
+        vc * verticalSin[x] +
+        ds * diagonalCos[x] +
+        dc * diagonalSin[x] +
+        radialSin[i] * radialTimeCos +
+        radialCos[i] * radialTimeSin;
+      levels[i] = w * 1.7;
+    }
+  }
+
   const [f0, f1, f2] = p.from;
   const [t0, t1, t2] = p.to;
   const [d0, d1, d2] = p.depth;
   const [l0, l1, l2] = p.line;
-  for (let y = 0; y < H; y++) {
-    const v = y * scale;
-    const yy = H > 1 ? y / (H - 1) : 0;
+  for (let y = 0; y < height; y++) {
+    const yy = height > 1 ? y / (height - 1) : 0;
     const b0 = f0 + (t0 - f0) * yy;
     const b1 = f1 + (t1 - f1) * yy;
     const b2 = f2 + (t2 - f2) * yy;
-    for (let x = 0; x < W; x++) {
-      const u = x * scale;
-      const w =
-        Math.sin(u * 1.25 + t * 0.32) +
-        Math.sin(v * 1.8 - t * 0.25 + Math.sin(u * 0.55 + t * 0.1)) +
-        Math.sin((u + v) * 0.85 + t * 0.2) +
-        0.7 * Math.sin(Math.hypot(u - 3.3, v - 2.6) * 2.3 - t * 0.55);
-      const f = Math.abs(((((w * 1.7) % 1) + 1) % 1) - 0.5);
-      const line = Math.max(0, 1 - f / 0.055);
-      const k = (w + 3.7) / 7.4;
-      const i = (y * W + x) * 4;
+    const row = y * width;
+    const adjacentRow = y < height - 1 ? row + width : Math.max(0, row - width);
+    for (let x = 0; x < width; x++) {
+      const pixel = row + x;
+      const level = levels[pixel];
+      const f = Math.abs(level - Math.floor(level) - 0.5);
+      const adjacentX = x < width - 1 ? x + 1 : Math.max(0, x - 1);
+      // У крутой линии засвечиваем соседние выборки слабее, чтобы штрих не распадался на «лесенку».
+      const footprint = Math.abs(levels[row + adjacentX] - level) + Math.abs(levels[adjacentRow + x] - level);
+      const halfWidth = Math.max(0.055, footprint);
+      const line = Math.max(0, 1 - f / halfWidth) * (0.055 / halfWidth);
+      const k = (level / 1.7 + 3.7) / 7.4;
+      const i = pixel * 4;
       data[i] = b0 + d0 * k + l0 * line;
       data[i + 1] = b1 + d1 * k + l1 * line;
       data[i + 2] = b2 + d2 * k + l2 * line;
@@ -77,30 +152,37 @@ export function FormulaWaves({ className }: { className?: string }) {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let palette = readPalette(root);
-    let img: ImageData | null = null;
-    let scale = DOWNSCALE / UNIT;
+    let field: ReturnType<typeof createField> | undefined;
 
     let phase = START_T;
     let inView = false;
-    let timer: number | undefined;
+    let frame: number | undefined;
+    let lastFrame: number | undefined;
 
     const render = () => {
-      if (img) draw(ctx, img, scale, phase, palette);
+      if (field) draw(ctx, field, phase, palette);
+    };
+
+    const animate = (now: number) => {
+      if (lastFrame !== undefined) {
+        phase += Math.min(now - lastFrame, MAX_FRAME_GAP_MS) * PHASE_PER_MS;
+        render();
+      }
+      lastFrame = now;
+      frame = window.requestAnimationFrame(animate);
     };
 
     const stop = () => {
-      window.clearInterval(timer);
-      timer = undefined;
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      frame = undefined;
+      lastFrame = undefined;
     };
 
     const updateAnimation = () => {
       if (reducedMotion.matches || document.hidden || !inView) {
         stop();
-      } else if (timer === undefined) {
-        timer = window.setInterval(() => {
-          phase += PHASE_STEP;
-          render();
-        }, FRAME_MS);
+      } else if (frame === undefined) {
+        frame = window.requestAnimationFrame(animate);
       }
     };
 
@@ -112,11 +194,11 @@ export function FormulaWaves({ className }: { className?: string }) {
       const down = Math.max(DOWNSCALE, Math.max(cw, ch) / MAX_SIDE);
       const w = Math.max(1, Math.round(cw / down));
       const h = Math.max(1, Math.round(ch / down));
-      if (img && img.width === w && img.height === h) return;
+      const nextScale = down / UNIT;
+      if (field?.img.width === w && field.img.height === h && field.scale === nextScale) return;
       canvas.width = w;
       canvas.height = h;
-      img = new ImageData(w, h);
-      scale = down / UNIT;
+      field = createField(w, h, nextScale);
       render();
     };
 
