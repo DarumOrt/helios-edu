@@ -2,7 +2,7 @@
 
 /* Брендкод EDU, палитра «Ясное небо» (см. docs/design-audit).
    Ясный синий — действия. Солнце — достижения, серия, тепло. Маркер — «сейчас / следующий шаг».
-   Градиент разрешён только для неба в приветствии: он показывает время суток.
+   «Волны из формул» — фон входа и приветствия. В пустых состояниях — лёгкие контурные кольца.
    Все пары текст/фон — не ниже 4.5:1 (WCAG AA). Солнце и маркер — только заливка под тёмным текстом. */
 
 @theme {
@@ -45,8 +45,10 @@
   --color-danger-soft: hsl(var(--danger-soft));
   --color-danger-foreground: hsl(var(--danger-foreground));
 
-  /* Текст на светлом небе приветствия — тёмный в обеих темах: небо показывает время суток, а не тему */
+  /* Тёмный текст на светлой заливке (солнце, маркер) — тёмный в обеих темах */
   --color-sky-ink: hsl(var(--sky-ink));
+  /* Текст поверх «волн из формул»: тёмный на небе, светлый на ночи */
+  --color-waves-ink: hsl(var(--waves-ink));
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
@@ -138,6 +140,26 @@
   background-size: 12px 12px;
 }
 
+/* Тихие изолинии для пустых состояний */
+@utility contour-rings {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0 15px,
+      hsl(var(--primary) / 0.07) 15px 16px
+    );
+    mask-image: radial-gradient(closest-side at 50% 50%, #000 0, transparent 100%);
+  }
+}
+
 @utility scrollbar-thin {
   scrollbar-width: thin;
 }
@@ -180,6 +202,14 @@
     --sky-ink: 221 51% 16%;
     --shadow: 221 51% 16%;
 
+    /* «Волны из формул» (shared/ui/FormulaWaves, docs/design/formula-waves.md). Значения — каналы RGB 0–255.
+       Цвет точки = lerp(from, to, y/H) + depth·k + line·линия, где k — глубина поля 0…1. */
+    --waves-from: 205 226 247; /* #CDE2F7 верх неба */
+    --waves-to: 243 247 252; /* #F3F7FC низ неба = фон сайта */
+    --waves-depth: -18 -10 -2; /* гребни чуть темнее */
+    --waves-line: 8 6 3; /* изолинии чуть светлее фона */
+    --waves-ink: 221 51% 16%;
+
     --radius: 0.75rem; /* 12px — мягкая, дружелюбная форма */
   }
 
@@ -211,6 +241,12 @@
     --grid: 221 36% 15%;
     /* на тёмном фоне тень почти не видна — карточки отделяет более светлый фон */
     --shadow: 0 0% 0%;
+    /* ночь: от #070C18 в низинах к #122450 на гребнях; линии вдвое тише, чем в ролике, — иначе слишком контрастно */
+    --waves-from: 7 12 24;
+    --waves-to: 7 12 24;
+    --waves-depth: 11 24 56;
+    --waves-line: 10 20 40;
+    --waves-ink: 216 43% 93%;
     color-scheme: dark;
   }
 

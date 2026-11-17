@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useDayPart } from "@/shared/lib/use-day-part";
-import { SkyScene, sky } from "@/shared/ui/SkyScene";
+import { FormulaWaves } from "@/shared/ui/FormulaWaves";
 
 export function HeroChip({
   icon: Icon,
@@ -43,28 +43,17 @@ export function RoleHero({
   actions?: ReactNode;
 }) {
   const day = useDayPart();
-  const part = day?.part ?? "day";
-  const night = part === "night";
   const heading = title ?? `${day ? day.greeting : "Здравствуйте"}${name ? `, ${name}` : ""}`;
 
   return (
-    <section
-      className={cn("relative overflow-hidden rounded-2xl border", night ? "text-white" : "text-sky-ink")}
-      style={{ background: sky[part] }}
-    >
-      <SkyScene part={part} progress={day?.sunProgress ?? 0.5} />
+    <section className="relative isolate overflow-hidden rounded-2xl border text-waves-ink">
+      <FormulaWaves className="-z-10" />
       <div className="relative max-w-xl px-7 pt-7 pb-9 md:px-9">
-        <div className={cn("font-mono text-xs", night ? "text-white/75" : "text-sky-ink/70")}>
-          {day?.dateLabel ?? " "}
-        </div>
+        <div className="font-mono text-xs text-waves-ink/70">{day?.dateLabel ?? " "}</div>
         <h1 className="mt-2 animate-enter text-3xl font-bold tracking-tight text-balance md:text-4xl">
           {heading}
         </h1>
-        {subtitle && (
-          <p className={cn("mt-2 max-w-lg text-base", night ? "text-white/85" : "text-sky-ink/75")}>
-            {subtitle}
-          </p>
-        )}
+        {subtitle && <p className="mt-2 max-w-lg text-base text-waves-ink/80">{subtitle}</p>}
         {chips && <div className="mt-4 flex flex-wrap gap-2">{chips}</div>}
         {actions && <div className="mt-5 flex flex-wrap gap-2">{actions}</div>}
       </div>
