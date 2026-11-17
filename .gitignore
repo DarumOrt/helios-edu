@@ -27,7 +27,10 @@ Thumbs.db
 # локальные данные агентов (worktrees, настройки у каждого свои); общие настройки — .claude/settings.json
 .claude/*
 !.claude/settings.json
-.codex/
+.codex/*
+!.codex/environments/
+.codex/environments/*
+!.codex/environments/environment.toml
 
 # test
 coverage/

@@ -9,6 +9,8 @@
 
 Что сделано и что дальше — в [ROADMAP.md](ROADMAP.md).
 
+Работа в Codex, кнопки запуска и короткая памятка — [docs/codex.md](docs/codex.md).
+
 ## Быстрый старт
 
 Нужен Node 24 LTS (`.nvmrc`).
