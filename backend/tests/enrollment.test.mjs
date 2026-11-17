@@ -60,6 +60,7 @@ for (const [name, baseUrl] of [
             201,
           ),
         );
+      const grouped = await login(baseUrl, users[0].user.email, users[0].temporaryPassword);
       const manual = await login(baseUrl, users[2].user.email, users[2].temporaryPassword);
       const self = await login(baseUrl, users[3].user.email, users[3].temporaryPassword);
       await expect(
@@ -69,7 +70,10 @@ for (const [name, baseUrl] of [
       await expect(await send(tutor, "PATCH", root, { tutorId: stranger.user.id }), 403);
       let info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
       assert.equal(info.students.length, 2);
-      assert.ok(info.students.every((s) => s.source === "group"));
+      assert.deepEqual(
+        info.students.map((s) => s.sources),
+        [["group"], ["group"]],
+      );
       const search = await expect(
         await get(
           baseUrl,
@@ -146,13 +150,27 @@ for (const [name, baseUrl] of [
       assert.equal((await expect(await get(baseUrl, root, self.cookie))).id, course.id);
       info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
       assert.equal(info.students.length, 4);
-      assert.equal(info.students.find((s) => s.id === self.user.id).source, "self");
-      assert.equal(info.students.find((s) => s.id === manual.user.id).source, "manual");
+      assert.deepEqual(info.students.find((s) => s.id === self.user.id).sources, ["self"]);
+      assert.deepEqual(info.students.find((s) => s.id === manual.user.id).sources, ["manual"]);
       assert.ok(!info.students.some((s) => s.id === student.user.id));
       assert.equal((await expect(await get(baseUrl, root, tutor.cookie))).enrolled, 4);
       // Повторная запись через другой способ не удваивает участника; снятие группы не отнимает индивидуальную запись.
       await expect(await send(tutor, "POST", `${root}/enrollment/students`, { userId: users[0].user.id }));
       assert.equal((await expect(await get(baseUrl, root, tutor.cookie))).enrolled, 4);
+      const groupedEnrollment = `${root}/enrollment/students/${grouped.user.id}`;
+      const manualEnrollment = `${root}/enrollment/students/${manual.user.id}`;
+      info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
+      assert.deepEqual(info.students.find((s) => s.id === grouped.user.id).sources, ["group", "manual"]);
+      await expect(await send(stranger, "DELETE", groupedEnrollment), 404);
+      await expect(await send(student, "DELETE", groupedEnrollment), 403);
+      await Promise.all([1, 2].map(async () => expect(await send(tutor, "DELETE", groupedEnrollment), 204)));
+      assert.equal((await expect(await get(baseUrl, root, grouped.cookie))).id, course.id);
+      info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
+      assert.deepEqual(info.students.find((s) => s.id === grouped.user.id).sources, ["group"]);
+      await expect(await send(tutor, "DELETE", manualEnrollment), 204);
+      await expect(await get(baseUrl, root, manual.cookie), 404);
+      await expect(await send(tutor, "POST", `${root}/enrollment/students`, { userId: grouped.user.id }));
+      await expect(await send(tutor, "POST", `${root}/enrollment/students`, { userId: manual.user.id }));
       await expect(await send(tutor, "PATCH", root, { cohortIds: [] }));
       info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
       assert.equal(info.students.length, 3);

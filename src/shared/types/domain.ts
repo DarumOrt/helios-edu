@@ -67,7 +67,7 @@ export interface EnrolledStudent {
   name: string;
   email: string;
   group?: string;
-  source: "group" | "manual" | "self";
+  sources: ("group" | "manual" | "self")[];
 }
 
 export interface EnrollmentInfo {

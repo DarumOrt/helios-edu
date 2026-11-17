@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { backendForward } from "@/shared/lib/backend";
 import { demoCourseEditor, fail, readJson, str } from "@/mocks/management-guards";
-import { enrollmentInfo, enrollStudent, setKeyword } from "@/mocks/enrollment-store";
+import {
+  enrollmentInfo,
+  enrollStudent,
+  removeIndividualEnrollment,
+  setKeyword,
+} from "@/mocks/enrollment-store";
 import { allDemoUsers, findDemoUser } from "@/mocks/users-store";
 import { keywordError } from "@/shared/lib/enrollment";
 
@@ -33,8 +38,14 @@ async function handle(req: Request, { params }: Ctx) {
             )
             .sort((a, b) => a.name.localeCompare(b.name, "ru"))
             .slice(0, 20)
-            .map((u) => ({ id: u.id, name: u.name, email: u.email, group: u.group, source: "manual" })),
+            .map((u) => ({ id: u.id, name: u.name, email: u.email, group: u.group, sources: [] })),
     );
+  }
+  if (req.method === "DELETE" && path.length === 2 && path[0] === "students") {
+    const student = findDemoUser(path[1]);
+    if (student?.role !== "student" || student.tenantId !== actor.tenantId) return fail(404, "not found");
+    removeIndividualEnrollment(id, student.id);
+    return new NextResponse(null, { status: 204 });
   }
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
@@ -55,4 +66,4 @@ async function handle(req: Request, { params }: Ctx) {
   } else return fail(404, "not found");
   return NextResponse.json({ ok: true });
 }
-export { handle as GET, handle as POST, handle as PUT };
+export { handle as GET, handle as POST, handle as PUT, handle as DELETE };

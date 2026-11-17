@@ -68,17 +68,15 @@ export function NotificationsBell() {
       await mutate((list) => list?.map((n) => (changed.has(n.id) ? { ...n, read: true } : n)), {
         revalidate: false,
       });
-      return true;
     } catch (failure) {
       setActionError(apiErrorInfo(failure).error ?? "Не удалось отметить уведомления. Попробуйте ещё раз.");
       await mutate();
-      return false;
     } finally {
       setPending(false);
     }
   }
-  async function openNotification(n: Notification) {
-    if (!n.read && !(await mark([n.id]))) return;
+  function openNotification(n: Notification) {
+    if (!n.read) void mark([n.id]);
     if (n.link) {
       setOpen(false);
       router.push(n.link);

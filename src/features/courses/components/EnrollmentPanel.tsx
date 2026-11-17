@@ -5,7 +5,18 @@ import useSWR, { mutate } from "swr";
 import { KeyRound, Search, UserPlus, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api, fetcher } from "@/shared/lib/api-client";
-import { Badge, Button, Card, CardBody, CardHeader, DataState, Field, Input, describedBy } from "@/shared/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  DataState,
+  Dialog,
+  Field,
+  Input,
+  describedBy,
+} from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import { keywordError } from "@/shared/lib/enrollment";
 import type { Cohort, EnrollmentInfo, EnrolledStudent } from "@/shared/types/domain";
@@ -44,6 +55,7 @@ function EnrollmentForm({
   const [q, setQ] = useState("");
   const [groupQuery, setGroupQuery] = useState("");
   const [cohortIds, setCohortIds] = useState(data.cohortIds);
+  const [studentToRemove, setStudentToRemove] = useState<EnrolledStudent | null>(null);
   const { pending, fields, error, run, setFields } = useFormSubmit();
   const {
     data: matches,
@@ -54,7 +66,9 @@ function EnrollmentForm({
     fetcher,
     { keepPreviousData: false },
   );
-  const enrolled = new Set(data.students.map((s) => s.id));
+  const individuallyEnrolled = new Set(
+    data.students.filter((s) => s.sources.some((source) => source !== "group")).map((s) => s.id),
+  );
   async function refresh() {
     await mutate(
       (key) =>
@@ -188,10 +202,12 @@ function EnrollmentForm({
                         variant="outline"
                         size="sm"
                         className="mt-2"
-                        disabled={pending || enrolled.has(s.id)}
+                        disabled={pending || individuallyEnrolled.has(s.id)}
                         onClick={() => addStudent(s.id)}
                       >
-                        {enrolled.has(s.id) ? "Уже на курсе" : "Записать"}
+                        {individuallyEnrolled.has(s.id)
+                          ? "Уже записан индивидуально"
+                          : "Записать индивидуально"}
                       </Button>
                     </li>
                   ))}
@@ -258,7 +274,7 @@ function EnrollmentForm({
                   <tr className="border-b text-xs text-muted-foreground">
                     <th className="px-3 py-2 font-medium">Студент</th>
                     <th className="px-3 py-2 font-medium">Группа</th>
-                    <th className="px-3 py-2 font-medium">Способ записи</th>
+                    <th className="px-3 py-2 font-medium">Доступ к курсу</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -270,7 +286,22 @@ function EnrollmentForm({
                       </td>
                       <td className="px-3 py-3">{s.group ?? "Без группы"}</td>
                       <td className="px-3 py-3">
-                        <Badge>{sourceLabel[s.source]}</Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {s.sources.map((source) => (
+                            <Badge key={source}>{sourceLabel[source]}</Badge>
+                          ))}
+                        </div>
+                        {individuallyEnrolled.has(s.id) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1 h-auto text-wrap"
+                            aria-label={`Снять индивидуальную запись: ${s.name}`}
+                            onClick={() => setStudentToRemove(s)}
+                          >
+                            Снять индивидуальную запись
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -284,6 +315,64 @@ function EnrollmentForm({
           )}
         </CardBody>
       </Card>
+      {studentToRemove && (
+        <RemoveEnrollmentDialog
+          student={studentToRemove}
+          root={root}
+          onClose={() => setStudentToRemove(null)}
+          refresh={refresh}
+        />
+      )}
     </div>
+  );
+}
+
+function RemoveEnrollmentDialog({
+  student,
+  root,
+  onClose,
+  refresh,
+}: {
+  student: EnrolledStudent;
+  root: string;
+  onClose: () => void;
+  refresh: () => Promise<void>;
+}) {
+  const { pending, error, run } = useFormSubmit();
+  async function remove() {
+    const removed = await run(async () => {
+      await api.del(`${root}/enrollment/students/${encodeURIComponent(student.id)}`);
+      return true;
+    });
+    if (!removed) return;
+    onClose();
+    toast.success("Индивидуальная запись снята");
+    await refresh();
+  }
+  return (
+    <Dialog
+      open
+      title="Снять индивидуальную запись?"
+      description={student.name}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" disabled={pending} onClick={onClose}>
+            Отмена
+          </Button>
+          <Button variant="danger" disabled={pending} onClick={remove}>
+            {pending ? "Снимаем…" : "Снять запись"}
+          </Button>
+        </>
+      }
+    >
+      <p className="text-sm">
+        {student.sources.includes("group")
+          ? "Доступ к курсу сохранится через назначенную группу."
+          : "Студент потеряет доступ к курсу. Если запись по кодовому слову включена, он сможет записаться снова."}{" "}
+        Оценки и сданные работы сохранятся.
+      </p>
+      <FormError message={error} />
+    </Dialog>
   );
 }

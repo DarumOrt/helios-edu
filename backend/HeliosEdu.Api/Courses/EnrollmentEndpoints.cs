@@ -18,7 +18,7 @@ public sealed class CourseEnrollment
     public DateTimeOffset CreatedAt { get; set; }
 }
 
-public sealed record EnrolledStudent(string Id, string Name, string Email, string? Group, string Source);
+public sealed record EnrolledStudent(string Id, string Name, string Email, string? Group, string[] Sources);
 public sealed record EnrollmentInfo(bool KeyEnabled, IReadOnlyList<string> CohortIds, IReadOnlyList<EnrolledStudent> Students);
 
 public static class EnrollmentEndpoints
@@ -34,6 +34,7 @@ public static class EnrollmentEndpoints
         group.MapGet("/students", SearchAsync).Produces<EnrolledStudent[]>();
         group.MapPut("/key", SetKeyAsync);
         group.MapPost("/students", AddStudentAsync);
+        group.MapDelete("/students/{userId}", RemoveStudentAsync).Produces(StatusCodes.Status204NoContent);
         app.MapGroup("/api/courses").RequireAuthorization(AccessRules.EnrollSelf)
             .AddEndpointFilter<ManagementWriteFilter>().MapPost("/{id}/enroll", EnrollAsync)
             .RequireRateLimiting("enrollment");
@@ -48,15 +49,20 @@ public static class EnrollmentEndpoints
         if (course is null) return Fail(404, "not found");
         var token = context.RequestAborted;
         var tenant = Actor(context).TenantId;
-        var cohorts = await db.Cohorts.Where(g => g.TenantId == tenant && db.CohortCourses.Any(l =>
-            l.CourseId == id && l.CohortId == g.Id)).ToListAsync(token);
-        var groups = cohorts.Select(g => g.Name).ToHashSet();
-        var links = await db.CourseEnrollments.Where(l => l.CourseId == id).ToDictionaryAsync(l => l.UserId, token);
+        var assignedGroups = db.Cohorts.Where(g => g.TenantId == tenant && db.CohortCourses.Any(l =>
+            l.CourseId == id && l.CohortId == g.Id));
+        var cohortIds = await assignedGroups.Select(g => g.Id).ToListAsync(token);
         var students = await AccessRules.CourseStudents(db, id).Where(a => a.TenantId == tenant)
-            .OrderBy(a => a.Name).ToListAsync(token);
-        return Results.Ok(new EnrollmentInfo(course.EnrollmentKeyHash is not null, cohorts.Select(g => g.Id).ToList(),
+            .OrderBy(a => a.Name).Select(a => new
+            {
+                a.Id, a.Name, a.Email, a.Group,
+                ViaGroup = assignedGroups.Any(g => g.Name == a.Group),
+                Individual = db.CourseEnrollments.Where(l => l.CourseId == id && l.UserId == a.Id)
+                    .Select(l => l.Source).FirstOrDefault()
+            }).ToListAsync(token);
+        return Results.Ok(new EnrollmentInfo(course.EnrollmentKeyHash is not null, cohortIds,
             students.Select(a => new EnrolledStudent(a.Id, a.Name, a.Email, a.Group,
-                groups.Contains(a.Group ?? "") ? "group" : links[a.Id].Source)).ToList()));
+                a.Individual is { } source ? (a.ViaGroup ? ["group", source] : [source]) : ["group"])).ToList()));
     }
 
     private static async Task<IResult> SearchAsync(string id, string? q, HttpContext context, LearningDbContext db)
@@ -68,7 +74,7 @@ public static class EnrollmentEndpoints
         var lowered = query.ToLowerInvariant();
         var rows = await db.Accounts.AsNoTracking().Where(a => a.TenantId == tenant && a.Role == "student" &&
             a.Status == "active" && (a.Name.ToLower().Contains(lowered) || a.Email.ToLower().Contains(lowered)))
-            .OrderBy(a => a.Name).Take(20).Select(a => new EnrolledStudent(a.Id, a.Name, a.Email, a.Group, "manual"))
+            .OrderBy(a => a.Name).Take(20).Select(a => new EnrolledStudent(a.Id, a.Name, a.Email, a.Group, Array.Empty<string>()))
             .ToListAsync(context.RequestAborted);
         return Results.Ok(rows);
     }
@@ -101,6 +107,25 @@ public static class EnrollmentEndpoints
         if (student is null) return Invalid(new() { ["userId"] = "Выберите действующего студента" });
         await Add(db, context, course, student, "manual");
         return Results.Ok(new { ok = true });
+    }
+
+    private static async Task<IResult> RemoveStudentAsync(string id, string userId, HttpContext context, LearningDbContext db)
+    {
+        var course = await Editable(id, context, db);
+        if (course is null) return Fail(404, "not found");
+        var token = context.RequestAborted;
+        var tenant = Actor(context).TenantId;
+        var student = await db.Accounts.Where(a => a.Id == userId && a.TenantId == tenant && a.Role == "student")
+            .Select(a => a.Name).SingleOrDefaultAsync(token);
+        if (student is null) return Fail(404, "not found");
+        var removed = await db.CourseEnrollments.Where(l => l.CourseId == id && l.UserId == userId)
+            .ExecuteDeleteAsync(token);
+        if (removed > 0)
+        {
+            AuditLog.Write(db, context, "course.unenrolled", "course", id, $"{course.Code} · {student}");
+            await db.SaveChangesAsync(token);
+        }
+        return Results.NoContent();
     }
 
     private static async Task<IResult> EnrollAsync(string id, HttpContext context, LearningDbContext db)

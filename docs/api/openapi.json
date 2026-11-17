@@ -890,6 +890,34 @@
         }
       }
     },
+    "/api/courses/{id}/enrollment/students/{userId}": {
+      "delete": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/courses/{id}/enroll": {
       "post": {
         "tags": ["EnrollmentEndpoints"],
@@ -2974,7 +3002,7 @@
         }
       },
       "EnrolledStudent": {
-        "required": ["id", "name", "email", "group", "source"],
+        "required": ["id", "name", "email", "group", "sources"],
         "type": "object",
         "properties": {
           "id": {
@@ -2989,8 +3017,11 @@
           "group": {
             "type": ["null", "string"]
           },
-          "source": {
-            "type": "string"
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

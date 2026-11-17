@@ -23,6 +23,9 @@ export function enrollStudent(id: string, userId: string, source: Source) {
   if (!students.has(userId)) students.set(userId, source);
   store.students.set(id, students);
 }
+export function removeIndividualEnrollment(id: string, userId: string) {
+  store.students.get(id)?.delete(userId);
+}
 export function isEnrolled(id: string, user: Pick<User, "id" | "group">) {
   return courseIdsForGroup(user.group).has(id) || (store.students.get(id)?.has(user.id) ?? false);
 }
@@ -35,12 +38,11 @@ export function enrollmentInfo(id: string, tenant: string): EnrollmentInfo {
     students: allDemoUsers()
       .filter((u) => u.tenantId === tenant && u.role === "student" && isEnrolled(id, u))
       .sort((a, b) => a.name.localeCompare(b.name, "ru"))
-      .map((u): EnrolledStudent => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        group: u.group,
-        source: courseIdsForGroup(u.group).has(id) ? "group" : store.students.get(id)!.get(u.id)!,
-      })),
+      .map((u): EnrolledStudent => {
+        const sources: EnrolledStudent["sources"] = courseIdsForGroup(u.group).has(id) ? ["group"] : [];
+        const individual = store.students.get(id)?.get(u.id);
+        if (individual) sources.push(individual);
+        return { id: u.id, name: u.name, email: u.email, group: u.group, sources };
+      }),
   };
 }

@@ -7,10 +7,11 @@
 | --- | --- | --- |
 | `POST /api/courses` | Преподаватель, управление | Существующий контракт карточки. Преподавателю `tutorId` необязателен, допускается только собственный id. Создаёт черновик |
 | `PATCH /api/courses/{id}` | Преподаватель своего курса, управление | `cohortIds: string[]` — полный список групп, максимум 200; сохраняется прежний контракт остальных полей |
-| `GET /api/courses/{id}/enrollment` | Преподаватель своего курса, управление | `{ keyEnabled, cohortIds, students: [{ id, name, email, group?, source }] }`; `source`: `group`, `manual`, `self` |
-| `GET /api/courses/{id}/enrollment/students?q=…` | Те же | До 20 действующих студентов своего вуза; поиск по фамилии/имени или почте, от 2 до 100 символов |
+| `GET /api/courses/{id}/enrollment` | Преподаватель своего курса, управление | `{ keyEnabled, cohortIds, students: [{ id, name, email, group?, sources }] }`; `sources` содержит все основания (`group`, `manual`, `self`) |
+| `GET /api/courses/{id}/enrollment/students?q=…` | Те же | До 20 действующих студентов своего вуза; поиск по фамилии/имени или почте, от 2 до 100 символов. У результатов поиска `sources: []` |
 | `PUT /api/courses/{id}/enrollment/key` | Те же | `{ keyword: string }` задаёт/меняет слово; `{ keyword: null }` отключает самозапись |
 | `POST /api/courses/{id}/enrollment/students` | Те же | `{ userId }` — индивидуальная запись действующего студента своего вуза; повтор не создаёт дубликат |
+| `DELETE /api/courses/{id}/enrollment/students/{userId}` | Те же | Снимает индивидуальную запись, сохраняя доступ по группе и учебные результаты. Ответ `204`, включая повтор; неизвестный студент — `404` |
 | `POST /api/courses/{id}/enroll` | Студент | `{ keyword }`; userId/role из тела не применяются. Опубликованный курс, максимум 15 запросов/мин. |
 
 Ошибка формы: `400 { error: "Проверьте поля формы", fields: { keyword: "…" } }`.
@@ -31,6 +32,7 @@
 `POST /api/notifications/read { ids: string[] }` отмечает от 1 до 200 доступных пользователю уведомлений.
 Неизвестный или чужой id отклоняет весь запрос с `404`; повторы безопасны.
 Кнопка «Прочитать показанные» применяет текущие фильтры, большие выборки отправляет частями.
+Переход по ссылке уведомления выполняется сразу. При ошибке отметки уведомление остаётся непрочитанным.
 
 Проверки: `backend/tests/enrollment.test.mjs`, `notifications.test.mjs` (C# и Next),
 модульные `enrollment.test.ts`, `permissions.test.ts`, `notifications/filters.test.ts`.

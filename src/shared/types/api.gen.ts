@@ -229,7 +229,7 @@ export type EnrolledStudent = {
   name: string;
   email: string;
   group: string | null;
-  source: string;
+  sources: string[];
 };
 
 export type EnrollmentInfo = {
