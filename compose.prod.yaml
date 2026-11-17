@@ -41,6 +41,8 @@ services:
       DEMO_MODE: "off"
       # адрес пользователя берём из заголовка Caddy (лимит входов)
       TRUSTED_PROXY: "on"
+      # адрес сайта для robots.txt и sitemap.xml
+      SITE_URL: ${SITE_URL}
     depends_on:
       - api
 

@@ -140,6 +140,7 @@ jobs:
       - run: npm run format:check
       # Модульные тесты правил (Vitest). Шаг внутри этой проверки: имя проверки обязательно в защите main.
       - run: npm test
+      - run: npm run test:tools
 
   build:
     name: Next build
