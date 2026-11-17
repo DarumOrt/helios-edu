@@ -33,7 +33,7 @@
 | `claude/deploy-caddy-reload` | Правки reload Caddy и документации сохранены в локальном коммите `c43864d` перед переносом чата. Нужна отдельная проверка при выкладке. |
 | `.claude/worktrees/formula-waves`, `claude/formula-waves` | Незакоммиченный фон FormulaWaves вместо SkyScene; новый компонент untracked, удаление SkyScene staged. Проверить обе темы и узкий экран; прежняя проверка остановилась на HTTP 500. Тёмные линии сделать менее контрастными по согласованному дизайну. |
 | [PR #45](https://github.com/DarumOrt/helios-edu/pull/45) | Курсы преподавателя, индивидуальная запись / кодовое слово, уведомления. Ещё не в main. Меняет прежние решения о правах и составе курса; при слиянии согласовать AGENTS, STATUS, README и ADR 0003. |
-| [PR #44](https://github.com/DarumOrt/helios-edu/pull/44) | HTML-паспорт проекта; ещё не в main. |
+| [PR #44](https://github.com/DarumOrt/helios-edu/pull/44) | [HTML-паспорт](architecture/helios-project-passport.html) описывает срез `0021a94`. Логины предназначены для локальной базы с демо-данными. |
 | [PR #49](https://github.com/DarumOrt/helios-edu/pull/49) | Next 16.4.5; текущая ветка обновляет сразу до 16.4.6. После её слияния отдельно решить судьбу дублирующего PR. |
 | [PR #48](https://github.com/DarumOrt/helios-edu/pull/48) | Группа обновлений зависимостей; отдельное ревью, не смешивать с переходом. |
 | [PR #38](https://github.com/DarumOrt/helios-edu/pull/38) | `@types/node` 24 → 26 — не вливать при Node 24. |
