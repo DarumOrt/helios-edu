@@ -4,9 +4,8 @@ import useSWR from "swr";
 import { UsersRound } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { useSession } from "@/shared/auth/session";
-import { Avatar, DataState } from "@/shared/ui";
+import { Avatar, DataState, Disclosure } from "@/shared/ui";
 import type { Classmate } from "@/shared/types/domain";
-import { Widget } from "./Widget";
 
 /** Одногруппники: учёба — не только материалы, но и люди рядом. Почту API не отдаёт — это личные данные. */
 export function Classmates() {
@@ -18,11 +17,7 @@ export function Classmates() {
   const mates = (data ?? []).filter((u) => u.id !== user.id);
 
   return (
-    <Widget
-      title="Одногруппники"
-      subtitle={mates.length ? `${mates.length} человек в ${user.group}` : undefined}
-      icon={UsersRound}
-    >
+    <Disclosure title="Одногруппники" meta={user.group} icon={<UsersRound size={17} />}>
       <DataState loading={isLoading} error={error} empty={!mates.length} emptyTitle="Пока никого нет">
         <ul className="space-y-1">
           {mates.slice(0, 5).map((m) => (
@@ -36,6 +31,6 @@ export function Classmates() {
           ))}
         </ul>
       </DataState>
-    </Widget>
+    </Disclosure>
   );
 }

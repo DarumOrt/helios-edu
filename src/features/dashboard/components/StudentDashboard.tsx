@@ -4,101 +4,130 @@ import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
 import { useSession } from "@/shared/auth/session";
 import Link from "next/link";
-import { Flame, Star, Trophy } from "lucide-react";
-import { Button } from "@/shared/ui";
-import type { Course, Notification } from "@/shared/types/domain";
+import { BookCheck, Flame, Medal, Trophy } from "lucide-react";
+import { Card, Progress, Skeleton } from "@/shared/ui";
+import { materialProgress } from "@/shared/lib/learning-progress";
+import { pluralCount } from "@/shared/lib/format";
+import type { Course } from "@/shared/types/domain";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
-import { RoleHero, HeroChip } from "./RoleHero";
-import { FactStrip } from "./FactStrip";
+import { RoleHero } from "./RoleHero";
 import { NextStep } from "./NextStep";
 import { MyCoursesWidget } from "./MyCoursesWidget";
 import { UpcomingDeadlines } from "./UpcomingDeadlines";
 import { NotificationsWidget } from "./NotificationsWidget";
 import { WeekSchedule } from "./WeekSchedule";
 import { Classmates } from "./Classmates";
+import { GradesWidget } from "./GradesWidget";
 
 export function StudentDashboard() {
   const user = useSession((s) => s.user);
-  const { data: courses } = useSWR<Course[]>("/api/courses?sections=1", fetcher);
-  const { data: notifs } = useSWR<Notification[]>("/api/notifications", fetcher);
-
-  const avgProgress = courses?.length
-    ? Math.round(courses.reduce((a, c) => a + (c.progress ?? 0), 0) / courses.length)
-    : 0;
-  const openTasks =
-    courses
-      ?.flatMap((c) => (c.sections ?? []).flatMap((s) => s.activities))
-      .filter((a) => a.due && !a.completed).length ?? 0;
-  const unread = notifs?.filter((n) => !n.read).length ?? 0;
-  const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
-    courses?.[0] ? `/api/hub/leaderboard?courseId=${courses[0].id}&userId=${user.id}` : null,
+  const demo = useSession((s) => !s.backendEnabled);
+  const { data: courses, error, isLoading } = useSWR<Course[]>("/api/courses?sections=1", fetcher);
+  const { done, total, percent } = materialProgress(courses ?? []);
+  const rankedCourse = courses?.[0];
+  const { data: leaderboard } = useSWR<{ entries: LeaderboardEntry[] }>(
+    rankedCourse
+      ? `/api/hub/leaderboard?courseId=${encodeURIComponent(rankedCourse.id)}&userId=${encodeURIComponent(user.id)}`
+      : null,
     fetcher,
   );
-  const me = lb?.entries.find((e) => e.isCurrentUser);
-  // Курс, который ближе всего к финишу, — повод для мотивирующей фразы
-  const closest = courses
-    ?.filter((c) => (c.progress ?? 0) < 100)
-    .sort((a, b) => (b.progress ?? 0) - (a.progress ?? 0))[0];
+  const entries = leaderboard?.entries ?? [];
+  const entry = entries.find((row) => row.isCurrentUser);
+  const state = { courses, error, loading: isLoading };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <RoleHero
         name={user.name.split(" ")[0]}
-        subtitle={
-          closest ? (
-            <>
-              «{closest.title}» пройден на {closest.progress}% — ещё немного, и курс закрыт.
-            </>
-          ) : (
-            "Все курсы пройдены. Отличная работа!"
-          )
-        }
-        chips={
-          <>
-            {me && me.streak > 0 && (
-              <HeroChip icon={Flame} tone="sun">
-                {me.streak} {me.streak === 1 ? "день" : me.streak < 5 ? "дня" : "дней"} подряд
-              </HeroChip>
-            )}
-            {me && <HeroChip icon={Star}>{me.score} баллов в группе</HeroChip>}
-            <HeroChip>{avgProgress}% пройдено в среднем</HeroChip>
-          </>
-        }
-        actions={
-          <Link href="/hub">
-            <Button variant="outline">
-              <Trophy size={16} /> Хаб группы
-            </Button>
-          </Link>
+        actions={<NextStep {...state} />}
+        aside={
+          isLoading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : total > 0 ? (
+            <Card className="min-w-0 border-border/60 bg-card/85 p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <BookCheck size={16} className="text-primary" aria-hidden /> Мои материалы
+                </span>
+                <strong className="text-2xl leading-none font-semibold tabular-nums">{percent}%</strong>
+              </div>
+              <Progress
+                value={percent}
+                label="Доля завершённых материалов во всех курсах"
+                className="mt-2.5"
+                tone={done === total ? "success" : "primary"}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                Завершено {done} из {total} во всех курсах
+              </p>
+            </Card>
+          ) : undefined
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <NextStep />
-        </div>
-        <UpcomingDeadlines />
-      </div>
+      {entry && rankedCourse && (
+        <Card className="border-border px-4 py-3 sm:px-5">
+          <section
+            aria-labelledby="student-rating-title"
+            className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:items-center"
+          >
+            <div className="min-w-0">
+              <h2 id="student-rating-title" className="text-sm font-semibold">
+                {demo ? "Рейтинг в демо" : "Мой рейтинг"}
+              </h2>
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{rankedCourse.title}</p>
+              <Link
+                href="/hub"
+                className="mt-1 inline-block text-xs font-medium text-primary underline-offset-3 hover:underline"
+              >
+                Открыть рейтинг
+              </Link>
+            </div>
+            <dl className="grid grid-cols-3 gap-2 text-xs sm:gap-3">
+              <div className="min-w-0 rounded-lg bg-sun-soft px-2.5 py-2 text-warning">
+                <dt className="flex items-center gap-1">
+                  <Flame size={14} aria-hidden /> Серия
+                </dt>
+                <dd className="mt-0.5 font-semibold tabular-nums">
+                  {pluralCount(entry.streak, "день", "дня", "дней")} подряд
+                </dd>
+              </div>
+              <div className="min-w-0 rounded-lg bg-primary-soft px-2.5 py-2">
+                <dt className="flex items-center gap-1 text-muted-foreground">
+                  <Trophy size={14} aria-hidden /> Баллы
+                </dt>
+                <dd className="mt-0.5 font-semibold tabular-nums">{entry.score} из 100</dd>
+              </div>
+              <div className="min-w-0 rounded-lg bg-muted px-2.5 py-2">
+                <dt className="flex items-center gap-1 text-muted-foreground">
+                  <Medal size={14} aria-hidden /> Место
+                </dt>
+                <dd className="mt-0.5 font-semibold tabular-nums">
+                  {entry.rank} из {entries.length}
+                </dd>
+              </div>
+            </dl>
+          </section>
+        </Card>
+      )}
 
-      <FactStrip
-        facts={[
-          { label: "Курсов", value: courses?.length ?? 0, href: "/courses" },
-          { label: "Пройдено в среднем", value: `${avgProgress}%` },
-          { label: "Заданий к сдаче", value: openTasks, tone: openTasks ? "warning" : "default" },
-          { label: "Новых уведомлений", value: unread },
-        ]}
-      />
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="min-w-0 xl:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+        <section aria-labelledby="student-learning" className="min-w-0 space-y-2.5">
+          <h2 id="student-learning" className="px-0.5 text-lg font-semibold tracking-tight">
+            Моя учёба
+          </h2>
+          <MyCoursesWidget {...state} />
+          <GradesWidget />
+          {user.group && <Classmates />}
+        </section>
+        <section aria-labelledby="student-agenda" className="min-w-0 space-y-2.5">
+          <h2 id="student-agenda" className="px-0.5 text-lg font-semibold tracking-tight">
+            Сегодня
+          </h2>
+          <UpcomingDeadlines {...state} />
           <WeekSchedule />
-        </div>
-        <Classmates />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <MyCoursesWidget />
-        <NotificationsWidget />
+          <NotificationsWidget collapsible />
+        </section>
       </div>
     </div>
   );

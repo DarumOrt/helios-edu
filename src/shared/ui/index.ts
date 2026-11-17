@@ -16,3 +16,5 @@ export { CourseCover } from "./CourseCover";
 export { Field, describedBy } from "./Field";
 export { Dialog } from "./Dialog";
 export { FileUpload } from "./FileUpload";
+export { Disclosure } from "./Disclosure";
+export { WavePanel } from "./WavePanel";

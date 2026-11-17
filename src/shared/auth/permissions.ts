@@ -101,7 +101,7 @@ export function navForRole(role: Role): NavItem[] {
 
   // Поиск курсов и дашборд — у всех
   items.push(M("/search", "Поиск", Search));
-  items.push(M("/dashboard", "Дашборд", LayoutDashboard));
+  items.push(M("/dashboard", "Главная", LayoutDashboard));
 
   if (role === "student") {
     items.push(M("/courses", "Мои курсы", BookOpen));

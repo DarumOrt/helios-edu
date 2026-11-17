@@ -40,7 +40,7 @@ export function AnnouncementsCard({ courseId }: { courseId: string }) {
               </div>
               <p className="mt-1 text-sm whitespace-pre-line text-foreground/80">{a.body}</p>
               <div className="mt-1.5 text-xs text-muted-foreground">
-                {a.authorName} · <span className="font-mono">{formatDateTime(a.createdAt)}</span>
+                {a.authorName}, <span className="font-mono">{formatDateTime(a.createdAt)}</span>
               </div>
             </li>
           ))}

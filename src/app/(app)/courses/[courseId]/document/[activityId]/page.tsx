@@ -4,8 +4,10 @@ import { use } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
 import { ExternalLink } from "lucide-react";
-import { PageHeader, Breadcrumbs, DataState, buttonVariants } from "@/shared/ui";
+import { DataState, buttonVariants } from "@/shared/ui";
 import { DocumentReader } from "@/features/player/DocumentReader";
+import { LessonHeader } from "@/features/player/LessonHeader";
+import { LessonRoute } from "@/features/player/LessonRoute";
 import { LessonStatsPanel } from "@/features/analytics/components/LessonStatsPanel";
 import { RoleGate } from "@/shared/auth/RoleGate";
 import { useActivityEvents } from "@/features/adaptive/useActivityEvents";
@@ -21,7 +23,7 @@ export default function DocumentLessonPage({
 
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
-    .find((a) => a.id === activityId);
+    .find((a) => a.id === activityId && (a.type === "pdf" || a.type === "presentation"));
   const onComplete = useActivityEvents(courseId, activity?.id);
 
   const kind = activity?.type === "presentation" ? "presentation" : "pdf";
@@ -29,11 +31,14 @@ export default function DocumentLessonPage({
   return (
     <div>
       <DataState loading={isLoading} error={error} empty={!activity}>
-        {activity && (
+        {course && activity && (
           <>
-            <PageHeader
+            <LessonHeader
+              courseId={courseId}
+              courseCode={course.code}
               title={activity.title}
-              subtitle={`${kind === "pdf" ? "PDF-документ" : "Презентация"} · просмотр отслеживается`}
+              type={kind}
+              durationMin={activity.durationMin}
               actions={
                 // сам файл (загруженный — /api/files/…); встроенный просмотр PDF — следующий шаг (PDF.js)
                 activity.src && (
@@ -47,23 +52,16 @@ export default function DocumentLessonPage({
                   </a>
                 )
               }
-              breadcrumbs={
-                <Breadcrumbs
-                  items={[
-                    { label: "Курсы", href: "/courses" },
-                    { label: course?.title ?? "Курс", href: `/courses/${courseId}` },
-                    { label: kind === "pdf" ? "Конспект" : "Презентация" },
-                  ]}
-                />
-              }
             />
             <DocumentReader
+              key={`${courseId}/${activity.id}`}
               courseId={courseId}
               activityId={activity.id}
               kind={kind}
-              title={activity.title}
+              hasFile={Boolean(activity.src)}
               totalPages={activity.pages ?? 10}
               onComplete={onComplete}
+              navigation={<LessonRoute course={course} activityId={activity.id} />}
             />
             <RoleGate roles={["tutor", "admin", "organizer"]}>
               <div className="mt-8">

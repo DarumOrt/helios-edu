@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { ClipboardCheck, AlertTriangle, BarChart3, ChevronRight } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { useSession } from "@/shared/auth/session";
-import { Button, Avatar, Badge, Progress, DataState } from "@/shared/ui";
+import { buttonVariants, Avatar, Badge, Progress, DataState } from "@/shared/ui";
 import { RoleHero } from "./RoleHero";
 import { FactStrip } from "./FactStrip";
 import { Widget } from "./Widget";
@@ -15,12 +15,13 @@ import type { SubmissionFull } from "@/features/submissions/api";
 import type { LeaderboardEntry } from "@/shared/lib/tracking/types";
 import type { CourseActivityStat } from "@/features/analytics/api";
 import { POLL_LIVE } from "@/shared/lib/polling";
+import { pluralCount } from "@/shared/lib/format";
 
 export function TeacherDashboard() {
   const user = useSession((s) => s.user);
   const { data: subs } = useSWR<{ items: SubmissionFull[] }>("/api/submissions?status=submitted", fetcher);
   // первый из курсов преподавателя — по нему прогресс группы на дашборде
-  const { data: myCourses } = useSWR<{ id: string }[]>("/api/courses", fetcher);
+  const { data: myCourses } = useSWR<{ id: string; title: string }[]>("/api/courses", fetcher);
   const COURSE = myCourses?.[0]?.id;
   const { data: lb } = useSWR<{ entries: LeaderboardEntry[] }>(
     COURSE ? `/api/hub/leaderboard?courseId=${COURSE}` : null,
@@ -47,20 +48,16 @@ export function TeacherDashboard() {
         name={user.name.split(" ")[0]}
         subtitle={
           pending.length
-            ? `${pending.length} ${pending.length === 1 ? "работа ждёт" : "работы ждут"} проверки. Начнём с них?`
-            : "Все работы проверены — можно заглянуть в аналитику группы."
+            ? `На проверке ${pluralCount(pending.length, "работа", "работы", "работ")}.`
+            : "Новых работ на проверку нет."
         }
         actions={
           <>
-            <Link href="/submissions">
-              <Button>
-                <ClipboardCheck size={16} /> Проверить работы
-              </Button>
+            <Link href="/submissions" className={buttonVariants()}>
+              <ClipboardCheck size={16} aria-hidden /> Проверить работы
             </Link>
-            <Link href="/analytics">
-              <Button variant="outline">
-                <BarChart3 size={16} /> Аналитика групп
-              </Button>
+            <Link href="/analytics" className={buttonVariants({ variant: "outline" })}>
+              <BarChart3 size={16} aria-hidden /> Аналитика групп
             </Link>
           </>
         }
@@ -153,7 +150,7 @@ export function TeacherDashboard() {
       {/* Прогресс по материалам */}
       <Widget
         title="Прогресс группы по материалам"
-        subtitle="Математический анализ · средн. покрытие по каждому материалу"
+        subtitle={myCourses?.[0]?.title}
         icon={BarChart3}
         action={
           <Link

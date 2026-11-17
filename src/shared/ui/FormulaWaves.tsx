@@ -140,7 +140,7 @@ function draw(ctx: CanvasRenderingContext2D, field: ReturnType<typeof createFiel
   ctx.putImageData(img, 0, 0);
 }
 
-export function FormulaWaves({ className }: { className?: string }) {
+export function FormulaWaves({ className, animated = true }: { className?: string; animated?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -213,23 +213,27 @@ export function FormulaWaves({ className }: { className?: string }) {
     });
     themeObserver.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
 
-    const viewObserver = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      updateAnimation();
-    });
-    viewObserver.observe(canvas);
-    document.addEventListener("visibilitychange", updateAnimation);
-    reducedMotion.addEventListener("change", updateAnimation);
+    const viewObserver = animated
+      ? new IntersectionObserver(([entry]) => {
+          inView = entry.isIntersecting;
+          updateAnimation();
+        })
+      : null;
+    if (viewObserver) {
+      viewObserver.observe(canvas);
+      document.addEventListener("visibilitychange", updateAnimation);
+      reducedMotion.addEventListener("change", updateAnimation);
+    }
 
     return () => {
       stop();
-      viewObserver.disconnect();
+      viewObserver?.disconnect();
       document.removeEventListener("visibilitychange", updateAnimation);
       reducedMotion.removeEventListener("change", updateAnimation);
       sizeObserver.disconnect();
       themeObserver.disconnect();
     };
-  }, []);
+  }, [animated]);
 
   return (
     <canvas

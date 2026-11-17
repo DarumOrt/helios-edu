@@ -4,10 +4,12 @@ export function Progress({
   value,
   className,
   tone = "primary",
+  label,
 }: {
   value: number;
   className?: string;
   tone?: "primary" | "success" | "warning";
+  label?: string;
 }) {
   const v = Math.max(0, Math.min(100, value));
   const color = tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : "bg-primary";
@@ -15,6 +17,7 @@ export function Progress({
     <div
       className={cn("h-1.5 w-full overflow-hidden rounded-full bg-muted", className)}
       role="progressbar"
+      aria-label={label}
       aria-valuenow={v}
       aria-valuemin={0}
       aria-valuemax={100}

@@ -10,6 +10,7 @@ import { Badge, Button, Card, CardBody, DataState, Progress, buttonVariants } fr
 import { cn } from "@/shared/lib/utils";
 import { useSession } from "@/shared/auth/session";
 import { newSessionId } from "@/shared/lib/tracking/tracker";
+import { revalidateCourseProgress } from "@/shared/lib/revalidate-course-progress";
 import type {
   AdaptiveQuestion,
   AnswerResult,
@@ -104,6 +105,7 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
     try {
       const result = await adaptiveApi.submit(attempt.attemptId);
       setFinished(result);
+      void revalidateCourseProgress(courseId);
       // результат теста — и в рейтинг группы (трекинг), как раньше
       void fetch("/api/tracking/progress", {
         method: "POST",
@@ -242,7 +244,7 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
                     </Button>
                     {hintsLeft > 0 && (
                       <Button variant="ghost" onClick={() => takeHint(q)} disabled={busy !== null}>
-                        <Lightbulb size={16} aria-hidden /> Подсказка · осталось {hintsLeft}
+                        <Lightbulb size={16} aria-hidden /> Подсказка ({hintsLeft})
                       </Button>
                     )}
                   </div>
@@ -313,7 +315,7 @@ function Feedback({
               title="Вероятность, что навык освоен (модель BKT)"
             >
               {skillTitle(c.skillId)}: {masteryPercent(c.before)} → {masteryPercent(c.after)}
-              {c.status === "mastered" && " · освоен"}
+              {c.status === "mastered" && " (освоен)"}
             </li>
           ))}
         </ul>
@@ -342,7 +344,7 @@ function QuizStart({
         </div>
         <p className="mt-4 text-sm text-muted-foreground">
           {attemptsLeft(left)}
-          {summary.used > 0 && ` · завершено: ${summary.used}`}
+          {summary.used > 0 && `. Завершено: ${summary.used}`}
         </p>
         {summary.bestPercent != null && (
           <p className="mt-1 text-sm">
@@ -387,7 +389,7 @@ function QuizResult({
         </Badge>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link href={`/courses/${courseId}`} className={buttonVariants()}>
-            Что дальше <ArrowRight size={16} aria-hidden />
+            К курсу <ArrowRight size={16} aria-hidden />
           </Link>
           {onAgain && (
             <Button variant="outline" onClick={onAgain}>

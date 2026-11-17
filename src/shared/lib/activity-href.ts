@@ -1,18 +1,21 @@
 import type { Activity } from "@/shared/types/domain";
 
+const pages: Partial<Record<Activity["type"], string>> = {
+  quiz: "quiz",
+  assignment: "assignment",
+  video: "video",
+  pdf: "document",
+  presentation: "document",
+};
+
+export function hasActivityPage(type: Activity["type"]) {
+  return Boolean(pages[type]);
+}
+
 /** Ссылка на страницу активности курса — общая для содержания курса и дашборда. */
 export function activityHref(courseId: string, a: Pick<Activity, "id" | "type">) {
-  switch (a.type) {
-    case "quiz":
-      return `/courses/${courseId}/quiz/${a.id}`;
-    case "assignment":
-      return `/courses/${courseId}/assignment/${a.id}`;
-    case "video":
-      return `/courses/${courseId}/video/${a.id}`;
-    case "pdf":
-    case "presentation":
-      return `/courses/${courseId}/document/${a.id}`;
-    default:
-      return `/courses/${courseId}#a-${a.id}`;
-  }
+  const page = pages[a.type];
+  const course = `/courses/${encodeURIComponent(courseId)}`;
+  const activity = encodeURIComponent(a.id);
+  return page ? `${course}/${page}/${activity}` : `${course}#a-${activity}`;
 }
