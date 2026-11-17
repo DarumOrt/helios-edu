@@ -10,6 +10,9 @@ next-env.d.ts
 # env
 .env*
 !.env.example
+!.env.prod.example
+# номер выложенной версии на рабочем сервере
+.version
 
 # logs / os / ide
 *.log
@@ -24,7 +27,10 @@ Thumbs.db
 # локальные данные агентов (worktrees, настройки у каждого свои); общие настройки — .claude/settings.json
 .claude/*
 !.claude/settings.json
-.codex/
+.codex/*
+!.codex/environments/
+.codex/environments/*
+!.codex/environments/environment.toml
 
 # test
 coverage/

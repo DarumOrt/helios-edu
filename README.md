@@ -9,6 +9,8 @@
 
 Что сделано и что дальше — в [ROADMAP.md](ROADMAP.md).
 
+Работа в Codex, кнопки запуска и короткая памятка — [docs/codex.md](docs/codex.md).
+
 ## Быстрый старт
 
 Нужен Node 24 LTS (`.nvmrc`).
@@ -23,6 +25,7 @@ npm run dev
 
 Собранный сайт в Docker (только демо, для показа без Node.js): `docker compose --profile web up --build`.
 Для разработки он не нужен — сайт запускается через `npm run dev`.
+Рабочий сервер (HTTPS, чистая база, выкладка кнопкой, копии) — [docs/deploy.md](docs/deploy.md).
 
 ## Два режима данных
 

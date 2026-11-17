@@ -30,6 +30,8 @@ const options: { value: DataSource; label: string; icon: LucideIcon; hint: strin
 export function DataSourceToggle({ state, className }: { state: DataSourceState; className?: string }) {
   const [pending, setPending] = useState<DataSource | null>(null);
   const role = useSession((s) => s.role);
+  // Переключать не между чем: на рабочем сервере демо запрещено (DEMO_MODE=off), без C# API есть только демо.
+  if (!state.serverAvailable || !state.demoAllowed) return null;
 
   async function choose(source: DataSource) {
     if (source === state.source || pending) return;
