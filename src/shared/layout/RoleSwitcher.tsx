@@ -29,7 +29,7 @@ export function RoleSwitcher() {
           // данные прошлой роли (курсы, поиск, оценки) перезапрашиваются под новой
           void mutate(() => true);
         }}
-        className="h-8 border-dashed bg-transparent text-xs"
+        className="h-8 border-dashed bg-transparent text-xs max-sm:w-28"
       >
         {roles.map((r) => (
           <option key={r.value} value={r.value}>

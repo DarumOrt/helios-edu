@@ -22,6 +22,13 @@ export function pct(n?: number) {
   return `${Math.round(n)}%`;
 }
 
+const russianPlural = new Intl.PluralRules("ru");
+
+export function pluralCount(value: number, one: string, few: string, many: string) {
+  const form = russianPlural.select(value);
+  return `${value} ${form === "one" ? one : form === "few" ? few : many}`;
+}
+
 export function fmtDuration(totalSec: number) {
   const s = Math.max(0, Math.round(totalSec));
   const m = Math.floor(s / 60);

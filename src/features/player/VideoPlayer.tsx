@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Card, CardBody, Badge, Progress } from "@/shared/ui";
@@ -33,6 +33,7 @@ export function VideoPlayer({
   src,
   title,
   onComplete,
+  navigation,
 }: {
   /** курс материала — id материалов уникальны только внутри курса */
   courseId: string;
@@ -41,6 +42,7 @@ export function VideoPlayer({
   title: string;
   /** вызывается один раз, когда материал засчитан */
   onComplete?: (coverage: number) => void;
+  navigation?: ReactNode;
 }) {
   const onCompleteRef = useRef(onComplete);
   useEffect(() => {
@@ -242,12 +244,13 @@ export function VideoPlayer({
   const shownCompleted = stats.completed || Boolean(prior?.completed);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="min-w-0">
         <Card className="overflow-hidden">
           <video
             ref={videoRef}
             src={src}
+            aria-label={title}
             controls
             className="aspect-video w-full bg-black"
             onPlay={(e) => ev("played", e.currentTarget.currentTime)}
@@ -272,54 +275,61 @@ export function VideoPlayer({
             onEnded={() => sendProgress()}
           />
           <CardBody className="py-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium">{title}</h3>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">Видео</span>
               <Badge tone={shownCompleted ? "success" : stats.playing ? "info" : "neutral"}>
-                {shownCompleted ? "завершено" : stats.playing ? "идёт просмотр" : "пауза"}
+                {shownCompleted ? "Завершено" : stats.playing ? "Идёт просмотр" : "На паузе"}
               </Badge>
             </div>
           </CardBody>
         </Card>
       </div>
 
-      {/* живая панель метрик — наглядно показывает, что трекается */}
-      <Card className="h-fit">
-        <CardBody className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Activity size={16} className="text-primary" />
-            Ваша активность
-            <span className="ml-auto text-xs font-normal text-muted-foreground">live</span>
-          </div>
-
-          <div>
-            <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Покрытие материала</span>
-              <span className="font-semibold tabular-nums">{shownCoverage}%</span>
+      <div className="min-w-0 space-y-4">
+        <Card className="border-border">
+          <CardBody className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Activity size={16} className="text-primary" aria-hidden />
+              Прогресс просмотра
             </div>
-            <Progress value={shownCoverage} tone={shownCompleted ? "success" : "primary"} />
-            <div className="mt-1 text-xs text-muted-foreground">
-              засчитывается только просмотр с активной вкладкой, перемотка не считается
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Просмотрено</span>
+                <span className="font-semibold tabular-nums">{shownCoverage}%</span>
+              </div>
+              <Progress
+                value={shownCoverage}
+                label="Просмотрено видео"
+                tone={shownCompleted ? "success" : "primary"}
+              />
+              <div className="mt-1 text-xs text-muted-foreground">
+                Учитываются участки, просмотренные в активной вкладке.
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Metric icon={Eye} label="Активное время" value={fmtDuration(stats.activeTimeSec)} />
-            <Metric icon={Gauge} label="Макс. скорость" value={`${stats.maxRate}x`} />
-            <Metric icon={MousePointerClick} label="Перемоток" value={String(stats.seeks)} />
-            <Metric icon={Pause} label="Пауз" value={String(stats.pauses)} />
-          </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Metric icon={Eye} label="Активное время" value={fmtDuration(stats.activeTimeSec)} />
+              <Metric icon={Gauge} label="Макс. скорость" value={`${stats.maxRate}x`} />
+              <Metric icon={MousePointerClick} label="Перемоток" value={String(stats.seeks)} />
+              <Metric icon={Pause} label="Пауз" value={String(stats.pauses)} />
+            </div>
 
-          <div className="flex items-center gap-2 border-t pt-2 text-xs">
-            {shownCompleted ? (
-              <span className="flex items-center gap-1.5 font-medium text-success">
-                <CheckCircle2 size={14} /> Материал изучен
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Досмотрите до {COMPLETE_AT}% покрытия для зачёта</span>
-            )}
-          </div>
-        </CardBody>
-      </Card>
+            <div className="flex items-center gap-2 border-t pt-2 text-xs">
+              {shownCompleted ? (
+                <span className="flex items-center gap-1.5 font-medium text-success">
+                  <CheckCircle2 size={14} /> Материал изучен
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  Для зачёта нужно посмотреть {COMPLETE_AT}% видео.
+                </span>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+        {navigation}
+      </div>
     </div>
   );
 }

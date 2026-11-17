@@ -4,12 +4,13 @@ import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { CheckCircle2, Clock, Paperclip, Pencil, X } from "lucide-react";
-import { Badge, Button, Card, CardBody, FileUpload, Skeleton, Textarea } from "@/shared/ui";
+import { Badge, Button, Card, CardBody, DataState, FileUpload, Skeleton, Textarea } from "@/shared/ui";
 import { assignmentApi } from "../api";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import { apiErrorInfo, fetcher } from "@/shared/lib/api-client";
 import { formatDateTime } from "@/shared/lib/format";
+import { revalidateCourseProgress } from "@/shared/lib/revalidate-course-progress";
 import type { MySubmission, SubmissionFull } from "@/shared/types/domain";
 
 // Сдача задания: ученик видит свою работу и её статус. Пересдать до проверки можно только явно —
@@ -18,7 +19,7 @@ export function SubmissionForm({ courseId, assignmentId }: { courseId: string; a
   const user = useSession((s) => s.user);
   const learner = can(user.role, "assignment.submit");
   const key = learner ? `/api/assignment/${assignmentId}/submission?courseId=${courseId}` : null;
-  const { data, isLoading, mutate } = useSWR<MySubmission>(key, fetcher);
+  const { data, error, isLoading, mutate } = useSWR<MySubmission>(key, fetcher);
   const [editing, setEditing] = useState(false);
 
   if (!learner)
@@ -27,6 +28,7 @@ export function SubmissionForm({ courseId, assignmentId }: { courseId: string; a
         Работы студентов по заданию — в разделе «Проверка работ».
       </p>
     );
+  if (error && !data) return <DataState error={error}>{null}</DataState>;
   if (isLoading || !data) return <Skeleton className="h-48 w-full" />;
 
   const work = data.submission;
@@ -39,6 +41,7 @@ export function SubmissionForm({ courseId, assignmentId }: { courseId: string; a
       onCancel={work ? () => setEditing(false) : undefined}
       onSubmit={async (text, fileId) => {
         await assignmentApi.submit(courseId, assignmentId, { text, fileId, userId: user.id });
+        void revalidateCourseProgress(courseId);
         await mutate();
         setEditing(false);
       }}
@@ -63,10 +66,8 @@ function SubmittedWork({ work, onEdit }: { work: SubmissionFull; onEdit: () => v
           </div>
           <div className="flex-1">
             <h3 className="font-semibold">{reviewed ? "Работа проверена" : "Работа отправлена"}</h3>
-            <p className="text-sm text-muted-foreground">
-              {formatDateTime(work.submittedAt)}
-              {reviewed ? "" : " · ждёт проверки преподавателем"}
-            </p>
+            <p className="text-sm text-muted-foreground">{formatDateTime(work.submittedAt)}</p>
+            {!reviewed && <p className="text-sm text-muted-foreground">Ожидает проверки</p>}
           </div>
           {reviewed ? (
             <Badge tone="success" className="font-mono text-sm">

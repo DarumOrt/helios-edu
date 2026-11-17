@@ -2,79 +2,83 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import useSWR from "swr";
-import { CalendarClock, FileText, ClipboardCheck } from "lucide-react";
-import { fetcher } from "@/shared/lib/api-client";
-import { DataState, Badge } from "@/shared/ui";
-import { Widget } from "./Widget";
-import { formatDate } from "@/shared/lib/format";
-import type { Course, Activity } from "@/shared/types/domain";
+import { CalendarClock, ChevronDown } from "lucide-react";
+import { activityHref } from "@/shared/lib/activity-href";
+import { pendingDeadlines } from "@/shared/lib/learning-progress";
+import { DataState, Badge, Disclosure } from "@/shared/ui";
+import { formatDate, pluralCount } from "@/shared/lib/format";
+import type { Course } from "@/shared/types/domain";
 
-interface DeadlineItem {
-  course: string;
-  activity: Activity;
-}
-
-export function UpcomingDeadlines() {
-  // фиксируем "сейчас" один раз: Date.now() в рендере нечист и ломает гидратацию
-  const [now] = useState(() => Date.now());
-  const { data, error, isLoading } = useSWR<Course[]>("/api/courses?sections=1", fetcher);
-
-  const items: DeadlineItem[] = (data ?? [])
-    .flatMap((c) =>
-      (c.sections ?? [])
-        .flatMap((s) => s.activities)
-        .filter((a) => a.due && !a.completed)
-        .map((a) => ({ course: c.title, activity: a })),
-    )
-    .sort((a, b) => (a.activity.due ?? "").localeCompare(b.activity.due ?? ""));
+export function UpcomingDeadlines({
+  courses,
+  loading,
+  error,
+}: {
+  courses?: Course[];
+  loading: boolean;
+  error: unknown;
+}) {
+  const [now] = useState(() => new Date());
+  const items = pendingDeadlines(courses ?? []);
 
   return (
-    <Widget title="Сдать" icon={CalendarClock}>
-      <DataState loading={isLoading} error={error} empty={!items.length} emptyTitle="Сдавать пока нечего">
-        <ul className="-my-1 divide-y">
-          {items.slice(0, 3).map(({ course, activity }) => {
-            const Icon = activity.type === "quiz" ? ClipboardCheck : FileText;
-            const daysLeft = activity.due
-              ? Math.ceil((new Date(activity.due).getTime() - now) / 86400000)
-              : null;
-            const overdue = daysLeft != null && daysLeft < 0;
-            const tone =
-              overdue || (daysLeft != null && daysLeft <= 3)
-                ? "danger"
-                : daysLeft != null && daysLeft <= 7
-                  ? "warning"
-                  : "neutral";
-            const when = overdue
-              ? "просрочено"
-              : daysLeft === 0
-                ? "сегодня"
-                : daysLeft != null && daysLeft <= 7
-                  ? `через ${daysLeft} дн`
-                  : null;
-            return (
-              <li key={`${course}-${activity.id}`} className="flex gap-3 py-2.5">
-                <Icon size={16} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <div className="line-clamp-2 text-sm leading-snug font-medium">{activity.title}</div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">{course}</div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    {when && <Badge tone={tone as "danger" | "warning" | "neutral"}>{when}</Badge>}
-                    <span className="font-mono text-xs text-muted-foreground">
-                      до {formatDate(activity.due)}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+    <Disclosure
+      title="К сдаче"
+      icon={<CalendarClock size={17} />}
+      defaultOpen
+      meta={courses && pluralCount(items.length, "срок", "срока", "сроков")}
+    >
+      <DataState loading={loading} error={error} empty={!items.length} emptyTitle="Сдавать пока нечего">
+        <DeadlineList items={items.slice(0, 3)} now={now} />
         {items.length > 3 && (
-          <Link href="/courses" className="mt-3 inline-block text-sm text-primary hover:underline">
-            Ещё {items.length - 3} — все задания
-          </Link>
+          <details className="group/more border-t">
+            <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-1 text-sm font-medium text-primary hover:bg-muted/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+              Ещё {pluralCount(items.length - 3, "срок", "срока", "сроков")}
+              <ChevronDown
+                size={15}
+                aria-hidden
+                className="group-open/more:rotate-180 motion-safe:transition-transform"
+              />
+            </summary>
+            <DeadlineList items={items.slice(3)} now={now} />
+          </details>
         )}
       </DataState>
-    </Widget>
+    </Disclosure>
+  );
+}
+
+function DeadlineList({ items, now }: { items: ReturnType<typeof pendingDeadlines>; now: Date }) {
+  return (
+    <ul className="divide-y">
+      {items.map(({ course, activity, due: date }) => {
+        const due = new Date(date);
+        const overdue = due.getTime() < now.getTime();
+        const today = due.toDateString() === now.toDateString();
+        return (
+          <li key={`${course.id}/${activity.id}`}>
+            <Link
+              href={activityHref(course.id, activity)}
+              className="flex items-start justify-between gap-2 rounded-md px-1 py-2.5 hover:bg-muted/55 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-inset"
+            >
+              <div className="min-w-0">
+                <p className="text-sm leading-snug font-medium wrap-break-word">{activity.title}</p>
+                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{course.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">До {formatDate(date)}</p>
+              </div>
+              {overdue ? (
+                <Badge tone="danger" className="shrink-0">
+                  Срок прошёл
+                </Badge>
+              ) : today ? (
+                <Badge tone="warning" className="shrink-0">
+                  Сегодня
+                </Badge>
+              ) : null}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

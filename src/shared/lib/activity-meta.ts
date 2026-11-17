@@ -32,6 +32,14 @@ export const activityLabel: Record<ActivityType, string> = {
   presentation: "Презентация",
 };
 
+export function activityKindLabel(type: ActivityType, title: string) {
+  const label = activityLabel[type];
+  const shortLabel = type === "pdf" ? "Конспект" : label;
+  return title.toLocaleLowerCase("ru").startsWith(`${shortLabel.toLocaleLowerCase("ru")}:`)
+    ? undefined
+    : label;
+}
+
 /** ISO → значение для <input type="datetime-local"> в местном времени */
 export function toLocalInput(iso?: string): string {
   if (!iso) return "";

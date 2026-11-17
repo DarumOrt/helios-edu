@@ -17,7 +17,7 @@ export function CourseCard({ course }: { course: Course }) {
 
         <div className="flex flex-1 flex-col p-5">
           <div className="font-mono text-xs text-muted-foreground">
-            {course.code} · {course.category}
+            {course.code}, {course.category}
           </div>
           <h3 className="mt-1 line-clamp-2 leading-snug font-semibold group-hover:text-primary">
             {course.title}

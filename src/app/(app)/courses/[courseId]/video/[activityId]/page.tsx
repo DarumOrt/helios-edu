@@ -3,8 +3,10 @@
 import { use } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
-import { PageHeader, Breadcrumbs, DataState } from "@/shared/ui";
+import { DataState } from "@/shared/ui";
 import { VideoPlayer } from "@/features/player/VideoPlayer";
+import { LessonHeader } from "@/features/player/LessonHeader";
+import { LessonRoute } from "@/features/player/LessonRoute";
 import { LessonStatsPanel } from "@/features/analytics/components/LessonStatsPanel";
 import { RoleGate } from "@/shared/auth/RoleGate";
 import { useActivityEvents } from "@/features/adaptive/useActivityEvents";
@@ -20,33 +22,29 @@ export default function VideoLessonPage({
 
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
-    .find((a) => a.id === activityId);
+    .find((a) => a.id === activityId && a.type === "video");
   const onComplete = useActivityEvents(courseId, activity?.id);
 
   return (
     <div>
       <DataState loading={isLoading} error={error} empty={!activity}>
-        {activity && (
+        {course && activity && (
           <>
-            <PageHeader
+            <LessonHeader
+              courseId={courseId}
+              courseCode={course.code}
               title={activity.title}
-              subtitle="Видеолекция · просмотр отслеживается"
-              breadcrumbs={
-                <Breadcrumbs
-                  items={[
-                    { label: "Курсы", href: "/courses" },
-                    { label: course?.title ?? "Курс", href: `/courses/${courseId}` },
-                    { label: "Видеолекция" },
-                  ]}
-                />
-              }
+              type="video"
+              durationMin={activity.durationMin}
             />
             <VideoPlayer
+              key={`${courseId}/${activity.id}`}
               courseId={courseId}
               activityId={activity.id}
               src={activity.src ?? "/media/lesson-matan.mp4"}
               title={activity.title}
               onComplete={onComplete}
+              navigation={<LessonRoute course={course} activityId={activity.id} />}
             />
             <RoleGate roles={["tutor", "admin", "organizer"]}>
               <div className="mt-8">

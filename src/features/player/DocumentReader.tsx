@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, FileText, Presentation, Activity, Eye, CheckCircle2 } from "lucide-react";
 import { Card, CardBody, Progress, Button } from "@/shared/ui";
@@ -21,6 +21,8 @@ export function DocumentReader({
   totalPages,
   pageTitles,
   onComplete,
+  navigation,
+  hasFile,
 }: {
   /** курс материала — id материалов уникальны только внутри курса */
   courseId: string;
@@ -28,9 +30,10 @@ export function DocumentReader({
   /** вызывается один раз, когда материал засчитан */
   onComplete?: (coverage: number) => void;
   kind: "pdf" | "presentation";
-  title: string;
+  hasFile?: boolean;
   totalPages: number;
   pageTitles?: string[];
+  navigation?: ReactNode;
 }) {
   const user = useSession((s) => s.user);
   const onCompleteRef = useRef(onComplete);
@@ -145,21 +148,23 @@ export function DocumentReader({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="space-y-3 lg:col-span-2">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-3">
         <Card className="overflow-hidden">
           {/* область рендера страницы (заглушка) */}
-          <div className="relative flex aspect-4/3 flex-col items-center justify-center border-b bg-muted/40">
-            <Icon size={40} className="text-muted-foreground/40" />
+          <div className="flex min-h-52 flex-col items-center justify-center border-b bg-muted/40 px-4 py-8 text-center sm:min-h-64">
+            <Icon size={36} className="text-muted-foreground" aria-hidden />
             <div className="mt-4 text-lg font-semibold text-foreground/70">
               {pageTitles?.[page] ?? `Страница ${page + 1}`}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {kind === "pdf" ? "PDF-документ" : "Презентация"} · {page + 1} из {totalPages}
+              {page + 1} из {totalPages}
             </div>
-            <div className="absolute right-3 bottom-3 text-xs text-muted-foreground">
-              демо-рендер · в проде здесь PDF.js
-            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {hasFile
+                ? "Откройте файл в новой вкладке. Здесь можно отмечать страницы по мере чтения."
+                : "Файл пока недоступен."}
+            </p>
           </div>
           <CardBody className="flex items-center justify-between py-3">
             <Button variant="outline" size="sm" onClick={() => go(page - 1)} disabled={page === 0}>
@@ -185,6 +190,8 @@ export function DocumentReader({
             <button
               key={i}
               onClick={() => go(i)}
+              aria-label={`Страница ${i + 1}`}
+              aria-current={i === page ? "page" : undefined}
               className={cn(
                 "h-8 w-8 rounded-md border text-xs font-medium transition",
                 i === page
@@ -200,45 +207,51 @@ export function DocumentReader({
         </div>
       </div>
 
-      <Card className="h-fit">
-        <CardBody className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Activity size={16} className="text-primary" />
-            Ваша активность
-            <span className="ml-auto text-xs font-normal text-muted-foreground">live</span>
-          </div>
-          <div>
-            <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Просмотрено страниц</span>
-              <span className="font-semibold tabular-nums">
-                {viewedPages.size} / {totalPages}
-              </span>
+      <div className="min-w-0 space-y-4">
+        <Card className="border-border">
+          <CardBody className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Activity size={16} className="text-primary" aria-hidden />
+              Прогресс по документу
             </div>
-            <Progress value={coverage} tone={completed ? "success" : "primary"} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-md border bg-muted/30 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Eye size={11} /> Время чтения
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Отмечено страниц</span>
+                <span className="font-semibold tabular-nums">
+                  {viewedPages.size} / {totalPages}
+                </span>
               </div>
-              <div className="mt-0.5 text-sm font-semibold tabular-nums">{fmtDuration(activeTime)}</div>
+              <Progress
+                value={coverage}
+                label="Доля отмеченных страниц"
+                tone={completed ? "success" : "primary"}
+              />
             </div>
-            <div className="rounded-md border bg-muted/30 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">покрытие</div>
-              <div className="mt-0.5 text-sm font-semibold tabular-nums">{coverage}%</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-md border bg-muted/30 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Eye size={11} aria-hidden /> Время на странице урока
+                </div>
+                <div className="mt-0.5 text-sm font-semibold tabular-nums">{fmtDuration(activeTime)}</div>
+              </div>
+              <div className="rounded-md border bg-muted/30 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">Доля страниц</div>
+                <div className="mt-0.5 text-sm font-semibold tabular-nums">{coverage}%</div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 border-t pt-2 text-xs">
-            {completed ? (
-              <span className="flex items-center gap-1.5 font-medium text-success">
-                <CheckCircle2 size={14} /> Материал изучен
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Просмотрите {COMPLETE_AT}% страниц для зачёта</span>
-            )}
-          </div>
-        </CardBody>
-      </Card>
+            <div className="flex items-center gap-2 border-t pt-2 text-xs">
+              {completed ? (
+                <span className="flex items-center gap-1.5 font-medium text-success">
+                  <CheckCircle2 size={14} /> Материал изучен
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Для зачёта отметьте {COMPLETE_AT}% страниц.</span>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+        {navigation}
+      </div>
     </div>
   );
 }

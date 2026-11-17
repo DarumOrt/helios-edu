@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { mutate } from "swr";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
+import { revalidateCourseProgress } from "@/shared/lib/revalidate-course-progress";
 import { adaptiveApi, adaptiveKeys } from "./api";
 
 // События просмотра материала для адаптивной модели (только ученик): открыл — viewed, досмотрел — completed.
@@ -20,6 +21,7 @@ export function useActivityEvents(courseId: string, activityId: string | undefin
     void adaptiveApi.event(courseId, "activity.completed", activityId, coverage).then(() => {
       void mutate(adaptiveKeys.progress(courseId));
       void mutate(adaptiveKeys.next(courseId));
+      void revalidateCourseProgress(courseId);
     });
   };
 }

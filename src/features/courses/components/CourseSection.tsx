@@ -1,98 +1,108 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, CheckCircle2, Activity as ActivityIcon } from "lucide-react";
-import { Badge } from "@/shared/ui";
+import { Check, ChevronRight } from "lucide-react";
+import { Badge, Disclosure } from "@/shared/ui";
 import { formatDate } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
-import { activityHref } from "@/shared/lib/activity-href";
-import { activityIcon as iconByType, activityLabel as labelByType } from "@/shared/lib/activity-meta";
-import type { Section, ActivityType } from "@/shared/types/domain";
+import { activityHref, hasActivityPage } from "@/shared/lib/activity-href";
+import { activityIcon, activityKindLabel } from "@/shared/lib/activity-meta";
+import type { Section } from "@/shared/types/domain";
 
-// активности с трекингом просмотра
-const TRACKED: ActivityType[] = ["video", "pdf", "presentation"];
-
-export function CourseSection({ section, courseId }: { section: Section; courseId: string }) {
-  const [open, setOpen] = useState(true);
+export function CourseSection({
+  section,
+  courseId,
+  nextId,
+  defaultOpen = true,
+}: {
+  section: Section;
+  courseId: string;
+  nextId?: string;
+  defaultOpen?: boolean;
+}) {
   const total = section.activities.length;
-  const done = section.activities.filter((a) => a.completed).length;
+  const done = section.activities.filter((activity) => activity.completed).length;
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-soft">
-      <button
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-muted/40"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-xs font-semibold text-primary">
-            {section.order}
-          </div>
-          <div>
-            <div className="font-semibold">{section.title}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {done} из {total} активностей завершено
-            </div>
-          </div>
-        </div>
-        <ChevronDown
-          size={18}
-          className={cn("text-muted-foreground transition-transform", open && "rotate-180")}
-        />
-      </button>
-
-      {open && (
-        <ul className="divide-y border-t">
-          {section.activities.map((a) => {
-            const Icon = iconByType[a.type];
-            const href = activityHref(courseId, a);
-            const tracked = TRACKED.includes(a.type);
-            return (
-              <li key={a.id}>
-                <Link
-                  href={href}
-                  className="group flex items-center justify-between px-5 py-3 transition hover:bg-muted/40"
+    <Disclosure
+      title={section.title}
+      icon={
+        <span
+          className={cn(
+            "grid size-8 place-items-center rounded-md font-mono text-xs font-semibold",
+            nextId && "bg-primary text-primary-foreground",
+          )}
+        >
+          {String(section.order).padStart(2, "0")}
+        </span>
+      }
+      meta={total ? `${done} из ${total}` : "Пусто"}
+      defaultOpen={defaultOpen}
+    >
+      {total > 0 ? (
+        <ul className="divide-y">
+          {section.activities.map((activity) => {
+            const Icon = activityIcon[activity.type];
+            const kind = activityKindLabel(activity.type, activity.title);
+            const next = activity.id === nextId;
+            const className = cn(
+              "flex items-center gap-2.5 rounded-md px-1.5 py-2.5",
+              next && "bg-primary-soft/55",
+            );
+            const row = (
+              <>
+                <span
+                  className={cn(
+                    "grid size-8 shrink-0 place-items-center rounded-md",
+                    activity.completed ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
+                  )}
                 >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
-                        a.completed ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      <Icon size={15} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{a.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {labelByType[a.type]}
-                        {a.durationMin ? ` · ${a.durationMin} мин` : ""}
-                        {a.due ? ` · до ${formatDate(a.due)}` : ""}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {tracked && (
-                      <span className="hidden items-center gap-1 text-xs text-primary/70 sm:flex">
-                        <ActivityIcon size={11} />
-                        отслеживается
-                      </span>
+                  <Icon size={15} aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm leading-snug font-medium wrap-break-word">
+                    {activity.title}
+                  </span>
+                  {(kind || activity.durationMin || activity.due) && (
+                    <span className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+                      {kind && <span>{kind}</span>}
+                      {activity.durationMin ? <span>{activity.durationMin} мин</span> : null}
+                      {activity.due && <span>До {formatDate(activity.due)}</span>}
+                    </span>
+                  )}
+                </span>
+                {activity.completed ? (
+                  <Badge tone="success">
+                    <Check size={13} aria-hidden />
+                    <span className="max-sm:sr-only">Завершено</span>
+                  </Badge>
+                ) : next ? (
+                  <Badge tone="primary">Далее</Badge>
+                ) : hasActivityPage(activity.type) ? (
+                  <ChevronRight size={15} className="shrink-0 text-muted-foreground" aria-hidden />
+                ) : null}
+              </>
+            );
+            return (
+              <li key={activity.id} id={`a-${activity.id}`} className="scroll-mt-24">
+                {hasActivityPage(activity.type) ? (
+                  <Link
+                    href={activityHref(courseId, activity)}
+                    className={cn(
+                      className,
+                      "hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-inset",
                     )}
-                    {a.completed ? (
-                      <Badge tone="success">
-                        <CheckCircle2 size={11} />
-                        Завершено
-                      </Badge>
-                    ) : a.due ? (
-                      <Badge tone="warning">К сроку</Badge>
-                    ) : null}
-                  </div>
-                </Link>
+                  >
+                    {row}
+                  </Link>
+                ) : (
+                  <div className={className}>{row}</div>
+                )}
               </li>
             );
           })}
         </ul>
+      ) : (
+        <p className="py-2 text-sm text-muted-foreground">В этом модуле пока нет материалов.</p>
       )}
-    </div>
+    </Disclosure>
   );
 }

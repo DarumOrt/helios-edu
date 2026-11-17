@@ -4,7 +4,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { Users as UsersIcon, Settings2, BarChart3 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { Button, Avatar, Badge, DataState, Table, THead, TR, TH, TD } from "@/shared/ui";
+import { buttonVariants, Avatar, Badge, DataState, Table, THead, TR, TH, TD } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { RoleHero } from "./RoleHero";
@@ -42,15 +42,11 @@ export function AdminDashboard() {
         subtitle={meta.dashSubtitle}
         actions={
           <>
-            <Link href="/admin/users">
-              <Button>
-                <UsersIcon size={16} /> Пользователи
-              </Button>
+            <Link href="/admin/users" className={buttonVariants()}>
+              <UsersIcon size={16} aria-hidden /> Пользователи
             </Link>
-            <Link href="/admin/courses">
-              <Button variant="outline">
-                <Settings2 size={16} /> Управление курсами
-              </Button>
+            <Link href="/admin/courses" className={buttonVariants({ variant: "outline" })}>
+              <Settings2 size={16} aria-hidden /> Управление курсами
             </Link>
           </>
         }
