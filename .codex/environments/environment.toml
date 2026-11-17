@@ -1,0 +1,35 @@
+version = 1
+name = "HeliosEDU"
+
+[setup]
+script = "npm ci"
+
+[[actions]]
+name = "Сайт"
+icon = "run"
+command = "npm run dev -- --port 3000"
+
+[[actions]]
+name = "Сервер"
+icon = "tool"
+command = "docker compose -p heliosedu --profile backend up -d --build db storage api"
+
+[[actions]]
+name = "Проверить"
+icon = "test"
+command = "npm run check"
+
+[[actions]]
+name = "Сборка"
+icon = "tool"
+command = "npm run build"
+
+[[actions]]
+name = "Тесты API"
+icon = "test"
+command = "npm run verify:backend"
+
+[[actions]]
+name = "Остановить сервер"
+icon = "tool"
+command = "docker compose -p heliosedu --profile backend stop api storage db"
