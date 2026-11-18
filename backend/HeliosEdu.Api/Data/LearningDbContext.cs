@@ -73,6 +73,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
     public DbSet<Files.StoredFile> Files => Set<Files.StoredFile>();
+    public DbSet<Audit.Branding> Branding => Set<Audit.Branding>();
     public DbSet<Audit.SystemSettings> Settings => Set<Audit.SystemSettings>();
     public DbSet<Audit.AuditEntry> AuditLog => Set<Audit.AuditEntry>();
     public DbSet<Tracking.ActivityProgress> ActivityProgress => Set<Tracking.ActivityProgress>();
@@ -136,6 +137,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         var schedule = modelBuilder.Entity<Tracking.ScheduleSlot>();
         schedule.HasIndex(item => new { item.TenantId, item.Group });
         schedule.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Audit.Branding>().ToTable("Branding").HasKey(item => item.TenantId);
         modelBuilder.Entity<Audit.SystemSettings>().ToTable("Settings").HasKey(item => item.TenantId);
         var audit = modelBuilder.Entity<Audit.AuditEntry>();
         audit.ToTable("AuditLog");

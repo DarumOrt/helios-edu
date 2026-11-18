@@ -156,7 +156,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
               {...describedBy("reg-consent", errorOf("consent"))}
             />
             <span className="text-muted-foreground">
-              Согласен на обработку персональных данных (152-ФЗ) для учёбы в электронной среде ПГГПУ
+              Согласен на обработку персональных данных (152-ФЗ) для учёбы в электронной образовательной среде
             </span>
           </label>
           {errorOf("consent") && (

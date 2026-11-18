@@ -433,6 +433,34 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("AuditLog", (string)null);
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Audit.Branding", b =>
+                {
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FooterText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginText")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("Logo")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("LogoType")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("LogoVersion")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Subtitle")
+                        .HasColumnType("text");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("Branding", (string)null);
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Audit.SystemSettings", b =>
                 {
                     b.Property<string>("TenantId")

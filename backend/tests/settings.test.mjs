@@ -72,4 +72,50 @@ for (const [name, baseUrl] of [
       assert.deepEqual(await restored.json(), before);
     }
   });
+  test(name + ": оформление доступно на входе, изменяет только администратор", async () => {
+    const admin = await login(baseUrl, "admin@pspu.ru");
+    const organizer = await login(baseUrl, "organizer@pspu.ru");
+    const path = "/api/branding";
+    const png =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aMioAAAAASUVORK5CYII=";
+    const put = (actor, body) =>
+      fetch(baseUrl + path, {
+        method: "PUT",
+        headers: {
+          Cookie: actor.cookie,
+          Origin: new URL(baseUrl).origin,
+          "Content-Type": "application/json",
+          "X-Helios-Client": "web",
+        },
+        body: JSON.stringify(body),
+      });
+    const reset = { subtitle: null, loginText: null, footerText: null, logo: null };
+    try {
+      assert.equal((await put(organizer, { subtitle: "Учебный центр" })).status, 403);
+      assert.equal((await put(admin, { logo: Buffer.from("<svg/>").toString("base64") })).status, 400);
+      assert.equal((await put(admin, { subtitle: "а".repeat(33) })).status, 400);
+      const saved = await put(admin, {
+        subtitle: "Учебный центр",
+        loginText: "Добро пожаловать в учебный центр",
+        logo: png,
+      });
+      assert.equal(saved.status, 200, await saved.clone().text());
+      const brand = await saved.json();
+      assert.ok(brand.logoVersion);
+      assert.deepEqual(await (await get(baseUrl, path)).json(), brand);
+      const asset = await get(baseUrl, path + "/logo");
+      assert.equal(asset.status, 200);
+      assert.equal(asset.headers.get("content-type"), "image/png");
+      assert.equal(asset.headers.get("x-content-type-options"), "nosniff");
+      assert.equal(Buffer.from(await asset.arrayBuffer()).toString("base64"), png);
+      const changed = await put(admin, { footerText: "Справочная служба" });
+      assert.equal((await changed.json()).logoVersion, brand.logoVersion);
+      const log = await (await get(baseUrl, "/api/audit", admin.cookie)).json();
+      assert.ok(log.items.some((item) => item.target === "Оформление организации"));
+      if (name === "Next.js") assert.match(await (await get(baseUrl, "/login")).text(), /Учебный центр/);
+    } finally {
+      assert.deepEqual(await (await put(admin, reset)).json(), {});
+      assert.equal((await get(baseUrl, path + "/logo")).status, 404);
+    }
+  });
 }

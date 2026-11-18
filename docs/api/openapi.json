@@ -357,6 +357,48 @@
         }
       }
     },
+    "/api/branding": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["BrandingEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/branding/logo": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": ["HeliosEdu.Api"],
@@ -2764,6 +2806,25 @@
           }
         }
       },
+      "BrandingInfo": {
+        "required": ["subtitle", "loginText", "footerText", "logoVersion"],
+        "type": "object",
+        "properties": {
+          "subtitle": {
+            "type": ["null", "string"]
+          },
+          "loginText": {
+            "type": ["null", "string"]
+          },
+          "footerText": {
+            "type": ["null", "string"]
+          },
+          "logoVersion": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          }
+        }
+      },
       "CampaignInfo": {
         "required": ["id", "subject", "createdAt", "status", "total", "sent", "failed", "pending"],
         "type": "object",
@@ -4796,6 +4857,9 @@
     },
     {
       "name": "AuditEndpoints"
+    },
+    {
+      "name": "BrandingEndpoints"
     },
     {
       "name": "CourseTrash"

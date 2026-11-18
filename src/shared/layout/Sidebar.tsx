@@ -7,14 +7,19 @@ import pspuLogo from "@/shared/assets/pspu-logo.png";
 import { cn } from "@/shared/lib/utils";
 import { BrandMark } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
-import { navForRole } from "@/shared/auth/permissions";
+import { brandingLogo, defaultBranding, useBranding } from "@/shared/lib/branding";
+import { navForRole, can } from "@/shared/auth/permissions";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { useUiStore } from "@/stores/ui-store";
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 export function Sidebar() {
   const role = useSession((s) => s.role);
+  const backend = useSession((s) => s.backendEnabled);
+  const { data } = useBranding();
+  const showEdit = useUiStore((s) => s.editingBrand) && backend && can(role, "system.manage");
+  const setBrandingOpen = useUiStore((s) => s.setBrandingOpen);
   const meta = roleMeta[role];
   const pathname = usePathname();
   const items = navForRole(role);
@@ -81,29 +86,64 @@ export function Sidebar() {
           open ? "translate-x-0" : "-translate-x-full max-lg:invisible",
         )}
       >
-        <div className="flex items-start justify-between px-5 pt-6 pb-5">
-          <Link href="/dashboard" onClick={close} className="flex items-center gap-3 text-primary">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft">
+        <div className="group relative flex items-start justify-between px-5 pt-6 pb-5">
+          <Link
+            href="/dashboard"
+            onClick={close}
+            tabIndex={showEdit ? -1 : undefined}
+            aria-hidden={showEdit || undefined}
+            className="flex items-center gap-3 text-primary"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
               <BrandMark size={26} />
             </span>
-            <div>
+            <div className="min-w-0">
               <div className="text-lg leading-tight font-bold tracking-tight text-foreground">HeliosEDU</div>
               <div className="mt-0.5 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-                <span className="grid size-4.5 place-items-center rounded-sm bg-white" aria-hidden="true">
-                  <span className="relative size-3.5 overflow-hidden">
-                    {/* Знак занимает квадрат 592×592 со смещением 236 px от левого и верхнего края PNG. */}
+                <span
+                  className="grid size-4.5 shrink-0 place-items-center rounded-sm bg-white"
+                  aria-hidden="true"
+                >
+                  {data?.logoVersion ? (
                     <Image
-                      src={pspuLogo}
+                      src={brandingLogo(data.logoVersion)}
+                      width={18}
+                      height={18}
                       alt=""
                       unoptimized
-                      className="absolute -top-[39.86%] -left-[39.86%] h-auto w-[463.34%] max-w-none"
+                      className="size-4.5 object-contain"
                     />
-                  </span>
+                  ) : (
+                    <span className="relative size-3.5 overflow-hidden">
+                      {/* Знак занимает квадрат 592×592 со смещением 236 px от левого и верхнего края PNG. */}
+                      <Image
+                        src={pspuLogo}
+                        alt=""
+                        unoptimized
+                        className="absolute -top-[39.86%] -left-[39.86%] h-auto w-[463.34%] max-w-none"
+                      />
+                    </span>
+                  )}
                 </span>
-                ПГГПУ
+                <span className="wrap-anywhere">{data?.subtitle ?? defaultBranding.subtitle}</span>
               </div>
             </div>
           </Link>
+          {showEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                setBrandingOpen(true);
+              }}
+              aria-label="Изменить логотип и подпись"
+              className="absolute inset-y-4 right-12 left-3 flex items-end justify-end rounded-lg border border-dashed border-primary/45 p-1 text-primary hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring lg:right-3"
+            >
+              <span className="grid size-6 place-items-center rounded-md bg-card shadow-sm">
+                <Pencil size={14} aria-hidden />
+              </span>
+            </button>
+          )}
           <button
             ref={closeButton}
             type="button"

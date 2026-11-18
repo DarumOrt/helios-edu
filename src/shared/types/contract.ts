@@ -2,6 +2,7 @@
 // Проверяет `npm run typecheck`: если в C# переименовали, добавили или убрали поле, сменили его вид
 // (строка/число/массив) — здесь будет ошибка компиляции с именем поля.
 // Как обновить api.gen.ts — scripts/api-types.mjs (npm run api:types).
+import type { Branding } from "@/shared/lib/branding";
 import type * as Api from "./api.gen";
 import type {
   ActivityProgress,
@@ -108,6 +109,7 @@ export type ApiContract = [
   Assert<SameFields<Api.ClassmateInfo, Classmate>>,
   Assert<SameFields<Api.UploadTicket, UploadTicket>>,
   Assert<SameFields<Api.SettingsInfo, SystemSettings>>,
+  Assert<SameFields<Api.BrandingInfo, Branding>>,
   Assert<SameFields<Api.PasswordResetResult, PasswordResetResult>>,
   Assert<SameFields<Api.CourseImpact, CourseImpact>>,
   Assert<SameFields<Api.DeletedCourseInfo, DeletedCourse>>,

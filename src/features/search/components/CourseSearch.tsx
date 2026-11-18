@@ -66,7 +66,7 @@ export function CourseSearch() {
       <section className="mx-auto max-w-3xl pt-2 text-center sm:pt-6">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Поиск курсов</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Все курсы ПГГПУ: по названию, преподавателю, группе или направлению подготовки
+          Найдите курс по названию, преподавателю, группе или направлению подготовки
         </p>
         <form
           role="search"

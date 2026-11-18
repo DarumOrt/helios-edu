@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import pspuLogo from "@/shared/assets/pspu-logo.png";
+import { brandingLogo, defaultBranding, useBranding, type Branding } from "@/shared/lib/branding";
 import { BrandMark } from "@/shared/ui";
 import { FormulaWaves } from "@/shared/ui/FormulaWaves";
 import { DataSourceToggle } from "@/shared/layout/DataSourceToggle";
@@ -18,14 +18,18 @@ export function AuthShell({
   dataSource,
   active,
   allowRegistration,
+  branding,
   children,
 }: {
   dataSource: DataSourceState;
   active: "login" | "register";
   allowRegistration: boolean;
+  branding?: Branding;
   children: ReactNode;
 }) {
   const day = useDayPart();
+  const { data } = useBranding(branding);
+  const brand = { ...defaultBranding, ...data };
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
@@ -35,7 +39,9 @@ export function AuthShell({
           <BrandMark size={30} />
           <span>
             <span className="block text-lg leading-tight font-bold tracking-tight">HeliosEDU</span>
-            <span className="block font-mono text-xs text-waves-ink/70">ПГГПУ</span>
+            <span className="block max-w-64 font-mono text-xs wrap-break-word text-waves-ink/70">
+              {brand.subtitle}
+            </span>
           </span>
         </Link>
 
@@ -44,9 +50,7 @@ export function AuthShell({
           <h2 className="mt-2 animate-enter text-3xl font-bold tracking-tight text-balance lg:text-4xl">
             {day?.greeting ?? "Здравствуйте"}
           </h2>
-          <p className="mt-3 hidden text-base text-waves-ink/80 lg:block">
-            Курсы, задания и оценки в одном месте. Сразу видно, что уже сделано и с чего продолжить.
-          </p>
+          <p className="mt-3 text-sm wrap-break-word text-waves-ink/80 lg:text-base">{brand.loginText}</p>
         </div>
       </aside>
 
@@ -58,18 +62,18 @@ export function AuthShell({
         <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
           <div className="w-full max-w-md">
             <Image
-              src={pspuLogo}
-              alt="Пермский педагогический"
+              src={brandingLogo(brand.logoVersion)}
+              alt={brand.logoVersion ? brand.subtitle : "Пермский педагогический"}
+              width={256}
+              height={96}
               unoptimized
-              className="mx-auto mb-4 block h-auto w-56 max-w-full rounded-lg bg-white sm:w-64"
+              className="mx-auto mb-4 block h-auto max-h-28 w-56 max-w-full rounded-lg bg-white object-contain sm:w-64"
             />
             {allowRegistration && <AuthTabs active={active} />}
             {children}
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground">
-          Электронная образовательная среда ПГГПУ · учебный проект
-        </p>
+        <p className="text-center text-xs wrap-anywhere text-muted-foreground">{brand.footerText}</p>
       </main>
     </div>
   );

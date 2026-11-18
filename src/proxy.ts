@@ -28,6 +28,7 @@ function checkedByApi(path: string): boolean {
     /^\/api\/(attempts|me)\//.test(path) ||
     /^\/api\/faculties(\/|$)/.test(path) ||
     path === "/api/settings" ||
+    /^\/api\/branding(\/logo)?$/.test(path) ||
     path === "/api/users/directory" ||
     path === "/api/cohorts/directory" ||
     /^\/api\/users\/[^/]+\/application$/.test(path) ||

@@ -83,6 +83,7 @@ app.MapGradesEndpoints();
 app.MapNotificationsEndpoints();
 app.MapFilesEndpoints();
 app.MapAuditEndpoints();
+app.MapBrandingEndpoints();
 app.MapTrackingEndpoints();
 app.MapCourseTrashEndpoints();
 app.MapMailEndpoints();

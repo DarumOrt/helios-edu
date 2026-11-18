@@ -35,7 +35,8 @@ public static class RolePreview
             await ManagementValidation.Fail(409, "Режим кабинета изменился. Обновите страницу.").ExecuteAsync(http);
             return;
         }
-        if (key == null || req.Path == "/api/auth/preview" || req.Path == "/api/auth/logout")
+        var readsBrand = HttpMethods.IsGet(req.Method) && (req.Path == "/api/branding" || req.Path == "/api/branding/logo");
+        if (key == null || readsBrand || req.Path == "/api/auth/preview" || req.Path == "/api/auth/logout")
         {
             await next(http);
             return;

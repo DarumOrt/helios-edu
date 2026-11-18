@@ -72,6 +72,13 @@ export type AuditPage = {
   nextCursor: number | null;
 };
 
+export type BrandingInfo = {
+  subtitle: string | null;
+  loginText: string | null;
+  footerText: string | null;
+  logoVersion: string | null;
+};
+
 export type CampaignInfo = {
   id: string;
   subject: string;
