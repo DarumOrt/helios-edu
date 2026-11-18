@@ -115,6 +115,12 @@ public static class CsvImport
             var existing = await db.Accounts.SingleOrDefaultAsync(u => u.NormalizedEmail == normalized, ct);
             if (existing is not null)
             {
+                if (existing.TenantId == actor.TenantId && existing.Status == Account.Pending)
+                {
+                    skipped++;
+                    report.Add(new(i + 1, name, email, groupName, "skipped", "Заявка уже есть в списке «Без роли»"));
+                    continue;
+                }
                 if (existing.TenantId != actor.TenantId || existing.Status != "active")
                 { errors++; report.Add(new(i + 1, name, email, groupName, "error", "Адрес недоступен для импорта")); continue; }
                 if (input.UpdateExisting && group is not null && existing.Role == "student" && existing.Group != group.Name)

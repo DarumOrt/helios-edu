@@ -12,7 +12,7 @@ import type { Role } from "@/shared/types/domain";
 const order: Role[] = ["student", "tutor", "organizer", "admin"];
 
 // Вход в демо-режиме: пароль не нужен, выбираем, чьими глазами смотреть на систему.
-export function DemoLogin() {
+export function DemoLogin({ allowRegistration }: { allowRegistration: boolean }) {
   const router = useRouter();
   const setRole = useSessionStore((s) => s.setRole);
   const current = useSessionStore((s) => s.user);
@@ -84,12 +84,14 @@ export function DemoLogin() {
         })}
       </ul>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Хотите посмотреть путь нового студента?{" "}
-        <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
-          Зарегистрируйтесь
-        </Link>
-      </p>
+      {allowRegistration && (
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Хотите посмотреть путь нового студента?{" "}
+          <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+            Отправьте заявку
+          </Link>
+        </p>
+      )}
     </section>
   );
 }

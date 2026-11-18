@@ -17,10 +17,12 @@ import type { DataSourceState } from "@/shared/lib/data-source";
 export function AuthShell({
   dataSource,
   active,
+  allowRegistration,
   children,
 }: {
   dataSource: DataSourceState;
   active: "login" | "register";
+  allowRegistration: boolean;
   children: ReactNode;
 }) {
   const day = useDayPart();
@@ -61,7 +63,7 @@ export function AuthShell({
               unoptimized
               className="mx-auto mb-4 block h-auto w-56 max-w-full rounded-lg bg-white sm:w-64"
             />
-            <AuthTabs active={active} />
+            {allowRegistration && <AuthTabs active={active} />}
             {children}
           </div>
         </div>
@@ -76,7 +78,7 @@ export function AuthShell({
 function AuthTabs({ active }: { active: "login" | "register" }) {
   const tabs = [
     { key: "login", href: "/login", label: "Вход" },
-    { key: "register", href: "/register", label: "Регистрация" },
+    { key: "register", href: "/register", label: "Запросить доступ" },
   ] as const;
   return (
     <nav aria-label="Вход или регистрация" className="mb-8 grid grid-cols-2 gap-1 rounded-md bg-muted p-1">

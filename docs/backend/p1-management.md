@@ -51,9 +51,10 @@
 | Действие | Кто |
 | --- | --- |
 | `GET /api/users` | admin, organizer (уже есть) |
-| создать/изменить пользователя | admin, organizer. **Организатор не может**: назначать роль `admin`, менять учётные записи администраторов |
+| создать/изменить пользователя | admin, organizer. Организатор назначает студента и преподавателя, управляет заявками и может редактировать свою учётную запись |
 | никто | не меняет **свою** роль и не блокирует **себя** |
-| `GET /api/cohorts*` | admin, organizer, tutor |
+| `GET /api/cohorts`, `GET /api/cohorts/{id}` | admin, organizer, tutor |
+| `GET /api/users/directory`, `GET /api/cohorts/directory`, обработка заявки | admin, organizer |
 | изменения групп | admin, organizer |
 | создать курс, изменить карточку курса | admin, organizer (tutor — `403`) |
 
@@ -67,6 +68,15 @@
 `404` нет объекта, `409` конфликт (дубликат, непустая группа). JSON — camelCase, `null`-поля не писать (как сейчас).
 
 ### Пользователи
+
+**`GET /api/users/directory`** поддерживает `q`, `role` (в том числе `pending`), `status`,
+`faculty`, `group`, `ungrouped`, `sort` и `page`. Сервер возвращает 25 записей на странице,
+число результатов, число необработанных заявок и варианты фильтров. Даты старых записей неизвестны.
+
+**`POST /api/auth/register`** принимает имя, почту и согласие, если приём открыт. Возвращает
+`202 { status: "pending" }` без сессии. Заявки отсутствуют в обычном списке `GET /api/users`.
+**`POST /api/users/{id}/application`** принимает роль, факультет и группу, назначает роль и
+ставит приглашение в очередь в одной транзакции. **`DELETE /api/users/{id}/application`** отклоняет заявку.
 
 **`POST /api/users`** `{ name, email, role, group?, faculty? }` → `201 { user, temporaryPassword }`
 - `user` — `UserInfo` + `status`. Добавьте `Status` в `UserInfo` (старые клиенты поле просто игнорируют).
@@ -84,6 +94,9 @@
   тоже должен отклонять сессию заблокированного.
 
 ### Группы
+
+**`GET /api/cohorts/directory`** поддерживает `q`, `faculty`, `year`, `occupancy`, `sort` и `page`.
+Страница содержит до 25 групп с числом студентов и курсов. Состав загружается из карточки группы.
 
 **`GET /api/cohorts`** → `Cohort[]`, **`GET /api/cohorts/{id}`** → `Cohort`, где
 `Cohort = { id, name, faculty?, memberIds: string[], courseIds: string[] }`.

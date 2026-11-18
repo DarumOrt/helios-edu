@@ -14,12 +14,12 @@ export function PageHeader({
   return (
     <div className="mb-7">
       {breadcrumbs && <div className="mb-3">{breadcrumbs}</div>}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
           {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
-        <div className="flex gap-2">{actions}</div>
+        <div className="flex min-w-0 flex-wrap gap-2">{actions}</div>
       </div>
     </div>
   );

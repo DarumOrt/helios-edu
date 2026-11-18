@@ -43,6 +43,10 @@ import type {
   UploadedFile,
   AttemptsSummary,
   User,
+  DirectoryUser,
+  UserDirectory,
+  DirectoryCohort,
+  CohortDirectory,
 } from "./domain";
 
 type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T];
@@ -91,6 +95,10 @@ export type ApiContract = [
   Assert<SameFields<Api.CohortInfo, Cohort>>,
   Assert<SameFields<Api.SkillInfo, Skill>>,
   Assert<SameFields<Api.UserInfo, User>>,
+  Assert<SameFields<Api.DirectoryUser, DirectoryUser>>,
+  Assert<SameFields<Api.UserDirectory, UserDirectory>>,
+  Assert<SameFields<Api.DirectoryCohort, DirectoryCohort>>,
+  Assert<SameFields<Api.CohortDirectory, CohortDirectory>>,
   Assert<SameFields<Api.SubmissionInfo, SubmissionFull>>,
   Assert<SameFields<Api.GradeRow, GradeRow>>,
   Assert<SameFields<Api.GradeItem, GradeRow["items"][number]>>,

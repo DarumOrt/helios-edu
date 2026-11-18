@@ -33,10 +33,11 @@ public static class AccessRules
         actor.Role is "admin" or "organizer" || actor.Role == "tutor" && course.TutorId == actor.Id;
 
     public static bool CanManageUser(Account actor, Account target) =>
-        target.Role != "admin" || actor.Role == "admin";
+        actor.Role == "admin" || actor.Role == "organizer" &&
+        (target.Role is not ("admin" or "organizer") || target.Id == actor.Id);
 
     public static bool CanAssignRole(Account actor, string role) =>
-        role != "admin" || actor.Role == "admin";
+        actor.Role == "admin" || actor.Role == "organizer" && role is ("student" or "tutor");
 
     public static bool CanViewGroup(Account account, string group) =>
         account.Role != "student" || (!string.IsNullOrEmpty(account.Group) && account.Group == group);

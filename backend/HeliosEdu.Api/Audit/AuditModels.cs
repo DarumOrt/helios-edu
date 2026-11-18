@@ -5,7 +5,7 @@ public sealed class SystemSettings
 {
     public string TenantId { get; set; } = "";
     /// <summary>студенты могут сами создать учётную запись на /register</summary>
-    public bool AllowRegistration { get; set; } = true;
+    public bool AllowRegistration { get; set; }
     /// <summary>преподаватели могут отправлять объявления курсу</summary>
     public bool AnnouncementsEnabled { get; set; } = true;
     public DateTimeOffset UpdatedAt { get; set; }

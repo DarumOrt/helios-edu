@@ -2,6 +2,7 @@ using HeliosEdu.Api.Audit;
 using System.Security.Cryptography;
 using HeliosEdu.Api.Auth;
 using HeliosEdu.Api.Data;
+using HeliosEdu.Api.Mail;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using static HeliosEdu.Api.Management.ManagementValidation;
@@ -14,10 +15,13 @@ public static partial class ManagementEndpoints
     {
         var users = app.MapGroup("/api/users").RequireAuthorization(AccessRules.ManageUsers)
             .AddEndpointFilter<ManagementWriteFilter>();
+        users.MapGet("/directory", UserDirectoryAsync).Produces<UserDirectory>();
         users.MapPost("", CreateUserAsync);
         users.MapPatch("/{id}", UpdateUserAsync);
         users.MapDelete("/{id}", DeleteUserAsync);
         users.MapPost("/{id}/password-reset", ResetPasswordAsync).Produces<PasswordResetResult>();
+        users.MapPost("/{id}/application", ApproveApplicationAsync).Produces<UserInfo>();
+        users.MapDelete("/{id}/application", RejectApplicationAsync);
         MapCohorts(app);
         MapCourses(app);
     }
@@ -85,7 +89,7 @@ public static partial class ManagementEndpoints
             user.Status != "deleted", context.RequestAborted);
         if (account is null) return (null, Fail(404, "not found"));
         if (!AccessRules.CanManageUser(actor, account))
-            return (null, Fail(403, "Учётные записи администраторов меняет только администратор"));
+            return (null, Fail(403, "Учётные записи администраторов и других организаторов меняет администратор"));
         return (account, null);
     }
 
@@ -98,8 +102,9 @@ public static partial class ManagementEndpoints
     {
         var (account, error) = await ManagedAccount(db, context, id);
         if (error is not null) return error;
+        if (account!.Status == Account.Pending) return Fail(409, "Сначала назначьте роль");
         var password = TemporaryPassword();
-        account!.PasswordHash = hasher.HashPassword(account, password);
+        account.PasswordHash = hasher.HashPassword(account, password);
         account.MustChangePassword = true;
         await db.LoginSessions.Where(session => session.AccountId == id).ExecuteDeleteAsync(context.RequestAborted);
         AuditLog.Write(db, context, "password.reset", "user", account.Id, $"{account.Name} · {account.Email}");
@@ -119,6 +124,7 @@ public static partial class ManagementEndpoints
         var (account, error) = await ManagedAccount(db, context, id);
         if (error is not null) return error;
         var token = context.RequestAborted;
+        if (account!.Status == Account.Pending) return Fail(409, "Отклоните заявку в списке «Без роли»");
         var hasData = await db.Submissions.AnyAsync(item => item.UserId == id, token) ||
             await db.Grades.AnyAsync(item => item.UserId == id, token) ||
             await db.QuizAttempts.AnyAsync(item => item.UserId == id, token) ||
@@ -156,12 +162,13 @@ public static partial class ManagementEndpoints
             context.RequestAborted);
         if (account is null) return Fail(404, "not found");
         if (!AccessRules.CanManageUser(actor, account))
-            return Fail(403, "Учётные записи администраторов меняет только администратор");
+            return Fail(403, "Учётные записи администраторов и других организаторов меняет администратор");
+        if (account.Status == Account.Pending) return Fail(409, "Сначала назначьте роль");
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");
         var role = input.Choice("role", account.Role);
         var fields = User(input, true, role);
-        if (input.Has("role") && role != account.Role)
+        if (!fields.ContainsKey("role") && input.Has("role") && role != account.Role)
         {
             if (actor.Id == id) fields["role"] = "Свою роль изменить нельзя";
             else if (!AccessRules.CanAssignRole(actor, role)) fields["role"] = "Эту роль может назначить только администратор";
@@ -202,5 +209,54 @@ public static partial class ManagementEndpoints
                 "user", account.Id, $"{account.Name} · {account.Email}", changes);
         await db.SaveChangesAsync(context.RequestAborted);
         return Results.Ok(UserInfo.From(account));
+    }
+
+    private static async Task<IResult> ApproveApplicationAsync(string id, HttpContext context, LearningDbContext db,
+        MailService mail)
+    {
+        var input = await ManagementInput.ReadAsync(context.Request);
+        if (input is null) return Fail(400, "Некорректный запрос");
+        var actor = Actor(context);
+        var token = context.RequestAborted;
+        var role = input.Choice("role");
+        var fields = User(input, true, role);
+        if (!fields.ContainsKey("role") && !AccessRules.CanAssignRole(actor, role))
+            fields["role"] = "Эту роль может назначить только администратор";
+        if (fields.Count > 0) return Invalid(fields);
+
+        var account = await db.Accounts.FromSqlInterpolated(
+            $"SELECT * FROM \"Accounts\" WHERE \"Id\" = {id} AND \"TenantId\" = {actor.TenantId} AND \"Status\" = {Account.Pending} FOR UPDATE")
+            .SingleOrDefaultAsync(token);
+        if (account is null) return Fail(409, "Заявка уже обработана или не найдена");
+        if (!mail.InvitationsConfigured || !await MailEndpoints.Ready(db, actor.TenantId, token))
+            return Fail(409, "Для отправки приглашения администратор должен настроить почту");
+        Cohort? group = null;
+        if (input.OptionalText("group") is { } groupName)
+        {
+            group = await CanonicalGroup(db, groupName, actor.TenantId, token);
+            if (group is null) return Invalid(new() { ["group"] = "Такой группы нет" });
+        }
+        account.Role = role;
+        account.Status = "active";
+        account.Group = group?.Name;
+        account.Faculty = input.OptionalText("faculty") ?? group?.Faculty;
+        await mail.Invite(db, account, $"approval:{id}", token);
+        AuditLog.Write(db, context, "user.application_approved", "user", id, account.Email,
+            AuditLog.Diff(("Роль", null, AuditLog.Role(role)), ("Группа", null, account.Group),
+                ("Факультет", null, account.Faculty)));
+        await db.SaveChangesAsync(token);
+        return Results.Ok(UserInfo.From(account));
+    }
+
+    private static async Task<IResult> RejectApplicationAsync(string id, HttpContext context, LearningDbContext db)
+    {
+        var tenant = Actor(context).TenantId;
+        var token = context.RequestAborted;
+        var removed = await db.Accounts.Where(account => account.Id == id && account.TenantId == tenant &&
+            account.Status == Account.Pending).ExecuteDeleteAsync(token);
+        if (removed == 0) return Fail(409, "Заявка уже обработана или не найдена");
+        AuditLog.Write(db, context, "user.application_rejected", "user", id, "Заявка на доступ");
+        await db.SaveChangesAsync(token);
+        return Results.NoContent();
     }
 }

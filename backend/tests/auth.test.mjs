@@ -115,58 +115,72 @@ for (const [name, baseUrl] of [
       signal: AbortSignal.timeout(10_000),
     });
 
-  test(`${name}: регистрация создаёт студента без группы и сразу открывает сессию`, async () => {
-    const email = `new-${name === "C#" ? "api" : "web"}-${Date.now()}@example.ru`;
-    const password = "Учёба2026";
-    // role и group в теле игнорируются: сам регистрируется только студент без группы
-    const response = await register({
-      name: "  Новый Студент ",
-      email,
-      password,
-      consent: true,
-      role: "admin",
-      group: "М1217",
-    });
-    assert.equal(response.status, 201);
-    const cookie = response.headers.getSetCookie().find((c) => c.startsWith("helios-auth="));
-    assert.ok(cookie);
-    assert.match(cookie, /httponly/i);
-    const user = await response.json();
-    assert.equal(user.name, "Новый Студент");
-    assert.equal(user.email, email);
-    assert.equal(user.role, "student");
-    assert.ok(!("group" in user) && !("passwordHash" in user));
+  test(`${name}: закрытая регистрация, очередь без роли и отклонение`, async () => {
+    const admin = await login(baseUrl, "admin@pspu.ru");
+    const organizer = await login(baseUrl, "organizer@pspu.ru");
+    const send = (method, path, body, cookie = admin.cookie) =>
+      fetch(`${baseUrl}${path}`, {
+        method,
+        headers: {
+          Cookie: cookie,
+          "Content-Type": "application/json",
+          "X-Helios-Client": "web",
+          Origin: new URL(baseUrl).origin,
+        },
+        ...(body && { body: JSON.stringify(body) }),
+      });
+    const email = `pending-${crypto.randomUUID()}@example.ru`;
+    const valid = { name: "  Новый Студент ", email, consent: true };
+    assert.equal((await (await get(baseUrl, "/api/settings")).json()).allowRegistration, false);
+    assert.equal((await register(valid)).status, 403);
+    assert.equal((await send("PUT", "/api/settings", { allowRegistration: true })).status, 200);
+    try {
+      for (const [patch, field] of [
+        [{ name: " " }, "name"],
+        [{ email: "not-an-email" }, "email"],
+        [{ consent: false }, "consent"],
+      ]) {
+        const response = await register({ ...valid, ...patch });
+        assert.equal(response.status, 400, field);
+        assert.ok((await response.json()).fields[field], field);
+      }
+      assert.equal((await register(valid, "https://other.example")).status, 403);
+      const response = await register({ ...valid, role: "admin", group: "М1217", password: demoPassword });
+      assert.equal(response.status, 202);
+      assert.deepEqual(response.headers.getSetCookie(), []);
+      assert.deepEqual(await response.json(), { status: "pending" });
+      const duplicate = await register({ ...valid, email: email.toUpperCase() });
+      assert.equal(duplicate.status, 409);
+      assert.ok((await duplicate.json()).fields.email);
+      assert.equal(
+        (await send("POST", "/api/auth/login", { email, password: demoPassword }, "")).status,
+        401,
+      );
 
-    const session = cookie.split(";")[0];
-    assert.deepEqual(await (await get(baseUrl, "/api/auth/me", session)).json(), user);
-    // курсов нет, пока организатор не зачислит в группу
-    assert.deepEqual(await (await get(baseUrl, "/api/courses", session)).json(), []);
-    assert.equal((await login(baseUrl, email.toUpperCase(), password)).user.id, user.id);
-
-    const duplicate = await register({ name: "Другой", email, password, consent: true });
-    assert.equal(duplicate.status, 409);
-    assert.ok((await duplicate.json()).fields.email);
-  });
-
-  test(`${name}: регистрация проверяет поля и источник запроса`, async () => {
-    const valid = {
-      name: "Проверка Полей",
-      email: `fields-${Date.now()}@example.ru`,
-      password: "Пароль2026",
-      consent: true,
-    };
-    for (const [patch, field] of [
-      [{ name: " " }, "name"],
-      [{ email: "not-an-email" }, "email"],
-      [{ password: "кот12" }, "password"],
-      [{ password: "безцифрвообще" }, "password"],
-      [{ consent: false }, "consent"],
-    ]) {
-      const response = await register({ ...valid, ...patch });
-      assert.equal(response.status, 400, field);
-      assert.ok((await response.json()).fields[field], field);
+      const path = `/api/users/directory?role=pending&q=${encodeURIComponent(email)}`;
+      assert.equal((await get(baseUrl, path)).status, 401);
+      const queue = await (await get(baseUrl, path, organizer.cookie)).json();
+      assert.equal(queue.pendingCount, 1);
+      assert.equal(queue.total, 1);
+      const [application] = queue.items;
+      assert.equal(application.name, "Новый Студент");
+      assert.equal(application.status, "pending");
+      assert.ok(!("role" in application) && !("group" in application) && !("passwordHash" in application));
+      assert.ok(application.createdAt);
+      assert.ok(
+        !(await (await get(baseUrl, "/api/users", admin.cookie)).json()).some(
+          (user) => user.id === application.id,
+        ),
+      );
+      const approval = `/api/users/${application.id}/application`;
+      assert.equal((await send("POST", approval, { role: "organizer" }, organizer.cookie)).status, 400);
+      assert.equal((await send("PATCH", `/api/users/${application.id}`, { role: "student" })).status, 409);
+      assert.equal((await send("DELETE", approval, undefined, organizer.cookie)).status, 204);
+      assert.equal((await (await get(baseUrl, path, admin.cookie)).json()).total, 0);
+      assert.equal((await send("POST", approval, { role: "student" })).status, 409);
+    } finally {
+      assert.equal((await send("PUT", "/api/settings", { allowRegistration: false })).status, 200);
     }
-    assert.equal((await register(valid, "https://other.example")).status, 403);
   });
 }
 

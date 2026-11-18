@@ -27,6 +27,9 @@ function checkedByApi(path: string): boolean {
     /^\/api\/users\/[^/]+\/password-reset$/.test(path) ||
     /^\/api\/(attempts|me)\//.test(path) ||
     path === "/api/settings" ||
+    path === "/api/users/directory" ||
+    path === "/api/cohorts/directory" ||
+    /^\/api\/users\/[^/]+\/application$/.test(path) ||
     path.startsWith("/api/mail/") ||
     path.startsWith("/api/users/import") ||
     path === "/api/audit"

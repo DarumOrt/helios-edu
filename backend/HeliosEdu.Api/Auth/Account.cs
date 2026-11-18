@@ -2,6 +2,7 @@ namespace HeliosEdu.Api.Auth;
 
 public sealed class Account
 {
+    public const string Pending = "pending";
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Email { get; set; } = "";
@@ -12,6 +13,7 @@ public sealed class Account
     public string TenantId { get; set; } = "pspu";
     public string? Faculty { get; set; }
     public string? Group { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     /// <summary>после выдачи временного пароля (создание, сброс) — при входе попросить сменить его на свой</summary>
     public bool MustChangePassword { get; set; }
 }

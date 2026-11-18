@@ -19,7 +19,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const target = findDemoUser(id);
   if (!target) return fail(404, "not found");
   if (!canManageUser(actor, target))
-    return fail(403, "Учётные записи администраторов меняет только администратор");
+    return fail(403, "Учётные записи администраторов и других организаторов меняет администратор");
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
 
@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const role = patch.role ?? target.role;
   const fields = validateUser({ ...patch, role }, true);
-  if (patch.role && patch.role !== target.role) {
+  if (!fields.role && patch.role && patch.role !== target.role) {
     if (isSelf(actor, target)) fields.role = "Свою роль изменить нельзя";
     else if (!assignableRoles(actor.role).includes(patch.role))
       fields.role = "Эту роль может назначить только администратор";

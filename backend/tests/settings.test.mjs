@@ -54,11 +54,13 @@ for (const [name, baseUrl] of [
       const register = await send("", "POST", "/api/auth/register", {
         name: "Закрытая Регистрация",
         email: `closed-${Date.now()}@example.ru`,
-        password: "Password2026",
         consent: true,
       });
       assert.equal(register.status, 403);
-      assert.equal((await register.json()).error, "Регистрация закрыта. Учётную запись создаст организатор.");
+      assert.equal(
+        (await register.json()).error,
+        "Приём заявок закрыт. Учётную запись создаёт администратор.",
+      );
       const announcement = await send(tutor.cookie, "POST", "/api/courses/c-dor-ai/announcements", {
         title: "Не уйдёт",
         body: "Объявления выключены",

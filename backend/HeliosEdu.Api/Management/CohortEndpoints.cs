@@ -11,6 +11,8 @@ public static partial class ManagementEndpoints
     private static void MapCohorts(WebApplication app)
     {
         var cohorts = app.MapGroup("/api/cohorts").AddEndpointFilter<ManagementWriteFilter>();
+        cohorts.MapGet("/directory", CohortDirectoryAsync).RequireAuthorization(AccessRules.ManageCohorts)
+            .Produces<CohortDirectory>();
         cohorts.MapGet("", async (HttpContext context, LearningDbContext db) =>
         {
             var groups = await db.Cohorts.Where(group => group.TenantId == Actor(context).TenantId)

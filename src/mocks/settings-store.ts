@@ -8,7 +8,7 @@ export interface SystemSettings {
 
 const g = globalThis as unknown as { __helios_settings?: SystemSettings };
 const settings: SystemSettings =
-  g.__helios_settings ?? (g.__helios_settings = { allowRegistration: true, announcementsEnabled: true });
+  g.__helios_settings ?? (g.__helios_settings = { allowRegistration: false, announcementsEnabled: true });
 
 export const getSettings = (): SystemSettings => ({ ...settings });
 export function updateSettings(patch: Partial<SystemSettings>) {

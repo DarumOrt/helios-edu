@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 import { MANAGED_COURSE_FIELDS, assignableRoles, canEditCourse, canManageUser, isSelf } from "./management";
 
 describe("правила управления (зеркало AccessRules.cs)", () => {
-  it("организатор не назначает администратора", () => {
+  it("организатор назначает студента и преподавателя", () => {
     expect(assignableRoles("admin")).toContain("admin");
-    expect(assignableRoles("organizer")).not.toContain("admin");
+    expect(assignableRoles("organizer")).toEqual(["student", "tutor"]);
     expect(assignableRoles("tutor")).toEqual([]);
   });
 
-  it("организатор не трогает администраторов", () => {
+  it("организатор управляет заявками и нижестоящими ролями, может редактировать себя", () => {
     expect(canManageUser({ role: "organizer" }, { role: "admin" })).toBe(false);
     expect(canManageUser({ role: "organizer" }, { role: "student" })).toBe(true);
+    expect(canManageUser({ id: "o1", role: "organizer" }, { id: "o2", role: "organizer" })).toBe(false);
+    expect(canManageUser({ id: "o1", role: "organizer" }, { id: "o1", role: "organizer" })).toBe(true);
+    expect(canManageUser({ role: "organizer" }, {})).toBe(true);
     expect(canManageUser({ role: "admin" }, { role: "admin" })).toBe(true);
     expect(canManageUser({ role: "tutor" }, { role: "student" })).toBe(false);
   });

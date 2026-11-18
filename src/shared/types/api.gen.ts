@@ -145,6 +145,15 @@ export type CleanupResult = {
   courseItems?: number;
 };
 
+export type CohortDirectory = {
+  items: DirectoryCohort[];
+  total: number;
+  page: number;
+  pageSize: number;
+  faculties: string[];
+  years: number[];
+};
+
 export type CohortInfo = {
   id: string;
   name: string;
@@ -222,6 +231,27 @@ export type DeletedCourseInfo = {
   deletedByName: string;
   purgeAt: string;
   impact: CourseImpact;
+};
+
+export type DirectoryCohort = {
+  id: string;
+  name: string;
+  faculty: string | null;
+  year: number | null;
+  students: number;
+  courses: number;
+};
+
+export type DirectoryUser = {
+  id: string;
+  name: string;
+  email: string;
+  tenantId: string;
+  role: string | null;
+  status: string;
+  faculty: string | null;
+  group: string | null;
+  createdAt: string | null;
 };
 
 export type EnrolledStudent = {
@@ -429,8 +459,11 @@ export type RecipientInfo = {
 export type RegisterRequest = {
   name: string | null;
   email: string | null;
-  password: string | null;
   consent: boolean | null;
+};
+
+export type RegistrationResult = {
+  status: string;
 };
 
 export type ScheduleCourse = {
@@ -568,6 +601,16 @@ export type UploadTicket = {
   uploadUrl: string;
   contentType: string;
   expiresAt: string;
+};
+
+export type UserDirectory = {
+  items: DirectoryUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pendingCount: number;
+  faculties: string[];
+  groups: string[];
 };
 
 export type UserInfo = {

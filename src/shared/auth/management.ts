@@ -6,17 +6,24 @@ import type { Course, Role, User } from "@/shared/types/domain";
 
 const ALL_ROLES: Role[] = ["student", "tutor", "organizer", "admin"];
 
-/** Какие роли актор может назначать: организатор — всё, кроме администратора. */
+/** Организатор назначает студента и преподавателя. */
 export function assignableRoles(actorRole: Role): Role[] {
   if (actorRole === "admin") return ALL_ROLES;
-  if (actorRole === "organizer") return ["student", "tutor", "organizer"];
+  if (actorRole === "organizer") return ["student", "tutor"];
   return [];
 }
 
-/** Можно ли актору менять эту учётную запись: организатор не трогает администраторов. */
-export function canManageUser(actor: Pick<User, "role">, target: Pick<User, "role">): boolean {
+/** Организатор управляет заявками, студентами и преподавателями, а также своей учётной записью. */
+export function canManageUser(
+  actor: { id?: string; role: Role },
+  target: { id?: string; role?: Role },
+): boolean {
   if (!can(actor.role, "user.manage")) return false;
-  return target.role !== "admin" || actor.role === "admin";
+  return (
+    actor.role === "admin" ||
+    (target.role !== "admin" &&
+      (target.role !== "organizer" || (actor.id !== undefined && actor.id === target.id)))
+  );
 }
 
 /** Себе нельзя менять роль и блокировать себя — иначе легко потерять доступ к управлению. */

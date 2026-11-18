@@ -2,36 +2,30 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowRight, Check, Circle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { api, apiErrorInfo } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui";
-import { cn } from "@/shared/lib/utils";
-import { useSessionStore } from "@/stores/session-store";
 import {
-  passwordChecks,
   validateRegistration,
   type RegistrationErrors,
   type RegistrationInput,
 } from "@/shared/lib/registration";
 import type { DataSource } from "@/shared/lib/data-source";
-import type { User } from "@/shared/types/domain";
-import { AuthInput, Field, PasswordInput, describedBy } from "./Field";
+import { AuthInput, Field, describedBy } from "./Field";
 
-const fieldOrder: (keyof RegistrationInput)[] = ["name", "email", "password", "consent"];
+const fieldOrder: (keyof RegistrationInput)[] = ["name", "email", "consent"];
 
-// Регистрация студента. Сервер: аккаунт и сессия в C# API. Демо: пользователь в памяти, вход через Zustand.
 export function RegisterForm({ source }: { source: DataSource }) {
-  const setUser = useSessionStore((s) => s.setUser);
   const [values, setValues] = useState<RegistrationInput>({
     name: "",
     email: "",
-    password: "",
     consent: false,
   });
   const [touched, setTouched] = useState<Partial<Record<keyof RegistrationInput, boolean>>>({});
   const [serverErrors, setServerErrors] = useState<RegistrationErrors>({});
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
+  const [sent, setSent] = useState(false);
   // Куда вернуть фокус после проверки: новый объект на каждую попытку, поля к этому моменту уже доступны.
   const [focusTarget, setFocusTarget] = useState<{ key: keyof RegistrationInput } | null>(null);
 
@@ -39,7 +33,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
     if (focusTarget) document.getElementById(`reg-${focusTarget.key}`)?.focus();
   }, [focusTarget]);
 
-  // Ошибку показываем после того, как человек ушёл с поля или нажал «Создать», — не во время набора.
+  // Ошибку показываем после того, как человек ушёл с поля или нажал «Отправить заявку», — не во время набора.
   const clientErrors = validateRegistration(values);
   const errorOf = (key: keyof RegistrationInput) =>
     serverErrors[key] ?? (touched[key] ? clientErrors[key] : undefined);
@@ -52,7 +46,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setTouched({ name: true, email: true, password: true, consent: true });
+    setTouched({ name: true, email: true, consent: true });
     setFormError("");
     const firstInvalid = fieldOrder.find((key) => clientErrors[key]);
     if (firstInvalid) {
@@ -62,13 +56,9 @@ export function RegisterForm({ source }: { source: DataSource }) {
 
     setPending(true);
     try {
-      const user = await api.post<User>("/api/auth/register", values);
-      if (source === "demo") setUser(user);
-      // Полная навигация: в серверном режиме кабинет прочитает новую сессию из cookie.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Нужен новый документ, чтобы кабинет загрузился уже с новой сессией.
-      window.location.assign("/dashboard");
+      await api.post("/api/auth/register", values);
+      setSent(true);
     } catch (failure) {
-      setPending(false);
       const { status, error, fields } = apiErrorInfo(failure);
       if (fields && Object.keys(fields).length) {
         setServerErrors(fields);
@@ -79,21 +69,38 @@ export function RegisterForm({ source }: { source: DataSource }) {
       setFormError(
         status === 429
           ? "Слишком много попыток. Подождите минуту и попробуйте снова."
-          : (error ?? "Не удалось создать учётную запись. Проверьте соединение и попробуйте ещё раз."),
+          : (error ?? "Не удалось отправить заявку. Проверьте соединение и попробуйте ещё раз."),
       );
+    } finally {
+      setPending(false);
     }
   }
 
-  const passwordError = errorOf("password");
+  if (sent)
+    return (
+      <section aria-labelledby="register-title" role="status">
+        <h1 id="register-title" className="text-2xl font-semibold">
+          Заявка отправлена
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {source === "server"
+            ? "После одобрения на указанную почту придёт ссылка для установки пароля."
+            : "Заявку можно обработать в разделе «Пользователи» в демо-кабинете."}
+        </p>
+        <Link href="/login" className="mt-5 inline-block font-medium text-primary hover:underline">
+          Вернуться ко входу
+        </Link>
+      </section>
+    );
 
   return (
     <section aria-labelledby="register-title">
       <h1 id="register-title" className="text-2xl leading-tight font-semibold text-balance">
-        Регистрация студента
+        Заявка на доступ
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Группу и курсы назначит организатор — после этого они появятся в кабинете.
-        {source === "demo" && " В демо-режиме учётная запись живёт до перезапуска сервера."}
+        Доступ откроется после назначения роли.
+        {source === "demo" && " Данные демо сбрасываются при перезапуске сервера."}
       </p>
 
       <form onSubmit={submit} noValidate className="mt-7 space-y-5">
@@ -116,7 +123,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
           id="reg-email"
           label="Электронная почта"
           error={errorOf("email")}
-          hint="На неё придут уведомления о сроках и оценках"
+          hint="На неё придёт приглашение после одобрения заявки"
         >
           <AuthInput
             id="reg-email"
@@ -131,41 +138,6 @@ export function RegisterForm({ source }: { source: DataSource }) {
             onBlur={() => touch("email")}
             disabled={pending}
             {...describedBy("reg-email", errorOf("email"), true)}
-          />
-        </Field>
-
-        <Field
-          id="reg-password"
-          label="Пароль"
-          error={passwordError}
-          hint={
-            <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label="Требования к паролю">
-              {passwordChecks(values.password).map((check) => (
-                <li
-                  key={check.label}
-                  className={cn(
-                    "flex items-center gap-1.5 transition-colors",
-                    check.ok ? "text-success" : "text-muted-foreground",
-                  )}
-                >
-                  {check.ok ? <Check size={13} aria-hidden /> : <Circle size={10} aria-hidden />}
-                  {check.label}
-                  <span className="sr-only">{check.ok ? " — выполнено" : " — не выполнено"}</span>
-                </li>
-              ))}
-            </ul>
-          }
-        >
-          <PasswordInput
-            id="reg-password"
-            name="password"
-            autoComplete="new-password"
-            maxLength={256}
-            value={values.password}
-            onChange={(e) => update("password", e.target.value)}
-            onBlur={() => touch("password")}
-            disabled={pending}
-            {...describedBy("reg-password", passwordError, true)}
           />
         </Field>
 
@@ -201,7 +173,7 @@ export function RegisterForm({ source }: { source: DataSource }) {
         )}
 
         <Button type="submit" size="lg" className="h-11 w-full text-base" disabled={pending}>
-          {pending ? "Создаём учётную запись…" : "Создать учётную запись"}
+          {pending ? "Отправляем…" : "Отправить заявку"}
           {!pending && <ArrowRight size={17} aria-hidden />}
         </Button>
       </form>
