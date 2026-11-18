@@ -465,6 +465,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<Guid?>("LogoVersion")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("MenuLogoScale")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Subtitle")
                         .HasColumnType("text");
 

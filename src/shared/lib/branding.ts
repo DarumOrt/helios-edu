@@ -7,7 +7,7 @@ export const brandingPath = "/api/branding";
 
 export type Branding = Partial<
   Record<"subtitle" | "loginText" | "footerText" | "logoVersion" | "darkLogoVersion", string>
-> & { useLogo?: boolean; logoScale?: number };
+> & { useLogo?: boolean; logoScale?: number; menuLogoScale?: number };
 export type LogoTheme = "light" | "dark";
 export type LogoDrafts = Partial<Record<LogoTheme, string | null>>;
 

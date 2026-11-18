@@ -14,6 +14,7 @@ public sealed class Branding
     public string? LoginText { get; set; }
     public string? FooterText { get; set; }
     public int? LogoScale { get; set; }
+    public int? MenuLogoScale { get; set; }
     public bool? UseLogo { get; set; }
     public byte[]? DarkLogo { get; set; }
     public string? DarkLogoType { get; set; }
@@ -24,10 +25,10 @@ public sealed class Branding
 }
 
 public sealed record BrandingInfo(string? Subtitle, string? LoginText, string? FooterText, Guid? LogoVersion,
-    Guid? DarkLogoVersion, bool? UseLogo, int? LogoScale)
+    Guid? DarkLogoVersion, bool? UseLogo, int? LogoScale, int? MenuLogoScale)
 {
     public static BrandingInfo From(Branding? branding) =>
-        new(branding?.Subtitle, branding?.LoginText, branding?.FooterText, branding?.LogoVersion, branding?.DarkLogoVersion, branding?.UseLogo, branding?.LogoScale);
+        new(branding?.Subtitle, branding?.LoginText, branding?.FooterText, branding?.LogoVersion, branding?.DarkLogoVersion, branding?.UseLogo, branding?.LogoScale, branding?.MenuLogoScale);
 }
 
 public static class BrandingEndpoints
@@ -46,7 +47,7 @@ public static class BrandingEndpoints
         {
             var tenant = Tenant(http);
             return Results.Ok(await db.Branding.Where(b => b.TenantId == tenant)
-                .Select(b => new BrandingInfo(b.Subtitle, b.LoginText, b.FooterText, b.LogoVersion, b.DarkLogoVersion, b.UseLogo, b.LogoScale))
+                .Select(b => new BrandingInfo(b.Subtitle, b.LoginText, b.FooterText, b.LogoVersion, b.DarkLogoVersion, b.UseLogo, b.LogoScale, b.MenuLogoScale))
                 .SingleOrDefaultAsync(http.RequestAborted) ?? BrandingInfo.From(null));
         }).Produces<BrandingInfo>();
         app.MapGet("/api/branding/logo", async (HttpContext http, LearningDbContext db, string? theme) =>
@@ -93,7 +94,7 @@ public static class BrandingEndpoints
                 }
                 errors[key] = "Выберите PNG, JPEG или WebP до 512 КБ";
             }
-            else if (key == "logoScale")
+            else if (key is "logoScale" or "menuLogoScale")
             {
                 if (input.Value(key) is { ValueKind: not JsonValueKind.Null } value &&
                     (value.ValueKind != JsonValueKind.Number || !value.TryGetInt32(out var scale) || scale is < 50 or > 130))
@@ -141,15 +142,16 @@ public static class BrandingEndpoints
                 current.UseLogo = useLogo;
             }
         }
-        if (input.Value("logoScale") is { } scaleValue)
+        int? UpdateScale(string key, int? previous, string label)
         {
-            int? scale = scaleValue.ValueKind == JsonValueKind.Null ? null : scaleValue.GetInt32();
-            if (current.LogoScale != scale)
-            {
-                changes.Add(new AuditChange("Масштаб логотипа", $"{current.LogoScale ?? 100}%", $"{scale ?? 100}%"));
-                current.LogoScale = scale;
-            }
+            if (input.Value(key) is not { } value) return previous;
+            int? next = value.ValueKind == JsonValueKind.Null ? null : value.GetInt32();
+            if (previous != next)
+                changes.Add(new AuditChange(label, $"{previous ?? 100}%", $"{next ?? 100}%"));
+            return next;
         }
+        current.LogoScale = UpdateScale("logoScale", current.LogoScale, "Масштаб логотипа на входе");
+        current.MenuLogoScale = UpdateScale("menuLogoScale", current.MenuLogoScale, "Масштаб логотипа в меню");
         foreach (var (key, (bytes, type)) in logos)
         {
             var dark = key == "darkLogo";

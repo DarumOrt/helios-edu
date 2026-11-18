@@ -74,7 +74,14 @@ function BrandingForm({
   const [initial] = useState(() => ({ ...defaultBranding, ...current }));
   const [draft, setDraft] = useState(initial);
   const [logos, setLogos] = useState<LogoDrafts>({});
-  const [scale, setScale] = useState(current.logoScale ?? 100);
+  const [scales, setScales] = useState({
+    logoScale: current.logoScale ?? 100,
+    menuLogoScale: current.menuLogoScale ?? 100,
+  });
+  const scaleFields = [
+    ["logoScale", "Масштаб логотипа на странице входа"],
+    ["menuLogoScale", "Масштаб логотипа в боковом меню"],
+  ] as const;
   const [mode, setMode] = useState<boolean | null>(current.useLogo ?? null);
   const [reading, setReading] = useState(false);
   const [resetCount, setResetCount] = useState(0);
@@ -83,7 +90,7 @@ function BrandingForm({
   const preview: Branding = {
     subtitle: draft.subtitle === defaultBranding.subtitle ? undefined : draft.subtitle || undefined,
     useLogo: mode ?? undefined,
-    logoScale: scale,
+    ...scales,
     logoVersion: logos.light === null ? undefined : current.logoVersion,
     darkLogoVersion: logos.dark === null ? undefined : current.darkLogoVersion,
   };
@@ -94,7 +101,9 @@ function BrandingForm({
     for (const key of ["subtitle", "loginText", "footerText"] as const) {
       if (draft[key] !== initial[key]) body[key] = draft[key] === defaultBranding[key] ? null : draft[key];
     }
-    if (scale !== (current.logoScale ?? 100)) body.logoScale = scale === 100 ? null : scale;
+    for (const [key] of scaleFields) {
+      if (scales[key] !== (current[key] ?? 100)) body[key] = scales[key] === 100 ? null : scales[key];
+    }
     if (mode !== (current.useLogo ?? null)) body.useLogo = mode;
     if (logos.light !== undefined) body.logo = logos.light?.split(",")[1] ?? null;
     if (logos.dark !== undefined) body.darkLogo = logos.dark?.split(",")[1] ?? null;
@@ -159,26 +168,27 @@ function BrandingForm({
               />
             </Field>
           </fieldset>
-          {showLogos && (
-            <Field id={id + "-scale"} label="Масштаб логотипа" error={fields.logoScale}>
-              <div className="flex items-center gap-3">
-                <input
-                  id={id + "-scale"}
-                  type="range"
-                  min={50}
-                  max={130}
-                  value={scale}
-                  aria-valuetext={scale + "%"}
-                  {...describedBy(id + "-scale", fields.logoScale)}
-                  onChange={(e) => setScale(e.target.valueAsNumber)}
-                  className="w-full accent-primary"
-                />
-                <output htmlFor={id + "-scale"} className="w-12 text-right text-sm tabular-nums">
-                  {scale}%
-                </output>
-              </div>
-            </Field>
-          )}
+          {showLogos &&
+            scaleFields.map(([key, label]) => (
+              <Field key={key} id={id + key} label={label} error={fields[key]}>
+                <div className="flex items-center gap-3">
+                  <input
+                    id={id + key}
+                    type="range"
+                    min={50}
+                    max={130}
+                    value={scales[key]}
+                    aria-valuetext={scales[key] + "%"}
+                    {...describedBy(id + key, fields[key])}
+                    onChange={(e) => setScales({ ...scales, [key]: e.target.valueAsNumber })}
+                    className="w-full accent-primary"
+                  />
+                  <output htmlFor={id + key} className="w-12 text-right text-sm tabular-nums">
+                    {scales[key]}%
+                  </output>
+                </div>
+              </Field>
+            ))}
           <div className="grid gap-3 sm:grid-cols-2">
             {(["light", "dark"] as const).map((theme) => (
               <div key={theme} className="min-w-0 space-y-2">
@@ -257,7 +267,7 @@ function BrandingForm({
             onClick={() => {
               setDraft(defaultBranding);
               setMode(null);
-              setScale(100);
+              setScales({ logoScale: 100, menuLogoScale: 100 });
               setLogos({ light: null, dark: null });
               setResetCount((count) => count + 1);
             }}

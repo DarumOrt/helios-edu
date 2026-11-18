@@ -80,6 +80,7 @@ export type BrandingInfo = {
   darkLogoVersion: string | null;
   useLogo: boolean | null;
   logoScale: number | null;
+  menuLogoScale: number | null;
 };
 
 export type CampaignInfo = {

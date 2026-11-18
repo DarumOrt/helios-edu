@@ -21,7 +21,7 @@ export function BrandIdentity({
   drafts?: LogoDrafts;
 }) {
   const subtitle = branding.subtitle ?? defaultBranding.subtitle;
-  const scale = (branding.logoScale ?? 100) / 100;
+  const scale = ((compact ? branding.menuLogoScale : branding.logoScale) ?? 100) / 100;
   function organization(variant: LogoTheme) {
     const src = brandingLogo(branding, variant, drafts);
     return src ? (
