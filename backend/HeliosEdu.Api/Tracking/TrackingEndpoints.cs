@@ -57,6 +57,7 @@ public static class TrackingEndpoints
         var course = await VisibleCourse(db, context, input.Text("courseId"));
         var activity = course is null ? null : TrackedActivities(course).FirstOrDefault(item => item.Id == input.Text("activityId"));
         if (course is null || activity is null) return Fail(404, "not found");
+        if (Actor(context).Role == "admin") return Results.Ok(new TrackingAccepted(true, 0));
         var session = input.Text("sessionId");
         if (session.Length is 0 or > 100) return Invalid(new() { ["sessionId"] = "Нет идентификатора сессии" });
 
@@ -118,6 +119,7 @@ public static class TrackingEndpoints
         if (events.GetArrayLength() > MaxBatch) return Fail(400, $"Не больше {MaxBatch} событий за раз");
         var course = await VisibleCourse(db, context, input.Text("courseId"));
         if (course is null) return Fail(404, "not found");
+        if (Actor(context).Role == "admin") return Results.Ok(new TrackingAccepted(true, 0));
         var materials = TrackedActivities(course).ToDictionary(activity => activity.Id, activity => activity.Type);
         var actor = Actor(context);
         var now = DateTimeOffset.UtcNow;

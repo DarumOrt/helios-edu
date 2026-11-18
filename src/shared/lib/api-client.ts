@@ -1,3 +1,10 @@
+export function previewHeaders(): Record<string, string> {
+  const key =
+    typeof document !== "undefined" &&
+    document.querySelector<HTMLElement>("[data-helios-preview]")?.dataset.heliosPreview;
+  return key ? { "X-Helios-Preview": key } : {};
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -13,6 +20,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...previewHeaders(),
       ...(init?.headers ?? {}),
     },
     cache: "no-store",

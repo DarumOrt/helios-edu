@@ -53,7 +53,7 @@ export function Header() {
       >
         <Menu size={20} aria-hidden />
       </button>
-      <DataSourceToggle state={dataSource} className="sm:mr-2 lg:mr-auto" />
+      {!user.previewContext && <DataSourceToggle state={dataSource} className="sm:mr-2 lg:mr-auto" />}
       <RoleSwitcher />
       <ThemeToggle />
       <NotificationsBell />

@@ -42,11 +42,15 @@ public sealed class SessionAuthentication(
             db.OrganizerId = session.Account.Id;
             db.ManagedFaculties = codes;
         }
-        Context.Items[typeof(Account)] = session.Account;
+        Context.Items[typeof(LoginSession)] = session;
+        var actor = session.Account;
+        if (session.PreviewId.HasValue && actor.Role == "admin" && session.PreviewRole is "student" or "tutor" or "organizer")
+            actor = RolePreview.Actor(session.PreviewRole, actor.TenantId);
+        Context.Items[typeof(Account)] = actor;
         var identity = new ClaimsIdentity([
-            new Claim(ClaimTypes.NameIdentifier, session.AccountId),
-            new Claim(ClaimTypes.Role, session.Account.Role),
-            new Claim(ClaimTypes.Name, session.Account.Name)
+            new Claim(ClaimTypes.NameIdentifier, actor.Id),
+            new Claim(ClaimTypes.Role, actor.Role),
+            new Claim(ClaimTypes.Name, actor.Name)
         ], SchemeName);
         return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName));
     }

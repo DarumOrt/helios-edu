@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import Link from "next/link";
 import { Download } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { PageHeader, DataState, Select, Button, Badge } from "@/shared/ui";
@@ -41,6 +42,11 @@ function TeacherGradebook({ editable }: { editable: boolean }) {
         subtitle="Оценки студентов по курсу"
         actions={
           <>
+            {editable && (
+              <Link href="/submissions" className="text-sm text-primary underline">
+                Перейти к проверке работ
+              </Link>
+            )}
             {editable && <Badge tone="info">редактирование доступно</Badge>}
             <Button
               variant="outline"

@@ -24,6 +24,8 @@ public sealed class LoginSession
     public string TokenHash { get; set; } = "";
     public string AccountId { get; set; } = "";
     public Account Account { get; set; } = null!;
+    public Guid? PreviewId { get; set; }
+    public string? PreviewRole { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
 }
 
@@ -34,7 +36,7 @@ public sealed record ClassmateInfo(string Id, string Name, string? Group);
 public sealed record PasswordResetResult(UserInfo User, string TemporaryPassword);
 
 public sealed record UserInfo(string Id, string Name, string Email, string Role,
-    string TenantId, string? Faculty, string? Group, string Status, bool? MustChangePassword, string[]? OrganizerFaculties)
+    string TenantId, string? Faculty, string? Group, string Status, bool? MustChangePassword, string[]? OrganizerFaculties, string? PreviewContext = null)
 {
     public static UserInfo From(Account account) => new(account.Id, account.Name, account.Email,
         account.Role, account.TenantId, account.Faculty, account.Group, account.Status,

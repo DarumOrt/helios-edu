@@ -503,6 +503,11 @@ export type Section = {
   activities?: Activity[];
 };
 
+export type Selection = {
+  role: string | null;
+  courseId: string | null;
+};
+
 export type SettingsInfo = {
   allowRegistration: boolean;
   announcementsEnabled: boolean;
@@ -631,4 +636,5 @@ export type UserInfo = {
   status: string;
   mustChangePassword: boolean | null;
   organizerFaculties: string[] | null;
+  previewContext?: string | null;
 };

@@ -1,3 +1,4 @@
+import { getDemoActor } from "@/mocks/demo-actor";
 import { NextResponse } from "next/server";
 import { ingest } from "@/mocks/tracking-store";
 import { backendForward } from "@/shared/lib/backend";
@@ -7,6 +8,7 @@ import type { TrackingEvent } from "@/shared/lib/tracking/types";
 export async function POST(req: Request) {
   const forwarded = await backendForward(req, "/api/tracking/events");
   if (forwarded) return forwarded;
+  if ((await getDemoActor()).role === "admin") return NextResponse.json({ ok: true, accepted: 0 });
   try {
     const body = (await req.json()) as { events: TrackingEvent[] };
     if (Array.isArray(body.events)) ingest(body.events);

@@ -525,6 +525,12 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("PreviewId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PreviewRole")
+                        .HasColumnType("text");
+
                     b.HasKey("TokenHash");
 
                     b.HasIndex("AccountId");

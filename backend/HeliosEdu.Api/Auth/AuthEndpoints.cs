@@ -146,7 +146,7 @@ public static class AuthEndpoints
         }).RequireAuthorization().RequireRateLimiting("login").Produces<UserInfo>();
 
         auth.MapGet("/me", (HttpContext context) =>
-            Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!))).RequireAuthorization().Produces<UserInfo>();
+            Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!) with { PreviewContext = RolePreview.ContextKey(context) })).RequireAuthorization().Produces<UserInfo>();
 
         auth.MapPost("/logout", async (HttpContext context, LearningDbContext db, IConfiguration configuration) =>
         {

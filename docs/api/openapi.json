@@ -5,6 +5,48 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/auth/preview": {
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Selection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": ["HeliosEdu.Api"],
@@ -4257,6 +4299,18 @@
           }
         }
       },
+      "Selection": {
+        "required": ["role", "courseId"],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": ["null", "string"]
+          },
+          "courseId": {
+            "type": ["null", "string"]
+          }
+        }
+      },
       "SettingsInfo": {
         "required": ["allowRegistration", "announcementsEnabled"],
         "type": "object",
@@ -4725,6 +4779,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "previewContext": {
+            "type": ["null", "string"]
           }
         }
       }

@@ -1,5 +1,7 @@
 "use client";
 
+import { previewHeaders } from "@/shared/lib/api-client";
+
 import type { TrackingEvent, ProgressSnapshot } from "./types";
 
 /** Событие от плеера: курс обязателен — id материалов уникальны только внутри курса */
@@ -29,6 +31,7 @@ class Tracker {
   }
 
   event(e: TrackedEvent) {
+    if (typeof document !== "undefined" && document.querySelector("[data-helios-inspection]")) return;
     this.ensure();
     this.queue.push({ ...e, id: crypto.randomUUID(), ts: Date.now() });
   }
@@ -49,12 +52,12 @@ class Tracker {
   private send(courseId: string, batch: Queued[], useBeacon: boolean) {
     const body = JSON.stringify({ courseId, events: batch.map(({ courseId: _course, ...event }) => event) });
     try {
-      if (useBeacon && navigator.sendBeacon) {
+      if (useBeacon && !previewHeaders()["X-Helios-Preview"] && navigator.sendBeacon) {
         navigator.sendBeacon("/api/tracking/events", new Blob([body], { type: "application/json" }));
       } else {
         fetch("/api/tracking/events", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...previewHeaders() },
           body,
           keepalive: true,
         }).catch(() => {
@@ -69,14 +72,20 @@ class Tracker {
 
   // Снимок прогресса — отдельно, чтобы агрегат на сервере обновлялся даже без флаша очереди.
   progress(snapshot: ProgressSnapshot & { courseId: string }, useBeacon = false) {
+    if (typeof document !== "undefined" && document.querySelector("[data-helios-inspection]")) return;
     const body = JSON.stringify(snapshot);
-    if (useBeacon && typeof navigator !== "undefined" && navigator.sendBeacon) {
+    if (
+      useBeacon &&
+      !previewHeaders()["X-Helios-Preview"] &&
+      typeof navigator !== "undefined" &&
+      navigator.sendBeacon
+    ) {
       navigator.sendBeacon("/api/tracking/progress", new Blob([body], { type: "application/json" }));
       return;
     }
     fetch("/api/tracking/progress", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...previewHeaders() },
       body,
       keepalive: true,
     }).catch(() => {});

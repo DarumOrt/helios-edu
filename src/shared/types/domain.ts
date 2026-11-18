@@ -12,6 +12,8 @@ export interface User {
   tenantId: string;
   avatarUrl?: string;
   organizerFaculties?: string[];
+  /** Присутствует только в проверочном кабинете текущей серверной сессии. */
+  previewContext?: string;
   faculty?: string;
   /** название группы (когорты); у не-студентов не задаётся */
   group?: string;

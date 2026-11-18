@@ -131,7 +131,6 @@ export function navForRole(role: Role): NavItem[] {
     items.push(A("/admin/mail", "Рассылки и уведомления", Mail));
     items.push(A("/admin/audit", "Журнал действий", History));
     items.push(M("/courses", "Курсы", BookOpen));
-    items.push(M("/submissions", "Проверка работ", ClipboardCheck));
     items.push(M("/analytics", "Аналитика групп", BarChart3));
     items.push(M("/gradebook", "Журнал оценок", ClipboardList));
     items.push(A("/admin/courses", "Управление курсами", Settings2));

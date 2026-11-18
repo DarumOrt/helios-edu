@@ -71,6 +71,8 @@ app.Use(async (context, next) =>
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();
+app.Use(RolePreview.RouteRequest);
+app.MapRolePreview();
 app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();

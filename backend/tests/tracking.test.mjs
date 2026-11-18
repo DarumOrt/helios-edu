@@ -158,4 +158,97 @@ for (const [name, baseUrl] of [
       assert.equal((await read(tutor, `/api/schedule?group=${encodeURIComponent("М1227")}`)).group, "М1227");
     });
   });
+  test(name + ": проверка ролей изолирована в пределах одной сессии администратора", async () => {
+    const admin = await login(baseUrl, "admin@pspu.ru");
+    const second = await login(baseUrl, "admin@pspu.ru");
+    const student = await login(baseUrl);
+    const endpoint = "/api/auth/preview";
+    const original = "c-dor-ai";
+    let key = "";
+    async function send(actor, method, path, body, status, context = key) {
+      const response = await fetch(baseUrl + path, {
+        method,
+        headers: {
+          Cookie: actor.cookie,
+          Origin: new URL(baseUrl).origin,
+          "Content-Type": "application/json",
+          "X-Helios-Client": "web",
+          "X-Helios-Preview": context,
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      const message = await response.text();
+      assert.equal(response.status, status, path + " " + message);
+      return message ? JSON.parse(message) : null;
+    }
+    async function read(actor, path) {
+      const res = await get(baseUrl, path, actor.cookie);
+      assert.equal(res.status, 200, path);
+      return res.json();
+    }
+    const stats = "/api/analytics/course/" + original;
+    const list = "/api/submissions?courseId=" + original;
+    const snapshot = async () => Promise.all([stats, list, "/api/audit"].map((path) => read(second, path)));
+    const before = await snapshot();
+    const material = {
+      courseId: original,
+      activityId: "mv1",
+      sessionId: "admin-inspection",
+      completed: true,
+    };
+    assert.equal((await send(admin, "POST", "/api/tracking/progress", material, 200)).accepted, 0);
+    assert.equal(
+      (
+        await send(
+          admin,
+          "POST",
+          "/api/tracking/events",
+          { courseId: original, events: [{ ...material, verb: "opened" }] },
+          200,
+        )
+      ).accepted,
+      0,
+    );
+    await send(student, "POST", endpoint, { role: "admin" }, 403);
+    await send(admin, "POST", endpoint, { role: "student", courseId: "absent" }, 404);
+    const change = async (role, courseId) => {
+      const user = await send(admin, "POST", endpoint, { role, courseId }, 200);
+      assert.equal(user.role, role);
+      assert.ok(user.previewContext);
+      key = user.previewContext;
+    };
+    await change("student", original);
+    assert.deepEqual(
+      (await read(admin, "/api/courses")).map((c) => c.id),
+      [original],
+    );
+    assert.equal((await read(second, "/api/auth/me")).role, "admin");
+    assert.equal((await get(baseUrl, "/api/audit", admin.cookie)).status, 403);
+    await send(admin, "POST", "/api/tracking/progress", material, 409, "");
+    await send(admin, "POST", "/api/tracking/progress", material, 200);
+    const submit = "/api/assignment/ma1/submit";
+    const body = { courseId: original, text: "Ответ проверочного студента" };
+    await send(admin, "POST", submit, body, 201);
+    const oldKey = key;
+    await change("tutor");
+    await send(admin, "POST", endpoint, { role: "organizer" }, 409, oldKey);
+    const { items } = await read(admin, list);
+    assert.equal(items.length, 1);
+    assert.equal(items[0].userId, "preview-student");
+    await send(admin, "POST", "/api/submissions/" + items[0].id + "/review", { grade: 8 }, 200);
+    await change("organizer");
+    assert.equal((await read(admin, "/api/users")).length, 3);
+    await send(admin, "DELETE", endpoint, undefined, 200);
+    assert.equal((await read(admin, "/api/auth/me")).id, admin.user.id);
+    await send(admin, "POST", "/api/tracking/progress", material, 409);
+    assert.deepEqual(await snapshot(), before);
+    key = "";
+    await change("student");
+    assert.deepEqual(
+      (await read(admin, "/api/courses")).map((c) => c.id),
+      ["preview-course"],
+    );
+    await send(admin, "POST", "/api/auth/logout", {}, 204);
+    assert.equal((await get(baseUrl, "/api/auth/me", admin.cookie)).status, 401);
+  });
 }
