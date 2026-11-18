@@ -45,6 +45,7 @@ public static partial class ManagementEndpoints
                 return Fail(403, "Преподаватель создаёт курс только для себя");
         }
         var fields = ManagementValidation.Course(input, false, actor.Role == "tutor" ? actor.Id : null);
+        await ValidateFaculty(context, db, input.OptionalText("faculty"), fields);
         if (actor.Role != "tutor") await ValidateTutor(input, false, context, db, fields);
         await ValidateCourseGroups(input, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
@@ -54,7 +55,7 @@ public static partial class ManagementEndpoints
             return Duplicate("code", inTrash
                 ? "Курс с таким кодом в корзине — восстановите его или выберите другой код"
                 : "Курс с таким кодом уже есть");
-        var course = new Course { Id = $"c-{Guid.NewGuid():N}", Code = code, Title = input.Text("title"),
+        var course = new Course { TenantId = actor.TenantId, Id = $"c-{Guid.NewGuid():N}", Code = code, Title = input.Text("title"),
             Category = input.Text("category"), Description = input.Text("description"), TutorId = actor.Role == "tutor" ? actor.Id : input.Text("tutorId"),
             Status = "draft", CoverColor = CoverColors[RandomNumberGenerator.GetInt32(CoverColors.Length)],
             Faculty = input.OptionalText("faculty"), AcademicYear = input.OptionalText("academicYear") };
@@ -81,7 +82,8 @@ public static partial class ManagementEndpoints
             return Fail(403, "Преподавателя, факультет и учебный год курса меняет организатор");
         if (input.Has("code")) return Fail(400, "Код курса изменить нельзя", new() { ["code"] = "Код курса изменить нельзя" });
         var fields = ManagementValidation.Course(input, true);
-        await ValidateTutor(input, true, context, db, fields);
+        if (input.Has("faculty")) await ValidateFaculty(context, db, input.OptionalText("faculty"), fields, course.Faculty);
+        if (input.Text("tutorId") != course.TutorId) await ValidateTutor(input, true, context, db, fields);
         await ValidateCourseGroups(input, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
         var before = (course.Title, course.Category, course.Description, course.Faculty, course.AcademicYear, course.Status,

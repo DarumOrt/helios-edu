@@ -74,7 +74,7 @@ for (const [name, baseUrl] of [
     assert.ok(!JSON.stringify(failed).includes("не тот пароль"));
 
     // изменение пользователя — название вместо id и что изменилось
-    const faculty = `Ф-${Date.now() % 100000}`;
+    const faculty = "ФизФ";
     const before = (await (await get(baseUrl, "/api/users", admin.cookie)).json()).find(
       (u) => u.id === "u-stud-2",
     );

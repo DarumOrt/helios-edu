@@ -19,13 +19,15 @@ import {
   CourseCover,
 } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
+import { canEditCourse } from "@/shared/auth/management";
 import { can } from "@/shared/auth/permissions";
 import { CourseDialog } from "@/features/admin/components/CourseDialog";
 import { courseStatusMeta } from "@/features/admin/labels";
 import type { Cohort, Course, User } from "@/shared/types/domain";
 
 export default function AdminCoursesPage() {
-  const role = useSession((s) => s.role);
+  const actor = useSession((s) => s.user);
+  const role = actor.role;
   const { data, error, isLoading } = useSWR<Course[]>("/api/courses", fetcher);
   const { data: users } = useSWR<User[]>("/api/users", fetcher);
   const { data: cohorts } = useSWR<Cohort[]>("/api/cohorts", fetcher);
@@ -94,7 +96,7 @@ export default function AdminCoursesPage() {
                       <Badge tone={status.tone}>{status.label}</Badge>
                     </TD>
                     <TD className="text-right">
-                      {canManage && (
+                      {canEditCourse(actor, c) && (
                         <Button variant="ghost" size="sm" onClick={() => setEditing(c)}>
                           <Edit2 size={13} aria-hidden />
                           Редактировать

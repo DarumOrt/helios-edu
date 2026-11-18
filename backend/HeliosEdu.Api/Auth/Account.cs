@@ -12,6 +12,7 @@ public sealed class Account
     public string Status { get; set; } = "active";
     public string TenantId { get; set; } = "pspu";
     public string? Faculty { get; set; }
+    public string[]? OrganizerFaculties { get; set; }
     public string? Group { get; set; }
     public DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     /// <summary>после выдачи временного пароля (создание, сброс) — при входе попросить сменить его на свой</summary>
@@ -33,9 +34,9 @@ public sealed record ClassmateInfo(string Id, string Name, string? Group);
 public sealed record PasswordResetResult(UserInfo User, string TemporaryPassword);
 
 public sealed record UserInfo(string Id, string Name, string Email, string Role,
-    string TenantId, string? Faculty, string? Group, string Status, bool? MustChangePassword)
+    string TenantId, string? Faculty, string? Group, string Status, bool? MustChangePassword, string[]? OrganizerFaculties)
 {
     public static UserInfo From(Account account) => new(account.Id, account.Name, account.Email,
         account.Role, account.TenantId, account.Faculty, account.Group, account.Status,
-        account.MustChangePassword ? true : null);
+        account.MustChangePassword ? true : null, account.Role == "organizer" ? account.OrganizerFaculties : null);
 }

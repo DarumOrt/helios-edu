@@ -36,6 +36,12 @@ public sealed class SessionAuthentication(
             .SingleOrDefaultAsync(session => session.TokenHash == tokenHash &&
                 session.ExpiresAt > DateTimeOffset.UtcNow, Context.RequestAborted);
         if (session is null || session.Account.Status != "active") return AuthenticateResult.Fail("Сессия завершена.");
+        db.ViewerTenant = session.Account.TenantId;
+        if (session.Account.Role == "organizer" && session.Account.OrganizerFaculties is { } codes)
+        {
+            db.OrganizerId = session.Account.Id;
+            db.ManagedFaculties = codes;
+        }
         Context.Items[typeof(Account)] = session.Account;
         var identity = new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, session.AccountId),

@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
+import { useFaculties } from "@/shared/lib/use-faculties";
 import { facultyName } from "@/shared/lib/faculties";
 import { Button, DataState, EmptyState, Input, Select } from "@/shared/ui";
 import type { CatalogCourse } from "@/shared/types/domain";
@@ -32,6 +33,7 @@ const filterLabels: Record<FilterKey, string> = {
 
 export function CourseSearch() {
   const { data, error, isLoading } = useSWR<CatalogCourse[]>("/api/catalog", fetcher);
+  const { data: facultyDirectory } = useFaculties();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -40,7 +42,11 @@ export function CourseSearch() {
     (["q", ...FILTER_KEYS] as const).map((k) => [k, params.get(k) ?? undefined]),
   );
   const courses = useMemo(() => data ?? [], [data]);
-  const options = useMemo(() => facets(courses), [courses]);
+  const faculties = useMemo(
+    () => (facultyDirectory ?? []).filter((f) => !f.archived || courses.some((c) => c.faculty === f.code)),
+    [facultyDirectory, courses],
+  );
+  const options = useMemo(() => facets(courses, faculties), [courses, faculties]);
   const results = applyFilters(courses, filters);
   const active = hasFilters(filters);
 
@@ -113,7 +119,9 @@ export function CourseSearch() {
                 className="text-sm font-medium text-muted-foreground"
                 aria-live="polite"
               >
-                {filters.faculty && !filters.q ? `${facultyName(filters.faculty)} · ` : "Найдено: "}
+                {filters.faculty && !filters.q
+                  ? `${facultyName(filters.faculty, facultyDirectory ?? [])} · `
+                  : "Найдено: "}
                 {coursesCount(results.length)}
               </h2>
               <Button variant="ghost" size="sm" onClick={() => router.replace(pathname, { scroll: false })}>
@@ -151,7 +159,7 @@ export function CourseSearch() {
             )}
           </section>
         ) : (
-          <FacultyGrid courses={courses} onPick={(faculty) => update({ faculty })} />
+          <FacultyGrid faculties={faculties} courses={courses} onPick={(faculty) => update({ faculty })} />
         )}
       </DataState>
     </div>

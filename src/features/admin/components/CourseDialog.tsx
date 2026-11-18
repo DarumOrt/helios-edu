@@ -1,5 +1,7 @@
 "use client";
 
+import { FacultySelect } from "./FacultySelect";
+
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
 import { CheckList } from "./CheckList";
@@ -8,7 +10,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button, Dialog, Field, Input, Select, Textarea, describedBy } from "@/shared/ui";
 import { COURSE_STATUSES, validateCourse } from "@/shared/lib/management-validation";
-import { FACULTIES, currentAcademicYear } from "@/shared/lib/faculties";
+import { useFaculties } from "@/shared/lib/use-faculties";
+import { currentAcademicYear } from "@/shared/lib/faculties";
 import type { Cohort, Course, CourseStatus, User } from "@/shared/types/domain";
 import { adminApi, refreshManagement, type CoursePayload } from "../api";
 import { courseStatusMeta } from "../labels";
@@ -56,13 +59,14 @@ function CourseDialogForm({
   );
   const router = useRouter();
   const editing = Boolean(course);
+  const { data: faculties } = useFaculties();
   const [values, setValues] = useState({
     code: course?.code ?? "",
     title: course?.title ?? "",
     category: course?.category ?? "",
     description: course?.description ?? "",
     tutorId: course?.tutorId ?? tutors[0]?.id ?? "",
-    faculty: course?.faculty ?? "ИНЭК",
+    faculty: course?.faculty ?? "",
     academicYear: course?.academicYear ?? currentAcademicYear(),
     status: (course?.status ?? "draft") as CourseStatus,
   });
@@ -79,7 +83,11 @@ function CourseDialogForm({
         ? meta
         : { ...meta, tutorId };
     const payload: CoursePayload = editing ? { ...card, status } : { ...card, code: code.toUpperCase() };
-    const clientErrors = validateCourse(payload, editing);
+    const clientErrors = validateCourse(
+      payload,
+      editing,
+      faculties?.filter((f) => !f.archived || f.code === course?.faculty).map((f) => f.code) ?? [],
+    );
     if (Object.keys(clientErrors).length) {
       setFields(clientErrors);
       return;
@@ -169,7 +177,10 @@ function CourseDialogForm({
                 disabled={pending}
                 {...describedBy("course-tutor", fields.tutorId)}
               >
-                {tutors.length === 0 && <option value="">Преподавателей пока нет</option>}
+                {course && !tutors.some((t) => t.id === course.tutorId) && (
+                  <option value={course.tutorId}>Текущий преподаватель</option>
+                )}
+                {!course && tutors.length === 0 && <option value="">Преподавателей пока нет</option>}
                 {tutors.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -182,20 +193,14 @@ function CourseDialogForm({
         {managed && (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="course-faculty" label="Факультет" error={fields.faculty}>
-              <Select
+              <FacultySelect
                 id="course-faculty"
                 className="w-full"
                 value={values.faculty}
                 onChange={(e) => set("faculty", e.target.value)}
                 disabled={pending}
                 {...describedBy("course-faculty", fields.faculty)}
-              >
-                {FACULTIES.map((f) => (
-                  <option key={f.code} value={f.code}>
-                    {f.name}
-                  </option>
-                ))}
-              </Select>
+              />
             </Field>
             <Field
               id="course-year"

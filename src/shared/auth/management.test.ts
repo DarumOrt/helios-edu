@@ -18,6 +18,13 @@ describe("правила управления (зеркало AccessRules.cs)", 
     expect(canManageUser({ role: "tutor" }, { role: "student" })).toBe(false);
   });
 
+  it("организатор редактирует курсы назначенных факультетов", () => {
+    const actor = { id: "o", role: "organizer" as const, organizerFaculties: ["МФ", "ФФ"] };
+    expect(canEditCourse(actor, { tutorId: "t", faculty: "ФФ" })).toBe(true);
+    expect(canEditCourse(actor, { tutorId: "t", faculty: "ИНЭК" })).toBe(false);
+    expect(canEditCourse(actor, { tutorId: "t" })).toBe(false);
+  });
+
   it("преподаватель правит только свой курс", () => {
     const course = { tutorId: "u-tutor-1" };
     expect(canEditCourse({ id: "u-tutor-1", role: "tutor" }, course)).toBe(true);

@@ -42,8 +42,8 @@ public sealed class AdaptiveScopeFilter : IEndpointFilter
         if (exists is null) return Fail(404, "Курс не найден");
         var course = await db.Courses.Include(item => item.Sections.OrderBy(section => section.Order))
             .ThenInclude(section => section.Activities.OrderBy(activity => EF.Property<int>(activity, "Position")))
-            .AsSplitQuery().SingleAsync(item => item.Id == courseId, token);
-        if (course.DeletedAt is not null) return Fail(404, "Курс не найден");
+            .AsSplitQuery().SingleOrDefaultAsync(item => item.Id == courseId, token);
+        if (course == null || course.DeletedAt is not null) return Fail(404, "Курс не найден");
         if (actor.Role == "student")
         {
             var enrolled = await AccessRules.IsCourseStudent(db, actor, course.Id, token);

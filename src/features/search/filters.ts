@@ -1,4 +1,4 @@
-import { FACULTIES } from "@/shared/lib/faculties";
+import { FACULTIES, type Faculty } from "@/shared/lib/faculties";
 import type { CatalogCohort, CatalogCourse } from "@/shared/types/domain";
 
 // Фильтры поиска курсов. Состояние живёт в адресе страницы (?q=…&faculty=…), чтобы поиском можно было поделиться.
@@ -41,10 +41,13 @@ function unique(options: (Option | null)[]): Option[] {
 }
 
 /** Значения для выпадающих списков — только те, что встречаются в курсах */
-export function facets(courses: CatalogCourse[]): Record<FilterKey, Option[]> {
+export function facets(
+  courses: CatalogCourse[],
+  faculties: Faculty[] = FACULTIES,
+): Record<FilterKey, Option[]> {
   const cohorts = courses.flatMap((c) => c.cohorts);
   return {
-    faculty: FACULTIES.map((f) => ({ value: f.code, label: f.name })),
+    faculty: faculties.map((f) => ({ value: f.code, label: f.name })),
     direction: unique(cohorts.map(directionOf)),
     studyYear: unique(cohorts.map(studyYearOf)),
     academicYear: unique(

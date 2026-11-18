@@ -252,6 +252,7 @@ export type DirectoryUser = {
   faculty: string | null;
   group: string | null;
   createdAt: string | null;
+  organizerFaculties: string[] | null;
 };
 
 export type EnrolledStudent = {
@@ -266,6 +267,12 @@ export type EnrollmentInfo = {
   keyEnabled: boolean;
   cohortIds: string[];
   students: EnrolledStudent[];
+};
+
+export type FacultyInfo = {
+  code: string;
+  name: string;
+  archived: boolean;
 };
 
 export type GradeItem = {
@@ -623,4 +630,5 @@ export type UserInfo = {
   group: string | null;
   status: string;
   mustChangePassword: boolean | null;
+  organizerFaculties: string[] | null;
 };

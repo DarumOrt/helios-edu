@@ -613,6 +613,86 @@
         }
       }
     },
+    "/api/faculties": {
+      "get": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FacultyInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["ManagementEndpoints"],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacultyInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/faculties/{code}": {
+      "patch": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacultyInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["ManagementEndpoints"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/cohorts/directory": {
       "get": {
         "tags": ["ManagementEndpoints"],
@@ -3267,7 +3347,18 @@
         }
       },
       "DirectoryUser": {
-        "required": ["id", "name", "email", "tenantId", "role", "status", "faculty", "group", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "email",
+          "tenantId",
+          "role",
+          "status",
+          "faculty",
+          "group",
+          "createdAt",
+          "organizerFaculties"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3297,6 +3388,12 @@
           "createdAt": {
             "type": ["null", "string"],
             "format": "date-time"
+          },
+          "organizerFaculties": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3342,6 +3439,21 @@
             "items": {
               "$ref": "#/components/schemas/EnrolledStudent"
             }
+          }
+        }
+      },
+      "FacultyInfo": {
+        "required": ["code", "name", "archived"],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
           }
         }
       },
@@ -4576,7 +4688,8 @@
           "faculty",
           "group",
           "status",
-          "mustChangePassword"
+          "mustChangePassword",
+          "organizerFaculties"
         ],
         "type": "object",
         "properties": {
@@ -4606,6 +4719,12 @@
           },
           "mustChangePassword": {
             "type": ["null", "boolean"]
+          },
+          "organizerFaculties": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

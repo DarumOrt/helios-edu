@@ -1,3 +1,4 @@
+import { demoFacultyCodes } from "@/mocks/faculties-store";
 import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward, isNotImplemented } from "@/shared/lib/backend";
@@ -23,6 +24,8 @@ export async function POST(req: Request) {
   if (!body) return fail(400, "Некорректный запрос");
   const input = { name: str(body.name) ?? "", faculty: str(body.faculty) || undefined };
   const fields = validateCohort(input);
+  if (input.faculty && !fields.faculty && !demoFacultyCodes().includes(input.faculty))
+    fields.faculty = "Выберите факультет из списка";
   if (Object.keys(fields).length) return fail(400, "Проверьте поля формы", fields);
   if (findCohortByName(input.name))
     return fail(409, "Группа с таким названием уже есть", { name: "Группа с таким названием уже есть" });

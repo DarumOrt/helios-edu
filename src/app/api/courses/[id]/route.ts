@@ -1,3 +1,4 @@
+import { demoFacultyCodes } from "@/mocks/faculties-store";
 import { audit, diff } from "@/mocks/audit-store";
 import { findCohort, setCourseCohorts } from "@/mocks/cohorts-store";
 import { NextResponse } from "next/server";
@@ -53,7 +54,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (body.code !== undefined)
     return fail(400, "Код курса изменить нельзя", { code: "Код курса изменить нельзя" });
 
-  const fields = validateCourse(patch, true);
+  const fields = validateCourse(patch, true, demoFacultyCodes(existing.faculty));
   if (!fields.cohortIds && patch.cohortIds?.some((id) => !findCohort(id)))
     fields.cohortIds = "Выберите существующие группы (не более 200)";
   if (patch.tutorId && !fields.tutorId && findDemoUser(patch.tutorId)?.role !== "tutor")

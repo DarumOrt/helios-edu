@@ -10,6 +10,7 @@ import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import { CohortDialog } from "@/features/admin/components/CohortDialog";
 import { DirectoryPagination } from "@/features/admin/components/DirectoryPagination";
+import { useFaculties } from "@/shared/lib/use-faculties";
 import { facultyName } from "@/shared/lib/faculties";
 import type { CohortDirectory } from "@/shared/types/domain";
 
@@ -17,6 +18,7 @@ const defaults = { q: "", faculty: "", year: "", occupancy: "", sort: "name", pa
 
 export default function AdminCohortsPage() {
   const role = useSession((s) => s.role);
+  const { data: facultyDirectory } = useFaculties();
   const [filters, setFilters] = useState(defaults);
   const query = useDeferredValue(filters.q.trim());
   const params = new URLSearchParams({ ...filters, q: query });
@@ -64,7 +66,7 @@ export default function AdminCohortsPage() {
             <option value="">Все факультеты</option>
             {data?.faculties.map((value) => (
               <option key={value} value={value}>
-                {facultyName(value)}
+                {facultyName(value, facultyDirectory ?? [])}
               </option>
             ))}
           </Select>

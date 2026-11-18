@@ -11,6 +11,7 @@ export interface User {
   role: Role;
   tenantId: string;
   avatarUrl?: string;
+  organizerFaculties?: string[];
   faculty?: string;
   /** название группы (когорты); у не-студентов не задаётся */
   group?: string;
@@ -26,6 +27,7 @@ export interface PendingUser {
   email: string;
   tenantId: string;
   status: "pending";
+  organizerFaculties?: undefined;
   role?: undefined;
   group?: undefined;
   faculty?: undefined;

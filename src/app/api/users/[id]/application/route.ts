@@ -1,3 +1,4 @@
+import { demoFacultyCodes } from "@/mocks/faculties-store";
 import { NextResponse } from "next/server";
 import { audit } from "@/mocks/audit-store";
 import { findCohortByName } from "@/mocks/cohorts-store";
@@ -17,11 +18,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (actor instanceof NextResponse) return actor;
   const body = await readJson(request);
   if (!body) return fail(400, "Некорректный запрос");
+  if ("organizerFaculties" in body) return fail(501, "Назначение полномочий доступно в режиме «Сервер»");
   const role = (str(body.role) ?? "") as Role;
   const groupName = str(body.group);
   const group = groupName ? findCohortByName(groupName) : undefined;
   const faculty = str(body.faculty);
   const fields = validateUser({ role, group: groupName, faculty }, true);
+  if (faculty && !fields.faculty && !demoFacultyCodes().includes(faculty))
+    fields.faculty = "Выберите факультет из списка";
   if (!fields.role && !assignableRoles(actor.role).includes(role))
     fields.role = "Эту роль может назначить только администратор";
   if (groupName && !group && !fields.group) fields.group = "Такой группы нет";

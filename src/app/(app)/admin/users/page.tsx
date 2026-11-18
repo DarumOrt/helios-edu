@@ -26,6 +26,7 @@ import { UserDialog } from "@/features/admin/components/UserDialog";
 import { ApplicationDialog } from "@/features/admin/components/ApplicationDialog";
 import { DirectoryPagination } from "@/features/admin/components/DirectoryPagination";
 import { roleLabel } from "@/features/admin/labels";
+import { useFaculties } from "@/shared/lib/use-faculties";
 import { facultyName } from "@/shared/lib/faculties";
 import { formatDate } from "@/shared/lib/format";
 import type { Cohort, DirectoryUser, UserDirectory } from "@/shared/types/domain";
@@ -33,6 +34,7 @@ import type { Cohort, DirectoryUser, UserDirectory } from "@/shared/types/domain
 const defaults = { q: "", role: "", status: "", faculty: "", group: "", sort: "name", page: "1" };
 
 export default function AdminUsersPage() {
+  const { data: facultyDirectory } = useFaculties();
   const actor = useSession((s) => s.user);
   const [filters, setFilters] = useState(defaults);
   const query = useDeferredValue(filters.q.trim());
@@ -140,7 +142,7 @@ export default function AdminUsersPage() {
             <option value="">Все факультеты</option>
             {data?.faculties.map((value) => (
               <option key={value} value={value}>
-                {facultyName(value)}
+                {facultyName(value, facultyDirectory ?? [])}
               </option>
             ))}
           </Select>
@@ -212,7 +214,9 @@ export default function AdminUsersPage() {
                       {user.status === "blocked" && <Badge tone="danger">Заблокирован</Badge>}
                       {user.id === actor.id && <Badge tone="outline">Вы</Badge>}
                       {user.group && <span>{user.group}</span>}
-                      {user.faculty && <span title={facultyName(user.faculty)}>{user.faculty}</span>}
+                      {user.faculty && (
+                        <span title={facultyName(user.faculty, facultyDirectory ?? [])}>{user.faculty}</span>
+                      )}
                       {user.createdAt && <time dateTime={user.createdAt}>{formatDate(user.createdAt)}</time>}
                     </div>
                   </TD>

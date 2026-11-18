@@ -1,5 +1,9 @@
 "use client";
 
+import { OrganizerScope } from "./OrganizerScope";
+import { can } from "@/shared/auth/permissions";
+import { FacultySelect } from "./FacultySelect";
+
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
@@ -35,9 +39,10 @@ export function UserDialog({
     email: user?.email ?? "",
     role: (user?.role ?? "student") as Role,
     group: user?.group ?? "",
-    faculty: user?.faculty ?? "ИНЭК",
+    faculty: user?.faculty ?? "",
     blocked: user?.status === "blocked",
   });
+  const [scope, setScope] = useState<string[] | null>(user?.organizerFaculties ?? null);
   const [password, setPassword] = useState<string | null>(null);
   // сброс пароля и удаление — после подтверждения; только в режиме «Сервер» (в демо паролей нет)
   const [confirm, setConfirm] = useState<"reset" | "delete" | null>(null);
@@ -83,6 +88,9 @@ export function UserDialog({
       role: values.role,
       group: values.role === "student" ? values.group || null : null,
       faculty: values.faculty || null,
+      ...(server &&
+        values.role === "organizer" &&
+        can(actor.role, "system.manage") && { organizerFaculties: scope }),
       ...(editing && !self && { status: values.blocked ? "blocked" : "active" }),
     };
     const clientErrors = validateUser(payload as Parameters<typeof validateUser>[0]);
@@ -184,7 +192,7 @@ export function UserDialog({
             </Select>
           </Field>
           <Field id="user-faculty" label="Факультет" error={fields.faculty}>
-            <Input
+            <FacultySelect
               id="user-faculty"
               value={values.faculty}
               onChange={(e) => set("faculty", e.target.value)}
@@ -193,6 +201,15 @@ export function UserDialog({
             />
           </Field>
         </div>
+        {values.role === "organizer" &&
+          can(actor.role, "system.manage") &&
+          (server ? (
+            <OrganizerScope value={scope} onChange={setScope} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Назначение факультетов организатору доступно в режиме «Сервер».
+            </p>
+          ))}
         {values.role === "student" && (
           <Field id="user-group" label="Группа" error={fields.group} hint="Студент видит курсы своей группы">
             <Select

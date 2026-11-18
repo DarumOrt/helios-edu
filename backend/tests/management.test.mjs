@@ -41,6 +41,132 @@ for (const [name, baseUrl] of [
     let course;
     let credentials;
     try {
+      await t.test("справочник и полномочия организатора действуют в открытой сессии", async () => {
+        const facultyCode = "Ф" + unique;
+        const sharedCode = code.replace("-123", "-124");
+        const path = "/api/faculties/" + encodeURIComponent(facultyCode);
+        const scoped = { organizerFaculties: [facultyCode] };
+        const organizerPath = "/api/users/" + organizer.user.id;
+        let createdGroup;
+        let shared;
+        let member;
+        try {
+          assert.equal(
+            (await send("POST", "/api/faculties", { code: facultyCode, name: "Факультет пилота" })).status,
+            403,
+          );
+          await expect(
+            await send("POST", "/api/faculties", { code: facultyCode, name: "Факультет пилота" }, admin),
+            201,
+          );
+          await expect(await send("PATCH", path, { name: "Факультет практики" }, admin), 200);
+          createdGroup = await expect(
+            await send("POST", "/api/cohorts", { name: "Ф" + unique, faculty: facultyCode }, admin),
+            201,
+          );
+          shared = await expect(
+            await send(
+              "POST",
+              "/api/courses",
+              {
+                code: sharedCode,
+                title: "Общий курс",
+                category: "Практика",
+                faculty: "ИНЭК",
+                tutorId: tutor.user.id,
+                cohortIds: [createdGroup.id, "co-1"],
+              },
+              admin,
+            ),
+            201,
+          );
+          member = (
+            await expect(
+              await send(
+                "POST",
+                "/api/users",
+                {
+                  name: "Студент факультета",
+                  email: "faculty-" + unique + "@example.ru",
+                  role: "student",
+                  group: createdGroup.name,
+                },
+                admin,
+              ),
+              201,
+            )
+          ).user;
+          assert.equal((await send("PATCH", organizerPath, scoped)).status, 403);
+          await expect(await send("PATCH", organizerPath, scoped, admin), 200);
+          const groups = await expect(await get(baseUrl, "/api/cohorts/directory", organizer.cookie), 200);
+          assert.deepEqual(
+            groups.items.map((g) => g.id),
+            [createdGroup.id],
+          );
+          const users = await expect(await get(baseUrl, "/api/users/directory", organizer.cookie), 200);
+          assert.deepEqual(users.items.map((u) => u.id).sort(), [organizer.user.id, member.id].sort());
+          const faculties = await expect(await get(baseUrl, "/api/faculties", organizer.cookie), 200);
+          assert.deepEqual(
+            faculties.map((f) => f.code),
+            [facultyCode],
+          );
+          assert.equal((await get(baseUrl, "/api/cohorts/co-1", organizer.cookie)).status, 404);
+          assert.equal((await send("PATCH", "/api/users/u-stud-2", { name: "Чужая запись" })).status, 404);
+          assert.equal(
+            (await send("POST", "/api/cohorts", { name: "Чужая группа", faculty: "ИНЭК" })).status,
+            400,
+          );
+          assert.equal((await get(baseUrl, "/api/courses/" + shared.id, organizer.cookie)).status, 200);
+          assert.equal(
+            (await send("PATCH", "/api/courses/" + shared.id, { title: "Общий курс" })).status,
+            404,
+          );
+          assert.equal(
+            (await send("PUT", "/api/courses/" + shared.id + "/enrollment/key", { keyword: "пример" }))
+              .status,
+            404,
+          );
+          const roster = await expect(
+            await get(baseUrl, "/api/courses/" + shared.id + "/enrollment", organizer.cookie),
+            200,
+          );
+          assert.deepEqual(roster.cohortIds, [createdGroup.id]);
+          assert.deepEqual(
+            roster.students.map((s) => s.id),
+            [member.id],
+          );
+          assert.equal(
+            (await get(baseUrl, "/api/courses/" + shared.id + "/enrollment/students?q=ст", organizer.cookie))
+              .status,
+            404,
+          );
+          const grades = await expect(
+            await get(baseUrl, "/api/gradebook?courseId=" + shared.id, organizer.cookie),
+            200,
+          );
+          assert.deepEqual(
+            grades.map((g) => g.userId),
+            [member.id],
+          );
+          await expect(await send("PATCH", "/api/users/" + member.id, { name: "Студент практики" }), 200);
+          assert.equal((await send("DELETE", path, undefined, admin)).status, 409);
+          await expect(await send("PATCH", path, { archived: true }, admin), 200);
+          assert.equal(
+            (await send("POST", "/api/cohorts", { name: "Архивная", faculty: facultyCode }, admin)).status,
+            400,
+          );
+        } finally {
+          await send("PATCH", organizerPath, { organizerFaculties: null }, admin);
+          if (shared) {
+            await send("PATCH", "/api/courses/" + shared.id, { cohortIds: [] }, admin);
+            await send("DELETE", "/api/courses/" + shared.id, undefined, admin);
+          }
+          if (member) await send("DELETE", "/api/users/" + member.id, undefined, admin);
+          if (createdGroup) await send("DELETE", "/api/cohorts/" + createdGroup.id, undefined, admin);
+          assert.equal((await send("DELETE", path, undefined, admin)).status, 204);
+        }
+      });
+
       await t.test("права, запрет собственной роли и блокировки, CSRF", async () => {
         for (const actor of [student, tutor])
           for (const path of ["/api/users", "/api/cohorts", "/api/courses"])
@@ -148,7 +274,7 @@ for (const [name, baseUrl] of [
             const created = await expect(
               await send("POST", "/api/cohorts", {
                 name: `П${unique}${index}`,
-                faculty: "Тест",
+                faculty: "МФ",
               }),
               201,
             );

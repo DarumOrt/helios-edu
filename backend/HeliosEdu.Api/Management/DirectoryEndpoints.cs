@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HeliosEdu.Api.Management;
 
 public sealed record DirectoryUser(string Id, string Name, string Email, string TenantId,
-    string? Role, string Status, string? Faculty, string? Group, DateTimeOffset? CreatedAt);
+    string? Role, string Status, string? Faculty, string? Group, DateTimeOffset? CreatedAt, string[]? OrganizerFaculties);
 
 public sealed record UserDirectory(IReadOnlyList<DirectoryUser> Items, int Total, int Page, int PageSize,
     int PendingCount, IReadOnlyList<string> Faculties, IReadOnlyList<string> Groups);
@@ -61,7 +61,7 @@ public static partial class ManagementEndpoints
         var items = await ordered.ThenBy(user => user.Id)
             .Skip((selectedPage - 1) * DirectoryPageSize).Take(DirectoryPageSize)
             .Select(user => new DirectoryUser(user.Id, user.Name, user.Email, user.TenantId,
-                user.Status == Account.Pending ? null : user.Role, user.Status, user.Faculty, user.Group, user.CreatedAt))
+                user.Status == Account.Pending ? null : user.Role, user.Status, user.Faculty, user.Group, user.CreatedAt, user.OrganizerFaculties))
             .ToListAsync(token);
         return Results.Ok(new UserDirectory(items, total, selectedPage, DirectoryPageSize, pendingCount, faculties, groups));
     }

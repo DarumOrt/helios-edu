@@ -1,5 +1,6 @@
 "use client";
 
+import { FacultyDirectory } from "@/features/admin/components/FacultyDirectory";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { api, apiErrorInfo, fetcher } from "@/shared/lib/api-client";
@@ -84,6 +85,7 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
       </DataState>
+      <FacultyDirectory />
     </div>
   );
 }

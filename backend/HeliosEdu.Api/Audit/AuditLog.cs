@@ -65,6 +65,9 @@ public static class AuditLog
             ["grade.updated"] = ("Изменена оценка", "grades"),
             ["file.uploaded"] = ("Загружен файл", "files"),
             ["file.cleanup"] = ("Очистка хранилища", "files"),
+            ["faculty.created"] = ("Создан факультет", "settings"),
+            ["faculty.updated"] = ("Изменён факультет", "settings"),
+            ["faculty.deleted"] = ("Удалён факультет", "settings"),
             ["settings.updated"] = ("Изменены настройки", "settings"),
         };
 

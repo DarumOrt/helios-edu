@@ -22,6 +22,7 @@ public static partial class ManagementEndpoints
         users.MapPost("/{id}/password-reset", ResetPasswordAsync).Produces<PasswordResetResult>();
         users.MapPost("/{id}/application", ApproveApplicationAsync).Produces<UserInfo>();
         users.MapDelete("/{id}/application", RejectApplicationAsync);
+        MapFaculties(app);
         MapCohorts(app);
         MapCourses(app);
     }
@@ -56,6 +57,9 @@ public static partial class ManagementEndpoints
             if (group is null) fields["group"] = "Такой группы нет";
         }
         if (fields.Count > 0) return Invalid(fields);
+        var faculty = input.OptionalText("faculty") ?? group?.Faculty;
+        await ValidateFaculty(context, db, faculty, fields);
+        if (fields.Count > 0) return Invalid(fields);
         var email = input.Text("email");
         var normalized = email.ToUpperInvariant();
         if (await db.Accounts.AnyAsync(account => account.NormalizedEmail == normalized, context.RequestAborted))
@@ -65,8 +69,9 @@ public static partial class ManagementEndpoints
         {
             Id = $"u-{Guid.NewGuid():N}", Name = input.Text("name"), Email = email,
             NormalizedEmail = normalized, Role = role, Status = "active", TenantId = actor.TenantId,
-            Group = group?.Name, Faculty = input.OptionalText("faculty")
+            Group = group?.Name, Faculty = faculty
         };
+        if (await ApplyOrganizerScope(context, db, input, account, role) is { } scopeError) return scopeError;
         account.PasswordHash = hasher.HashPassword(account, password);
         // временный пароль — при первом входе попросить сменить
         account.MustChangePassword = true;
@@ -134,7 +139,7 @@ public static partial class ManagementEndpoints
             await db.LearningEvents.AnyAsync(item => item.UserId == id || item.ActorId == id, token) ||
             await db.ActivityProgress.AnyAsync(item => item.UserId == id, token) ||
             await db.Files.AnyAsync(item => item.OwnerId == id, token) ||
-            await db.Courses.AnyAsync(course => course.TutorId == id, token);
+            await db.Courses.IgnoreQueryFilters().AnyAsync(course => course.TutorId == id, token);
         var name = $"{account!.Name} · {account.Email}";
         await db.LoginSessions.Where(session => session.AccountId == id).ExecuteDeleteAsync(token);
         AuditLog.Write(db, context, "user.deleted", "user", account.Id, name,
@@ -145,6 +150,7 @@ public static partial class ManagementEndpoints
             account.Email = $"deleted-{account.Id}@deleted.invalid";
             account.NormalizedEmail = account.Email.ToUpperInvariant();
             account.PasswordHash = hasher.HashPassword(account, TemporaryPassword() + TemporaryPassword());
+            account.OrganizerFaculties = null;
             account.Faculty = null;
             account.Status = "deleted";
             account.MustChangePassword = false;
@@ -182,6 +188,10 @@ public static partial class ManagementEndpoints
             if (group is null) fields["group"] = "Такой группы нет";
         }
         if (fields.Count > 0) return Invalid(fields);
+        var faculty = input.Has("faculty") ? input.OptionalText("faculty") : account.Faculty;
+        if (input.Has("faculty") || input.Has("group")) await ValidateFaculty(context, db, faculty ?? group?.Faculty, fields, account.Faculty);
+        if (fields.Count > 0) return Invalid(fields);
+        if (await ApplyOrganizerScope(context, db, input, account, role) is { } scopeError) return scopeError;
         var before = (account.Name, account.Email, account.Role, account.Group, account.Faculty, account.Status);
         if (input.Has("email"))
         {
@@ -192,7 +202,7 @@ public static partial class ManagementEndpoints
             account.NormalizedEmail = normalized;
         }
         if (input.Has("name")) account.Name = input.Text("name");
-        if (input.Has("faculty")) account.Faculty = input.OptionalText("faculty");
+        if (input.Has("faculty")) account.Faculty = faculty;
         if (input.Has("status")) account.Status = input.Choice("status");
         account.Role = role;
         account.Group = role == "student" ? group?.Name : null;
@@ -236,6 +246,9 @@ public static partial class ManagementEndpoints
             group = await CanonicalGroup(db, groupName, actor.TenantId, token);
             if (group is null) return Invalid(new() { ["group"] = "Такой группы нет" });
         }
+        await ValidateFaculty(context, db, input.OptionalText("faculty") ?? group?.Faculty, fields);
+        if (fields.Count > 0) return Invalid(fields);
+        if (await ApplyOrganizerScope(context, db, input, account, role) is { } scopeError) return scopeError;
         account.Role = role;
         account.Status = "active";
         account.Group = group?.Name;

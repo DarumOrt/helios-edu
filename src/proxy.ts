@@ -26,6 +26,7 @@ function checkedByApi(path: string): boolean {
     /^\/api\/courses\/[^/]+\/(impact|restore|trash)(\/|$)/.test(path) ||
     /^\/api\/users\/[^/]+\/password-reset$/.test(path) ||
     /^\/api\/(attempts|me)\//.test(path) ||
+    /^\/api\/faculties(\/|$)/.test(path) ||
     path === "/api/settings" ||
     path === "/api/users/directory" ||
     path === "/api/cohorts/directory" ||

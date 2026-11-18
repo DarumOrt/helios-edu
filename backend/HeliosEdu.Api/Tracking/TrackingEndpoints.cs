@@ -201,7 +201,7 @@ public static class TrackingEndpoints
         List<TrackingEventInfo>? events = null;
         if (!string.IsNullOrEmpty(userId))
             events = (await db.TrackingEvents.AsNoTracking().Where(item => item.CourseId == course.Id &&
-                    item.ActivityId == activityId && item.UserId == userId).OrderBy(item => item.At).ThenBy(item => item.Id)
+                    item.ActivityId == activityId && ids.Contains(item.UserId) && item.UserId == userId).OrderBy(item => item.At).ThenBy(item => item.Id)
                     .Take(2000).ToListAsync(context.RequestAborted))
                 .Select(item => new TrackingEventInfo(item.Id.ToString(), item.SessionId, item.UserId, item.ActivityId,
                     item.ActivityType, item.Verb, item.Position, item.Payload, Ms(item.At))).ToList();
@@ -291,7 +291,7 @@ public static class TrackingEndpoints
     {
         if (string.IsNullOrWhiteSpace(group)) return Fail(400, "Укажите группу");
         var actor = Actor(context);
-        if (!AccessRules.CanViewGroup(actor, group)) return Fail(403, "Недостаточно прав");
+        if (!AccessRules.CanViewGroup(actor, group) || db.OrganizerId != null && !await db.Cohorts.AnyAsync(g => g.Name == group, context.RequestAborted)) return Fail(403, "Недостаточно прав");
         var slots = await db.ScheduleSlots.AsNoTracking().Where(slot => slot.TenantId == actor.TenantId && slot.Group == group)
             .OrderBy(slot => slot.Weekday).ThenBy(slot => slot.Pair).ToListAsync(context.RequestAborted);
         var courseIds = slots.Select(slot => slot.CourseId).Distinct().ToList();

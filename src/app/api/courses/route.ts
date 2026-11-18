@@ -1,3 +1,4 @@
+import { demoFacultyCodes } from "@/mocks/faculties-store";
 import { audit } from "@/mocks/audit-store";
 import { findCohort, setCourseCohorts } from "@/mocks/cohorts-store";
 import { NextResponse } from "next/server";
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
     faculty: str(body.faculty) || undefined,
     academicYear: str(body.academicYear) || undefined,
   };
-  const fields = validateCourse(input);
+  const fields = validateCourse(input, false, demoFacultyCodes());
   if (!fields.cohortIds && input.cohortIds?.some((id) => !findCohort(id)))
     fields.cohortIds = "Выберите существующие группы (не более 200)";
   if (!fields.tutorId && findDemoUser(input.tutorId)?.role !== "tutor")

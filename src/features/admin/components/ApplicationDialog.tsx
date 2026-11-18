@@ -1,11 +1,15 @@
 "use client";
 
+import { OrganizerScope } from "./OrganizerScope";
+import { can } from "@/shared/auth/permissions";
+import { FacultySelect } from "./FacultySelect";
+
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { assignableRoles } from "@/shared/auth/management";
 import { useSession } from "@/shared/auth/session";
 import type { PendingUser, Role } from "@/shared/types/domain";
-import { Button, Dialog, Field, Input, Select, describedBy } from "@/shared/ui";
+import { Button, Dialog, Field, Select, describedBy } from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import { adminApi, refreshManagement } from "../api";
 import { roleLabel } from "../labels";
@@ -25,6 +29,7 @@ export function ApplicationDialog({
   const [role, setRole] = useState<Role | "">("");
   const [group, setGroup] = useState("");
   const [faculty, setFaculty] = useState("");
+  const [scope, setScope] = useState<string[] | null>(null);
   const [reject, setReject] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -38,6 +43,9 @@ export function ApplicationDialog({
           role,
           group: role === "student" ? group || null : null,
           faculty: faculty.trim() || null,
+          ...(server &&
+            role === "organizer" &&
+            can(actorRole, "system.manage") && { organizerFaculties: scope }),
         });
       }
       return true;
@@ -120,11 +128,19 @@ export function ApplicationDialog({
                 </Select>
               </Field>
             )}
+            {role === "organizer" &&
+              can(actorRole, "system.manage") &&
+              (server ? (
+                <OrganizerScope value={scope} onChange={setScope} />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Назначение факультетов организатору доступно в режиме «Сервер».
+                </p>
+              ))}
             <Field id="application-faculty" label="Факультет" error={fields.faculty}>
-              <Input
+              <FacultySelect
                 id="application-faculty"
                 value={faculty}
-                maxLength={50}
                 onChange={(event) => setFaculty(event.target.value)}
                 disabled={pending}
                 {...describedBy("application-faculty", fields.faculty)}

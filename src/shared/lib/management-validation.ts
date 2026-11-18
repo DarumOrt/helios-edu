@@ -69,7 +69,11 @@ export function validateCohort(input: Partial<CohortInput>, partial = false): Fi
   return e;
 }
 
-export function validateCourse(input: Partial<CourseInput>, partial = false): FieldErrors {
+export function validateCourse(
+  input: Partial<CourseInput>,
+  partial = false,
+  facultyCodes = FACULTY_CODES,
+): FieldErrors {
   const e: FieldErrors = {};
   const has = (k: keyof CourseInput) => !partial || input[k] !== undefined;
   if (has("code") && !COURSE_CODE.test(text(input.code)))
@@ -83,7 +87,7 @@ export function validateCourse(input: Partial<CourseInput>, partial = false): Fi
     e.description = "Описание — до 1000 символов";
   if (has("tutorId") && !text(input.tutorId)) e.tutorId = "Назначьте преподавателя";
   const faculty = text(input.faculty);
-  if (faculty && !FACULTY_CODES.includes(faculty)) e.faculty = "Выберите факультет из списка";
+  if (faculty && !facultyCodes.includes(faculty)) e.faculty = "Выберите факультет из списка";
   const academicYear = text(input.academicYear);
   if (academicYear && !isAcademicYear(academicYear)) e.academicYear = "Учебный год в формате 2026/2027";
   if (input.status !== undefined && !COURSE_STATUSES.includes(input.status)) e.status = "Неизвестный статус";

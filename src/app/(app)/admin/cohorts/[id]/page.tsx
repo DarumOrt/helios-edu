@@ -20,6 +20,7 @@ import {
   PageHeader,
 } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
+import { canEditCourse } from "@/shared/auth/management";
 import { can } from "@/shared/auth/permissions";
 import { CohortDialog } from "@/features/admin/components/CohortDialog";
 import { MembersDialog } from "@/features/admin/components/MembersDialog";
@@ -31,7 +32,8 @@ import type { Cohort, Course, User } from "@/shared/types/domain";
 export default function CohortPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const role = useSession((s) => s.role);
+  const actor = useSession((s) => s.user);
+  const role = actor.role;
   const canManage = can(role, "cohort.manage");
   const { data: cohort, error, isLoading } = useSWR<Cohort>(`/api/cohorts/${id}`, fetcher);
   const { data: users } = useSWR<User[]>("/api/users", fetcher);
@@ -192,7 +194,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                             type="checkbox"
                             checked={chosen.has(c.id)}
                             onChange={() => toggleCourse(c.id)}
-                            disabled={!canManage || saving.pending}
+                            disabled={!canManage || !canEditCourse(actor, c) || saving.pending}
                             className="size-4 shrink-0 accent-primary"
                           />
                           <span className="min-w-0 flex-1">
