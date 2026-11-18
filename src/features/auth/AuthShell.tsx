@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import pspuLogo from "@/shared/assets/pspu-logo.png";
 import { BrandMark } from "@/shared/ui";
 import { FormulaWaves } from "@/shared/ui/FormulaWaves";
 import { DataSourceToggle } from "@/shared/layout/DataSourceToggle";
@@ -31,7 +33,7 @@ export function AuthShell({
           <BrandMark size={30} />
           <span>
             <span className="block text-lg leading-tight font-bold tracking-tight">HeliosEDU</span>
-            <span className="block font-mono text-xs text-waves-ink/70">ПГГПУ · ИНЭК</span>
+            <span className="block font-mono text-xs text-waves-ink/70">ПГГПУ</span>
           </span>
         </Link>
 
@@ -51,8 +53,14 @@ export function AuthShell({
           <ThemeToggle />
           <DataSourceToggle state={dataSource} />
         </div>
-        <div className="flex flex-1 items-center justify-center py-10">
+        <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
           <div className="w-full max-w-md">
+            <Image
+              src={pspuLogo}
+              alt="Пермский педагогический"
+              unoptimized
+              className="mx-auto mb-4 block h-auto w-56 max-w-full rounded-lg bg-white sm:w-64"
+            />
             <AuthTabs active={active} />
             {children}
           </div>

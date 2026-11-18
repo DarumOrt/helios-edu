@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import pspuLogo from "@/shared/assets/pspu-logo.png";
 import { cn } from "@/shared/lib/utils";
 import { BrandMark } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
@@ -86,11 +88,19 @@ export function Sidebar() {
             </span>
             <div>
               <div className="text-lg leading-tight font-bold tracking-tight text-foreground">HeliosEDU</div>
-              <div
-                className="font-mono text-xs text-muted-foreground"
-                title="Факультет информатики и экономики ПГГПУ"
-              >
-                ИНЭК ПГГПУ
+              <div className="mt-0.5 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                <span className="grid size-4.5 place-items-center rounded-sm bg-white" aria-hidden="true">
+                  <span className="relative size-3.5 overflow-hidden">
+                    {/* Знак занимает квадрат 592×592 со смещением 236 px от левого и верхнего края PNG. */}
+                    <Image
+                      src={pspuLogo}
+                      alt=""
+                      unoptimized
+                      className="absolute -top-[39.86%] -left-[39.86%] h-auto w-[463.34%] max-w-none"
+                    />
+                  </span>
+                </span>
+                ПГГПУ
               </div>
             </div>
           </Link>

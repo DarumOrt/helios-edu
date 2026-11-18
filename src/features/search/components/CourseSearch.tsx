@@ -77,7 +77,7 @@ export function CourseSearch() {
             type="search"
             value={filters.q ?? ""}
             onChange={(e) => update({ q: e.target.value })}
-            placeholder="Например, анализ данных или Казаринова"
+            placeholder="Название или код курса"
             aria-label="Название курса, преподаватель или группа"
             className="h-12 rounded-xl pr-4 pl-11 text-base shadow-card"
           />
