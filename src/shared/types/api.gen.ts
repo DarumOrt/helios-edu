@@ -79,6 +79,7 @@ export type BrandingInfo = {
   logoVersion: string | null;
   darkLogoVersion: string | null;
   useLogo: boolean | null;
+  logoScale: number | null;
 };
 
 export type CampaignInfo = {

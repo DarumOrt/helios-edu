@@ -13,6 +13,7 @@ public sealed class Branding
     public string? Subtitle { get; set; }
     public string? LoginText { get; set; }
     public string? FooterText { get; set; }
+    public int? LogoScale { get; set; }
     public bool? UseLogo { get; set; }
     public byte[]? DarkLogo { get; set; }
     public string? DarkLogoType { get; set; }
@@ -23,10 +24,10 @@ public sealed class Branding
 }
 
 public sealed record BrandingInfo(string? Subtitle, string? LoginText, string? FooterText, Guid? LogoVersion,
-    Guid? DarkLogoVersion, bool? UseLogo)
+    Guid? DarkLogoVersion, bool? UseLogo, int? LogoScale)
 {
     public static BrandingInfo From(Branding? branding) =>
-        new(branding?.Subtitle, branding?.LoginText, branding?.FooterText, branding?.LogoVersion, branding?.DarkLogoVersion, branding?.UseLogo);
+        new(branding?.Subtitle, branding?.LoginText, branding?.FooterText, branding?.LogoVersion, branding?.DarkLogoVersion, branding?.UseLogo, branding?.LogoScale);
 }
 
 public static class BrandingEndpoints
@@ -45,7 +46,7 @@ public static class BrandingEndpoints
         {
             var tenant = Tenant(http);
             return Results.Ok(await db.Branding.Where(b => b.TenantId == tenant)
-                .Select(b => new BrandingInfo(b.Subtitle, b.LoginText, b.FooterText, b.LogoVersion, b.DarkLogoVersion, b.UseLogo))
+                .Select(b => new BrandingInfo(b.Subtitle, b.LoginText, b.FooterText, b.LogoVersion, b.DarkLogoVersion, b.UseLogo, b.LogoScale))
                 .SingleOrDefaultAsync(http.RequestAborted) ?? BrandingInfo.From(null));
         }).Produces<BrandingInfo>();
         app.MapGet("/api/branding/logo", async (HttpContext http, LearningDbContext db, string? theme) =>
@@ -92,6 +93,12 @@ public static class BrandingEndpoints
                 }
                 errors[key] = "Выберите PNG, JPEG или WebP до 512 КБ";
             }
+            else if (key == "logoScale")
+            {
+                if (input.Value(key) is { ValueKind: not JsonValueKind.Null } value &&
+                    (value.ValueKind != JsonValueKind.Number || !value.TryGetInt32(out var scale) || scale is < 50 or > 130))
+                    errors[key] = "Укажите целое число от 50 до 130";
+            }
             else if (key == "useLogo")
             {
                 if (input.Value(key)?.ValueKind is not (JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null))
@@ -132,6 +139,15 @@ public static class BrandingEndpoints
                 };
                 changes.Add(new AuditChange("Оформление под названием сайта", Label(current.UseLogo), Label(useLogo)));
                 current.UseLogo = useLogo;
+            }
+        }
+        if (input.Value("logoScale") is { } scaleValue)
+        {
+            int? scale = scaleValue.ValueKind == JsonValueKind.Null ? null : scaleValue.GetInt32();
+            if (current.LogoScale != scale)
+            {
+                changes.Add(new AuditChange("Масштаб логотипа", $"{current.LogoScale ?? 100}%", $"{scale ?? 100}%"));
+                current.LogoScale = scale;
             }
         }
         foreach (var (key, (bytes, type)) in logos)

@@ -74,6 +74,7 @@ function BrandingForm({
   const [initial] = useState(() => ({ ...defaultBranding, ...current }));
   const [draft, setDraft] = useState(initial);
   const [logos, setLogos] = useState<LogoDrafts>({});
+  const [scale, setScale] = useState(current.logoScale ?? 100);
   const [mode, setMode] = useState<boolean | null>(current.useLogo ?? null);
   const [reading, setReading] = useState(false);
   const [resetCount, setResetCount] = useState(0);
@@ -82,16 +83,18 @@ function BrandingForm({
   const preview: Branding = {
     subtitle: draft.subtitle === defaultBranding.subtitle ? undefined : draft.subtitle || undefined,
     useLogo: mode ?? undefined,
+    logoScale: scale,
     logoVersion: logos.light === null ? undefined : current.logoVersion,
     darkLogoVersion: logos.dark === null ? undefined : current.darkLogoVersion,
   };
   const showLogos = usesLogo(preview);
 
   async function save() {
-    const body: Record<string, string | boolean | null> = {};
+    const body: Record<string, string | number | boolean | null> = {};
     for (const key of ["subtitle", "loginText", "footerText"] as const) {
       if (draft[key] !== initial[key]) body[key] = draft[key] === defaultBranding[key] ? null : draft[key];
     }
+    if (scale !== (current.logoScale ?? 100)) body.logoScale = scale === 100 ? null : scale;
     if (mode !== (current.useLogo ?? null)) body.useLogo = mode;
     if (logos.light !== undefined) body.logo = logos.light?.split(",")[1] ?? null;
     if (logos.dark !== undefined) body.darkLogo = logos.dark?.split(",")[1] ?? null;
@@ -156,6 +159,26 @@ function BrandingForm({
               />
             </Field>
           </fieldset>
+          {showLogos && (
+            <Field id={id + "-scale"} label="Масштаб логотипа" error={fields.logoScale}>
+              <div className="flex items-center gap-3">
+                <input
+                  id={id + "-scale"}
+                  type="range"
+                  min={50}
+                  max={130}
+                  value={scale}
+                  aria-valuetext={scale + "%"}
+                  {...describedBy(id + "-scale", fields.logoScale)}
+                  onChange={(e) => setScale(e.target.valueAsNumber)}
+                  className="w-full accent-primary"
+                />
+                <output htmlFor={id + "-scale"} className="w-12 text-right text-sm tabular-nums">
+                  {scale}%
+                </output>
+              </div>
+            </Field>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             {(["light", "dark"] as const).map((theme) => (
               <div key={theme} className="min-w-0 space-y-2">
@@ -234,6 +257,7 @@ function BrandingForm({
             onClick={() => {
               setDraft(defaultBranding);
               setMode(null);
+              setScale(100);
               setLogos({ light: null, dark: null });
               setResetCount((count) => count + 1);
             }}

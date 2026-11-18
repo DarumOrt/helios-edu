@@ -2816,7 +2816,15 @@
         }
       },
       "BrandingInfo": {
-        "required": ["subtitle", "loginText", "footerText", "logoVersion", "darkLogoVersion", "useLogo"],
+        "required": [
+          "subtitle",
+          "loginText",
+          "footerText",
+          "logoVersion",
+          "darkLogoVersion",
+          "useLogo",
+          "logoScale"
+        ],
         "type": "object",
         "properties": {
           "subtitle": {
@@ -2838,6 +2846,11 @@
           },
           "useLogo": {
             "type": ["null", "boolean"]
+          },
+          "logoScale": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
           }
         }
       },

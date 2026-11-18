@@ -456,6 +456,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<byte[]>("Logo")
                         .HasColumnType("bytea");
 
+                    b.Property<int?>("LogoScale")
+                        .HasColumnType("integer");
+
                     b.Property<string>("LogoType")
                         .HasColumnType("text");
 

@@ -90,7 +90,7 @@ export function Sidebar() {
             onClick={close}
             tabIndex={showEdit ? -1 : undefined}
             aria-hidden={showEdit || undefined}
-            className="flex items-center gap-3 text-foreground"
+            className="flex min-w-0 items-center gap-3 text-foreground"
           >
             <BrandIdentity branding={data} compact />
           </Link>

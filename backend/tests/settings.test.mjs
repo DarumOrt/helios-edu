@@ -98,11 +98,15 @@ for (const [name, baseUrl] of [
       logo: null,
       darkLogo: null,
       useLogo: null,
+      logoScale: null,
     };
     try {
       assert.equal((await put(organizer, { subtitle: "Учебный центр" })).status, 403);
       assert.equal((await put(admin, { logo: Buffer.from("<svg/>").toString("base64") })).status, 400);
       assert.equal((await put(admin, { subtitle: "а".repeat(33) })).status, 400);
+      for (const logoScale of [49, 131, 75.5, "90"]) {
+        assert.equal((await put(admin, { logoScale })).status, 400);
+      }
       const saved = await put(admin, {
         subtitle: "Учебный центр",
         loginText: "Добро пожаловать в учебный центр",
@@ -121,16 +125,19 @@ for (const [name, baseUrl] of [
         footerText: "Справочная служба",
         darkLogo: dark.toString("base64"),
         useLogo: true,
+        logoScale: 115,
       });
       const themed = await changed.json();
       assert.equal(themed.logoVersion, brand.logoVersion);
       assert.ok(themed.darkLogoVersion);
+      assert.equal(themed.logoScale, 115);
       const night = await get(baseUrl, path + "/logo?theme=dark");
       assert.equal(night.status, 200);
       assert.deepEqual(Buffer.from(await night.arrayBuffer()), dark);
       const text = await put(admin, { useLogo: false });
       const signature = await text.json();
       assert.equal(signature.useLogo, false);
+      assert.equal(signature.logoScale, 115);
       assert.equal(signature.darkLogoVersion, themed.darkLogoVersion);
       assert.equal((await put(admin, { darkLogo: null })).status, 200);
       assert.equal((await get(baseUrl, path + "/logo?theme=dark")).status, 404);
