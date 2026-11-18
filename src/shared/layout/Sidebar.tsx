@@ -1,13 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import pspuLogo from "@/shared/assets/pspu-logo.png";
 import { cn } from "@/shared/lib/utils";
-import { BrandMark } from "@/shared/ui";
+import { BrandIdentity } from "@/shared/layout/BrandIdentity";
 import { useSession } from "@/shared/auth/session";
-import { brandingLogo, defaultBranding, useBranding } from "@/shared/lib/branding";
+import { useBranding } from "@/shared/lib/branding";
 import { navForRole, can } from "@/shared/auth/permissions";
 import { roleMeta } from "@/shared/auth/role-meta";
 import { useUiStore } from "@/stores/ui-store";
@@ -92,42 +90,9 @@ export function Sidebar() {
             onClick={close}
             tabIndex={showEdit ? -1 : undefined}
             aria-hidden={showEdit || undefined}
-            className="flex items-center gap-3 text-primary"
+            className="flex items-center gap-3 text-foreground"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
-              <BrandMark size={26} />
-            </span>
-            <div className="min-w-0">
-              <div className="text-lg leading-tight font-bold tracking-tight text-foreground">HeliosEDU</div>
-              <div className="mt-0.5 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-                <span
-                  className="grid size-4.5 shrink-0 place-items-center rounded-sm bg-white"
-                  aria-hidden="true"
-                >
-                  {data?.logoVersion ? (
-                    <Image
-                      src={brandingLogo(data.logoVersion)}
-                      width={18}
-                      height={18}
-                      alt=""
-                      unoptimized
-                      className="size-4.5 object-contain"
-                    />
-                  ) : (
-                    <span className="relative size-3.5 overflow-hidden">
-                      {/* Знак занимает квадрат 592×592 со смещением 236 px от левого и верхнего края PNG. */}
-                      <Image
-                        src={pspuLogo}
-                        alt=""
-                        unoptimized
-                        className="absolute -top-[39.86%] -left-[39.86%] h-auto w-[463.34%] max-w-none"
-                      />
-                    </span>
-                  )}
-                </span>
-                <span className="wrap-anywhere">{data?.subtitle ?? defaultBranding.subtitle}</span>
-              </div>
-            </div>
+            <BrandIdentity branding={data} compact />
           </Link>
           {showEdit && (
             <button

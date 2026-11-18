@@ -1,20 +1,22 @@
 "use client";
 
-import Image from "next/image";
-import { useId, useState, type ChangeEvent } from "react";
+import { useId, useState } from "react";
+import { LogoEditor } from "./LogoEditor";
+import { BrandIdentity } from "./BrandIdentity";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
 import { useUiStore } from "@/stores/ui-store";
-import { BrandMark, Button, describedBy, Dialog, Field, Input, Textarea } from "@/shared/ui";
+import { Button, describedBy, Dialog, Field, Input, Textarea } from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import { api } from "@/shared/lib/api-client";
 import {
-  brandingLogo,
   brandingPath,
   defaultBranding,
   useBranding,
+  usesLogo,
+  type LogoDrafts,
   type Branding,
 } from "@/shared/lib/branding";
 
@@ -71,47 +73,28 @@ function BrandingForm({
   const id = useId();
   const [initial] = useState(() => ({ ...defaultBranding, ...current }));
   const [draft, setDraft] = useState(initial);
-  const [logo, setLogo] = useState<string | null>();
+  const [logos, setLogos] = useState<LogoDrafts>({});
+  const [mode, setMode] = useState<boolean | null>(current.useLogo ?? null);
   const [reading, setReading] = useState(false);
-  const { pending, error, fields, run, setFields } = useFormSubmit();
+  const [resetCount, setResetCount] = useState(0);
+  const { pending, error, fields, run } = useFormSubmit();
   const busy = reading || pending;
-  const defaults = logo === null || (logo === undefined && !current.logoVersion);
-  const src = logo ?? brandingLogo(defaults ? undefined : current.logoVersion);
-
-  async function selectLogo(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0];
-    event.currentTarget.value = "";
-    if (!file) return;
-    const invalid = "Выберите PNG, JPEG или WebP до 512 КБ";
-    setFields({});
-    if (file.size > 512 * 1024 || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      setFields({ logo: invalid });
-      return;
-    }
-    setReading(true);
-    try {
-      const bitmap = await createImageBitmap(file);
-      bitmap.close();
-      const reader = new FileReader();
-      const data = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      setLogo(data);
-    } catch {
-      setFields({ logo: "Не удалось открыть изображение" });
-    } finally {
-      setReading(false);
-    }
-  }
+  const preview: Branding = {
+    subtitle: draft.subtitle === defaultBranding.subtitle ? undefined : draft.subtitle || undefined,
+    useLogo: mode ?? undefined,
+    logoVersion: logos.light === null ? undefined : current.logoVersion,
+    darkLogoVersion: logos.dark === null ? undefined : current.darkLogoVersion,
+  };
+  const showLogos = usesLogo(preview);
 
   async function save() {
-    const body: Record<string, string | null> = {};
+    const body: Record<string, string | boolean | null> = {};
     for (const key of ["subtitle", "loginText", "footerText"] as const) {
       if (draft[key] !== initial[key]) body[key] = draft[key] === defaultBranding[key] ? null : draft[key];
     }
-    if (logo !== undefined) body.logo = logo?.split(",")[1] ?? null;
+    if (mode !== (current.useLogo ?? null)) body.useLogo = mode;
+    if (logos.light !== undefined) body.logo = logos.light?.split(",")[1] ?? null;
+    if (logos.dark !== undefined) body.darkLogo = logos.dark?.split(",")[1] ?? null;
     const result = await run(() => api.put<Branding>(brandingPath, body));
     if (!result) return;
     onSave(result);
@@ -146,11 +129,23 @@ function BrandingForm({
         }}
       >
         <fieldset className="space-y-4" disabled={busy}>
-          <div className="rounded-xl border bg-muted/40 p-4">
-            <div className="mb-3 flex items-center gap-2 text-lg font-bold">
-              <BrandMark size={24} /> HeliosEDU
+          <fieldset className="rounded-xl border bg-muted/40 p-4">
+            <legend className="mb-2 text-sm font-semibold">Под названием HeliosEDU</legend>
+            <div className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="brand-mode" checked={showLogos} onChange={() => setMode(true)} />
+                Логотип
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="brand-mode" checked={!showLogos} onChange={() => setMode(false)} />
+                Текстовая подпись
+              </label>
             </div>
-            <Field id={id + "-subtitle"} label="Подпись под названием" error={fields.subtitle}>
+            <Field
+              id={id + "-subtitle"}
+              label={showLogos ? "Подпись, если для темы нет логотипа" : "Подпись под названием"}
+              error={fields.subtitle}
+            >
               <Input
                 id={id + "-subtitle"}
                 {...describedBy(id + "-subtitle", fields.subtitle)}
@@ -160,36 +155,53 @@ function BrandingForm({
                 onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })}
               />
             </Field>
+          </fieldset>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(["light", "dark"] as const).map((theme) => (
+              <div key={theme} className="min-w-0 space-y-2">
+                <section
+                  className={
+                    theme === "dark"
+                      ? "min-w-0 rounded-xl border bg-slate-950 p-3 text-white"
+                      : "min-w-0 rounded-xl border bg-white p-3 text-slate-950"
+                  }
+                >
+                  <h3 className="mb-3 text-xs font-semibold">
+                    {theme === "dark" ? "Тёмная тема" : "Светлая тема"}
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="mb-1 block text-xs opacity-80">Страница входа</span>
+                      <BrandIdentity branding={preview} drafts={logos} theme={theme} />
+                    </div>
+                    <div>
+                      <span className="mb-1 block text-xs opacity-80">Боковое меню</span>
+                      <BrandIdentity branding={preview} drafts={logos} theme={theme} compact />
+                    </div>
+                  </div>
+                </section>
+                {showLogos && (
+                  <LogoEditor
+                    key={resetCount}
+                    theme={theme}
+                    removable={Boolean(
+                      logos[theme] ??
+                      (logos[theme] === undefined &&
+                        (theme === "dark" ? current.darkLogoVersion : current.logoVersion)),
+                    )}
+                    setReading={setReading}
+                    error={theme === "dark" ? fields.darkLogo : fields.logo}
+                    onChange={(value) => {
+                      setMode(true);
+                      setLogos((previous) => ({ ...previous, [theme]: value }));
+                    }}
+                  />
+                )}
+              </div>
+            ))}
           </div>
           <div className="space-y-4 rounded-xl border p-4">
-            <h3 className="font-semibold">Страница входа</h3>
-            <div className="flex flex-wrap items-center gap-3">
-              <Image
-                src={src}
-                alt="Предпросмотр логотипа"
-                width={160}
-                height={80}
-                unoptimized
-                className="h-20 w-40 rounded-lg border bg-white object-contain"
-              />
-              <div>
-                <input
-                  id={id + "-logo"}
-                  type="file"
-                  className="peer sr-only"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(e) => void selectLogo(e)}
-                />
-                <label
-                  htmlFor={id + "-logo"}
-                  className="inline-flex cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium peer-focus-visible:ring-2 peer-focus-visible:ring-ring hover:bg-muted"
-                >
-                  Выбрать логотип
-                </label>
-                <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG, WebP до 512 КБ</p>
-              </div>
-            </div>
-            <FormError message={fields.logo} />
+            <h3 className="font-semibold">Тексты на входе</h3>
             <Field id={id + "-login"} label="Текст приветствия" error={fields.loginText}>
               <Textarea
                 rows={2}
@@ -221,8 +233,9 @@ function BrandingForm({
             size="sm"
             onClick={() => {
               setDraft(defaultBranding);
-              setLogo(null);
-              setFields({});
+              setMode(null);
+              setLogos({ light: null, dark: null });
+              setResetCount((count) => count + 1);
             }}
           >
             Восстановить исходное оформление

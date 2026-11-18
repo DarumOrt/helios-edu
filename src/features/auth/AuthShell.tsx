@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { brandingLogo, defaultBranding, useBranding, type Branding } from "@/shared/lib/branding";
-import { BrandMark } from "@/shared/ui";
+import { defaultBranding, useBranding, type Branding } from "@/shared/lib/branding";
+import { BrandIdentity } from "@/shared/layout/BrandIdentity";
 import { FormulaWaves } from "@/shared/ui/FormulaWaves";
 import { DataSourceToggle } from "@/shared/layout/DataSourceToggle";
 import { ThemeToggle } from "@/shared/layout/ThemeToggle";
@@ -36,13 +35,7 @@ export function AuthShell({
       <aside className="relative isolate flex min-h-52 flex-col overflow-hidden px-6 pt-6 pb-10 text-waves-ink sm:px-10 lg:min-h-screen lg:pt-10 lg:pb-16">
         <FormulaWaves className="-z-10" />
         <Link href="/" className="relative flex w-fit items-center gap-2.5 rounded-md">
-          <BrandMark size={30} />
-          <span>
-            <span className="block text-lg leading-tight font-bold tracking-tight">HeliosEDU</span>
-            <span className="block max-w-64 font-mono text-xs wrap-break-word text-waves-ink/70">
-              {brand.subtitle}
-            </span>
-          </span>
+          <BrandIdentity branding={data} />
         </Link>
 
         <div className="relative mt-8 max-w-md lg:mt-auto">
@@ -61,14 +54,6 @@ export function AuthShell({
         </div>
         <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
           <div className="w-full max-w-md">
-            <Image
-              src={brandingLogo(brand.logoVersion)}
-              alt={brand.logoVersion ? brand.subtitle : "Пермский педагогический"}
-              width={256}
-              height={96}
-              unoptimized
-              className="mx-auto mb-4 block h-auto max-h-28 w-56 max-w-full rounded-lg bg-white object-contain sm:w-64"
-            />
             {allowRegistration && <AuthTabs active={active} />}
             {children}
           </div>

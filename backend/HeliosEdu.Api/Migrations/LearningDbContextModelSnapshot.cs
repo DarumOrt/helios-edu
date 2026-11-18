@@ -438,6 +438,15 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("TenantId")
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("DarkLogo")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("DarkLogoType")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DarkLogoVersion")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("FooterText")
                         .HasColumnType("text");
 
@@ -455,6 +464,9 @@ namespace HeliosEdu.Api.Migrations
 
                     b.Property<string>("Subtitle")
                         .HasColumnType("text");
+
+                    b.Property<bool?>("UseLogo")
+                        .HasColumnType("boolean");
 
                     b.HasKey("TenantId");
 

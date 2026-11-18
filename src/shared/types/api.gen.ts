@@ -77,6 +77,8 @@ export type BrandingInfo = {
   loginText: string | null;
   footerText: string | null;
   logoVersion: string | null;
+  darkLogoVersion: string | null;
+  useLogo: boolean | null;
 };
 
 export type CampaignInfo = {

@@ -392,6 +392,15 @@
     "/api/branding/logo": {
       "get": {
         "tags": ["HeliosEdu.Api"],
+        "parameters": [
+          {
+            "name": "theme",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -2807,7 +2816,7 @@
         }
       },
       "BrandingInfo": {
-        "required": ["subtitle", "loginText", "footerText", "logoVersion"],
+        "required": ["subtitle", "loginText", "footerText", "logoVersion", "darkLogoVersion", "useLogo"],
         "type": "object",
         "properties": {
           "subtitle": {
@@ -2822,6 +2831,13 @@
           "logoVersion": {
             "type": ["null", "string"],
             "format": "uuid"
+          },
+          "darkLogoVersion": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "useLogo": {
+            "type": ["null", "boolean"]
           }
         }
       },

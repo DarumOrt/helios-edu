@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { apiUrl, get, login } from "./client.mjs";
 
@@ -89,7 +90,15 @@ for (const [name, baseUrl] of [
         },
         body: JSON.stringify(body),
       });
-    const reset = { subtitle: null, loginText: null, footerText: null, logo: null };
+    const dark = await readFile(new URL("../../src/shared/assets/pspu-logo-dark.png", import.meta.url));
+    const reset = {
+      subtitle: null,
+      loginText: null,
+      footerText: null,
+      logo: null,
+      darkLogo: null,
+      useLogo: null,
+    };
     try {
       assert.equal((await put(organizer, { subtitle: "Учебный центр" })).status, 403);
       assert.equal((await put(admin, { logo: Buffer.from("<svg/>").toString("base64") })).status, 400);
@@ -108,8 +117,24 @@ for (const [name, baseUrl] of [
       assert.equal(asset.headers.get("content-type"), "image/png");
       assert.equal(asset.headers.get("x-content-type-options"), "nosniff");
       assert.equal(Buffer.from(await asset.arrayBuffer()).toString("base64"), png);
-      const changed = await put(admin, { footerText: "Справочная служба" });
-      assert.equal((await changed.json()).logoVersion, brand.logoVersion);
+      const changed = await put(admin, {
+        footerText: "Справочная служба",
+        darkLogo: dark.toString("base64"),
+        useLogo: true,
+      });
+      const themed = await changed.json();
+      assert.equal(themed.logoVersion, brand.logoVersion);
+      assert.ok(themed.darkLogoVersion);
+      const night = await get(baseUrl, path + "/logo?theme=dark");
+      assert.equal(night.status, 200);
+      assert.deepEqual(Buffer.from(await night.arrayBuffer()), dark);
+      const text = await put(admin, { useLogo: false });
+      const signature = await text.json();
+      assert.equal(signature.useLogo, false);
+      assert.equal(signature.darkLogoVersion, themed.darkLogoVersion);
+      assert.equal((await put(admin, { darkLogo: null })).status, 200);
+      assert.equal((await get(baseUrl, path + "/logo?theme=dark")).status, 404);
+      assert.equal((await get(baseUrl, path + "/logo")).status, 200);
       const log = await (await get(baseUrl, "/api/audit", admin.cookie)).json();
       assert.ok(log.items.some((item) => item.target === "Оформление организации"));
       if (name === "Next.js") assert.match(await (await get(baseUrl, "/login")).text(), /Учебный центр/);

@@ -13,15 +13,20 @@ public sealed class Branding
     public string? Subtitle { get; set; }
     public string? LoginText { get; set; }
     public string? FooterText { get; set; }
+    public bool? UseLogo { get; set; }
+    public byte[]? DarkLogo { get; set; }
+    public string? DarkLogoType { get; set; }
+    public Guid? DarkLogoVersion { get; set; }
     public byte[]? Logo { get; set; }
     public string? LogoType { get; set; }
     public Guid? LogoVersion { get; set; }
 }
 
-public sealed record BrandingInfo(string? Subtitle, string? LoginText, string? FooterText, Guid? LogoVersion)
+public sealed record BrandingInfo(string? Subtitle, string? LoginText, string? FooterText, Guid? LogoVersion,
+    Guid? DarkLogoVersion, bool? UseLogo)
 {
     public static BrandingInfo From(Branding? branding) =>
-        new(branding?.Subtitle, branding?.LoginText, branding?.FooterText, branding?.LogoVersion);
+        new(branding?.Subtitle, branding?.LoginText, branding?.FooterText, branding?.LogoVersion, branding?.DarkLogoVersion, branding?.UseLogo);
 }
 
 public static class BrandingEndpoints
@@ -40,15 +45,17 @@ public static class BrandingEndpoints
         {
             var tenant = Tenant(http);
             return Results.Ok(await db.Branding.Where(b => b.TenantId == tenant)
-                .Select(b => new BrandingInfo(b.Subtitle, b.LoginText, b.FooterText, b.LogoVersion))
+                .Select(b => new BrandingInfo(b.Subtitle, b.LoginText, b.FooterText, b.LogoVersion, b.DarkLogoVersion, b.UseLogo))
                 .SingleOrDefaultAsync(http.RequestAborted) ?? BrandingInfo.From(null));
         }).Produces<BrandingInfo>();
-        app.MapGet("/api/branding/logo", async (HttpContext http, LearningDbContext db) =>
+        app.MapGet("/api/branding/logo", async (HttpContext http, LearningDbContext db, string? theme) =>
         {
             var branding = await db.Branding.AsNoTracking().SingleOrDefaultAsync(b => b.TenantId == Tenant(http), http.RequestAborted);
-            if (branding?.Logo is not { } logo) return Results.NotFound();
+            var dark = theme == "dark";
+            var logo = dark ? branding?.DarkLogo : branding?.Logo;
+            if (logo == null) return Results.NotFound();
             http.Response.Headers["X-Content-Type-Options"] = "nosniff";
-            return Results.File(logo, branding.LogoType);
+            return Results.File(logo, dark ? branding?.DarkLogoType : branding?.LogoType);
         });
         app.MapPut("/api/branding", UpdateAsync).RequireAuthorization(AccessRules.ManageSystem)
             .AddEndpointFilter<ManagementWriteFilter>().Produces<BrandingInfo>();
@@ -58,28 +65,37 @@ public static class BrandingEndpoints
 
     private static async Task<IResult> UpdateAsync(HttpContext http, LearningDbContext db)
     {
-        if (http.Request.ContentLength > 720_000) return Fail(413, "Слишком большой файл");
+        if (http.Request.ContentLength > 1_420_000) return Fail(413, "Слишком большой файл");
         var input = await ManagementInput.ReadAsync(http.Request);
         if (input == null) return Fail(400, "Некорректный запрос");
         var errors = new Dictionary<string, string>();
-        byte[]? logo = null;
-        string? logoType = null;
+        var logos = new Dictionary<string, (byte[]? Bytes, string? Type)>();
         foreach (var key in input.Keys)
         {
-            if (key == "logo")
+            if (key is "logo" or "darkLogo")
             {
-                if (input.Value(key)?.ValueKind == JsonValueKind.Null) continue;
+                if (input.Value(key)?.ValueKind == JsonValueKind.Null)
+                {
+                    logos[key] = (null, null);
+                    continue;
+                }
                 var encoded = input.Text(key);
                 if (encoded.Length <= (LogoLimit + 2) / 3 * 4)
                 {
                     var buffer = new byte[LogoLimit];
-                    if (Convert.TryFromBase64String(encoded, buffer, out var size))
+                    if (Convert.TryFromBase64String(encoded, buffer, out var size) &&
+                        ImageType(buffer.AsSpan(0, size)) is { } type)
                     {
-                        logo = buffer[..size];
-                        logoType = ImageType(logo);
+                        logos[key] = (buffer[..size], type);
+                        continue;
                     }
                 }
-                if (logoType == null) errors[key] = "Выберите PNG, JPEG или WebP до 512 КБ";
+                errors[key] = "Выберите PNG, JPEG или WebP до 512 КБ";
+            }
+            else if (key == "useLogo")
+            {
+                if (input.Value(key)?.ValueKind is not (JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null))
+                    errors[key] = "Выберите логотип или текстовую подпись";
             }
             else if (!TextFields.TryGetValue(key, out var field)) errors[key] = "Неизвестная настройка";
             else if (input.Value(key)?.ValueKind is not (JsonValueKind.Null or JsonValueKind.String) ||
@@ -104,13 +120,40 @@ public static class BrandingEndpoints
             (TextFields["subtitle"].Label, current.Subtitle, subtitle),
             (TextFields["loginText"].Label, current.LoginText, loginText),
             (TextFields["footerText"].Label, current.FooterText, footerText));
-        if (input.Has("logo") && !(current.Logo ?? []).AsSpan().SequenceEqual(logo ?? []))
+        if (input.Has("useLogo"))
         {
-            changes.Add(new AuditChange("Логотип организации", current.Logo == null ? "Исходный" : "Загружен",
-                logo == null ? "Исходный" : "Загружен новый"));
-            current.Logo = logo;
-            current.LogoType = logoType;
-            current.LogoVersion = logo == null ? null : Guid.NewGuid();
+            var mode = input.Value("useLogo")!.Value;
+            bool? useLogo = mode.ValueKind == JsonValueKind.Null ? null : mode.GetBoolean();
+            if (useLogo != current.UseLogo)
+            {
+                static string Label(bool? value) => value switch
+                {
+                    true => "Логотип", false => "Текстовая подпись", null => "Исходное оформление"
+                };
+                changes.Add(new AuditChange("Оформление под названием сайта", Label(current.UseLogo), Label(useLogo)));
+                current.UseLogo = useLogo;
+            }
+        }
+        foreach (var (key, (bytes, type)) in logos)
+        {
+            var dark = key == "darkLogo";
+            var before = dark ? current.DarkLogo : current.Logo;
+            if ((before ?? []).AsSpan().SequenceEqual(bytes ?? [])) continue;
+            changes.Add(new AuditChange(dark ? "Логотип для тёмной темы" : "Логотип для светлой темы",
+                before == null ? "Нет файла" : "Загружен", bytes == null ? "Удалён" : "Загружен новый"));
+            Guid? version = bytes == null ? null : Guid.NewGuid();
+            if (dark)
+            {
+                current.DarkLogo = bytes;
+                current.DarkLogoType = type;
+                current.DarkLogoVersion = version;
+            }
+            else
+            {
+                current.Logo = bytes;
+                current.LogoType = type;
+                current.LogoVersion = version;
+            }
         }
         if (changes.Count > 0)
         {
