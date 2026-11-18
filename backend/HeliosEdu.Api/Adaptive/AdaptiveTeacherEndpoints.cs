@@ -130,6 +130,7 @@ public static partial class AdaptiveEndpoints
         var type = http.Request.Query["type"].ToString();
         var query = db.LearningEvents.AsNoTracking().Where(item => item.CourseId == course.Id);
         if (userId.Length > 0) query = query.Where(item => item.UserId == userId);
+        if (db.OrganizerId != null) query = query.Where(item => db.Accounts.Any(a => a.Id == item.UserId));
         if (type.Length > 0) query = query.Where(item => item.Type == type);
         return Results.Ok(await query.OrderByDescending(item => item.At).ThenByDescending(item => item.Id).Take(limit).ToListAsync(http.RequestAborted));
     }

@@ -433,6 +433,52 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("AuditLog", (string)null);
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Audit.Branding", b =>
+                {
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("DarkLogo")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("DarkLogoType")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DarkLogoVersion")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FooterText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginText")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("Logo")
+                        .HasColumnType("bytea");
+
+                    b.Property<int?>("LogoScale")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LogoType")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("LogoVersion")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("MenuLogoScale")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subtitle")
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("UseLogo")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("Branding", (string)null);
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Audit.SystemSettings", b =>
                 {
                     b.Property<string>("TenantId")
@@ -458,6 +504,9 @@ namespace HeliosEdu.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -478,6 +527,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<string>("NormalizedEmail")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.PrimitiveCollection<string[]>("OrganizerFaculties")
+                        .HasColumnType("text[]");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -502,6 +554,8 @@ namespace HeliosEdu.Api.Migrations
                     b.HasIndex("NormalizedEmail")
                         .IsUnique();
 
+                    b.HasIndex("TenantId", "Faculty");
+
                     b.ToTable("Accounts");
                 });
 
@@ -516,6 +570,12 @@ namespace HeliosEdu.Api.Migrations
 
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PreviewId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PreviewRole")
+                        .HasColumnType("text");
 
                     b.HasKey("TokenHash");
 
@@ -579,6 +639,10 @@ namespace HeliosEdu.Api.Migrations
                         .HasColumnType("text")
                         .HasDefaultValue("published");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
@@ -591,6 +655,8 @@ namespace HeliosEdu.Api.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "Faculty");
 
                     b.ToTable("Courses");
                 });
@@ -1011,6 +1077,8 @@ namespace HeliosEdu.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "Faculty");
+
                     b.HasIndex("TenantId", "NormalizedName")
                         .IsUnique();
 
@@ -1033,6 +1101,33 @@ namespace HeliosEdu.Api.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("CohortCourses");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Management.Faculty", b =>
+                {
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Archived")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NormalizedCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("TenantId", "Code");
+
+                    b.HasIndex("TenantId", "NormalizedCode")
+                        .IsUnique();
+
+                    b.ToTable("Faculties");
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Notifications.Announcement", b =>
@@ -1397,6 +1492,14 @@ namespace HeliosEdu.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Auth.Account", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Management.Faculty", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "Faculty")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Auth.LoginSession", b =>
                 {
                     b.HasOne("HeliosEdu.Api.Auth.Account", "Account")
@@ -1410,6 +1513,11 @@ namespace HeliosEdu.Api.Migrations
 
             modelBuilder.Entity("HeliosEdu.Api.Courses.Course", b =>
                 {
+                    b.HasOne("HeliosEdu.Api.Management.Faculty", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "Faculty")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.OwnsMany("HeliosEdu.Api.Courses.Section", "Sections", b1 =>
                         {
                             b1.Property<string>("CourseId")
@@ -1579,6 +1687,14 @@ namespace HeliosEdu.Api.Migrations
                         .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Management.Cohort", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Management.Faculty", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "Faculty")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Management.CohortCourse", b =>

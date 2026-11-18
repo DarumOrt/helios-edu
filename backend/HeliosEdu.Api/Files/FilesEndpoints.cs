@@ -120,7 +120,7 @@ public static class FilesEndpoints
     /// </summary>
     private static async Task<bool> CanReadAsync(LearningDbContext db, HttpContext context, StoredFile file)
     {
-        if (file.Kind == FileKinds.Cover.Name) return true;
+        if (file.Kind == FileKinds.Cover.Name) return await db.Courses.AnyAsync(c => c.Id == file.CourseId, context.RequestAborted);
         var visible = await AccessRules.VisibleCourses(db, context.User)
             .AnyAsync(course => course.Id == file.CourseId, context.RequestAborted);
         if (file.Kind != FileKinds.Submission.Name) return visible;

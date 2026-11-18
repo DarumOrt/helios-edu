@@ -338,6 +338,50 @@ test("общие курсы, CSV, активация и SMTP с очередью
       const actor = await login(apiUrl, email, activation.password);
       assert.equal(actor.user.mustChangePassword, undefined);
     });
+    await t.test(
+      "одобрение заявки отправляет ровно одно приглашение, пароль устанавливает получатель",
+      async () => {
+        const email = `${unique}-approval@example.org`;
+        await expect(await send("PUT", "/api/settings", { allowRegistration: true }));
+        try {
+          await expect(
+            await send("POST", "/api/auth/register", { name: "Новая Заявка", email, consent: true }),
+            202,
+          );
+          const {
+            items: [pending],
+          } = await expect(await get(apiUrl, `/api/users/directory?role=pending&q=${email}`, admin.cookie));
+          assert.ok(pending);
+          const path = `/api/users/${pending.id}/application`;
+          const decisions = await Promise.all([
+            send("POST", path, { role: "student", group: groups[0].name }, organizer),
+            send("POST", path, { role: "student", group: groups[0].name }, organizer),
+          ]);
+          assert.deepEqual(decisions.map((r) => r.status).sort(), [200, 409]);
+          const user = await expect(decisions.find((r) => r.status === 200));
+          createdUsers.push({ user });
+          assert.equal(user.id, pending.id);
+          assert.equal(user.role, "student");
+          assert.equal(user.group, groups[0].name);
+          assert.equal((await send("DELETE", path, undefined, organizer)).status, 409);
+          const deadline = Date.now() + 15000;
+          while (!fixture.messages.some((m) => m.recipient === email) && Date.now() < deadline)
+            await delay(250);
+          const messages = fixture.messages.filter((m) => m.recipient === email);
+          assert.equal(messages.length, 1);
+          const token = messages[0].body
+            .replaceAll(/=\r\n/g, "")
+            .replaceAll("=3D", "=")
+            .match(/token=([A-F0-9]{64})/)?.[1];
+          assert.ok(token);
+          const password = "ExamplePassword2026";
+          await expect(await send("POST", "/api/auth/activate", { token, password }));
+          assert.equal((await login(apiUrl, email, password)).user.id, user.id);
+        } finally {
+          await send("PUT", "/api/settings", { allowRegistration: false });
+        }
+      },
+    );
     await t.test("постоянная SMTP-ошибка отражается в истории", async () => {
       // Запрос с другим идентификатором — новая осознанная операция.
       fixture.setMode("permanent");

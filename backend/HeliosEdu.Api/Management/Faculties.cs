@@ -2,12 +2,17 @@ using System.Text.RegularExpressions;
 
 namespace HeliosEdu.Api.Management;
 
-// Факультеты ПГГПУ — тот же список, что src/shared/lib/faculties.ts.
+public sealed class Faculty
+{
+    public string TenantId { get; set; } = "";
+    public string Code { get; set; } = "";
+    public string NormalizedCode { get; set; } = "";
+    public string Name { get; set; } = "";
+    public bool Archived { get; set; }
+}
+
 public static partial class Faculties
 {
-    public static readonly string[] Codes =
-        ["ИНЭК", "МФ", "ФизФ", "ЕНФ", "ФФ", "ИстФ", "ИнЯз", "ПсФ", "ПиСПО", "ПиМНО", "ППД", "МузФ", "ФФК"];
-
     [GeneratedRegex(@"^(\d{4})/(\d{4})$")]
     private static partial Regex AcademicYearPattern();
 

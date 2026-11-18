@@ -92,6 +92,8 @@ public static class CsvImport
             columns.Values.Any(i => i < 0 || i >= csv[0].Length) || columns.Values.Distinct().Count() != columns.Count)
             return Fail(400, "Сопоставьте уникальные колонки имени и почты; роли через CSV не изменяются");
         var groups = await db.Cohorts.FromSqlInterpolated($"SELECT * FROM \"Cohorts\" WHERE \"TenantId\" = {actor.TenantId} ORDER BY \"Id\" FOR UPDATE").ToListAsync(ct);
+        var faculties = await db.Faculties.FromSqlInterpolated($"SELECT * FROM \"Faculties\" WHERE \"TenantId\" = {actor.TenantId} AND NOT \"Archived\" FOR SHARE")
+            .Select(f => f.Code).ToListAsync(ct);
         var mail = c.RequestServices.GetRequiredService<MailService>();
         var hasher = c.RequestServices.GetRequiredService<IPasswordHasher<Account>>();
         var publicUrl = c.RequestServices.GetRequiredService<IConfiguration>()["Mail:PublicUrl"];
@@ -109,12 +111,18 @@ public static class CsvImport
             var error = cells.Length != csv[0].Length ? "Количество полей не совпадает с заголовком" :
                 name.Length is < 2 or > 100 ? "Укажите имя и фамилию — от 2 до 100 символов" :
                 !MailService.EmailValid(email) ? "Почта выглядит неполной, например name@pspu.ru" :
-                faculty.Length > 50 ? "Факультет — до 50 символов" : groupName.Length > 0 && group is null ? "Такой группы нет" : null;
+                faculty.Length > 50 ? "Факультет — до 50 символов" : faculty.Length > 0 && !faculties.Contains(faculty) ? "Выберите факультет из списка" : groupName.Length > 0 && group is null ? "Такой группы нет" : null;
             if (error is not null) { errors++; report.Add(new(i + 1, name, email, groupName, "error", error)); continue; }
             if (!seen.Add(normalized)) { skipped++; report.Add(new(i + 1, name, email, groupName, "skipped", "Повтор почты в CSV")); continue; }
-            var existing = await db.Accounts.SingleOrDefaultAsync(u => u.NormalizedEmail == normalized, ct);
+            var existing = await db.Accounts.IgnoreQueryFilters().SingleOrDefaultAsync(u => u.NormalizedEmail == normalized, ct);
             if (existing is not null)
             {
+                if (existing.TenantId == actor.TenantId && existing.Status == Account.Pending)
+                {
+                    skipped++;
+                    report.Add(new(i + 1, name, email, groupName, "skipped", "Заявка уже есть в списке «Без роли»"));
+                    continue;
+                }
                 if (existing.TenantId != actor.TenantId || existing.Status != "active")
                 { errors++; report.Add(new(i + 1, name, email, groupName, "error", "Адрес недоступен для импорта")); continue; }
                 if (input.UpdateExisting && group is not null && existing.Role == "student" && existing.Group != group.Name)
@@ -129,7 +137,7 @@ public static class CsvImport
             {
                 var tracked = db.ChangeTracker.Entries().Select(e => e.Entity).ToHashSet();
                 var user = new Account { Id = $"u-{Guid.NewGuid():N}", Name = name, Email = email, NormalizedEmail = normalized,
-                    Role = "student", TenantId = actor.TenantId, Group = group?.Name, Faculty = faculty.Length > 0 ? faculty : null, MustChangePassword = true };
+                    Role = "student", TenantId = actor.TenantId, Group = group?.Name, Faculty = faculty.Length > 0 ? faculty : group?.Faculty, MustChangePassword = true };
                 user.PasswordHash = hasher.HashPassword(user, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)));
                 db.Add(user);
                 if (input.SendInvitations) await mail.Invite(db, user, $"import:{input.RequestId}:{i}", ct);

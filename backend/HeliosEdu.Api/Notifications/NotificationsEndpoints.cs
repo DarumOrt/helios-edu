@@ -33,16 +33,17 @@ public static class NotificationsEndpoints
     private static bool CanDelete(Account actor, Announcement a) =>
         actor.Role is "admin" or "organizer" || actor.Role == "tutor" && a.AuthorId == actor.Id;
 
-    private static AnnouncementInfo Info(Announcement a, Account actor) =>
-        new(a.Id, a.CourseId, a.Title, a.Body, a.AuthorName, a.CreatedAt, CanDelete(actor, a));
+    private static AnnouncementInfo Info(Announcement a, Account actor, bool mayEdit = true) =>
+        new(a.Id, a.CourseId, a.Title, a.Body, a.AuthorName, a.CreatedAt, mayEdit && CanDelete(actor, a));
 
     private static async Task<IResult> ListAnnouncementsAsync(string id, HttpContext context, LearningDbContext db)
     {
-        if (!await AccessRules.VisibleCourses(db, context.User).AnyAsync(course => course.Id == id, context.RequestAborted))
+        var course = await AccessRules.VisibleCourses(db, context.User).SingleOrDefaultAsync(course => course.Id == id, context.RequestAborted);
+        if (course == null)
             return Fail(404, "not found");
         var items = await db.Announcements.AsNoTracking().Where(a => a.CourseId == id)
             .OrderByDescending(a => a.CreatedAt).ToListAsync(context.RequestAborted);
-        return Results.Ok(items.Select(a => Info(a, Actor(context))));
+        return Results.Ok(items.Select(a => Info(a, Actor(context), AccessRules.CanEditCourse(Actor(context), course))));
     }
 
     // Объявление пишет тот, кто правит курс: преподаватель своего курса, организатор, администратор.

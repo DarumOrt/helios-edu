@@ -11,6 +11,10 @@ namespace HeliosEdu.Api.Data;
 
 public sealed class LearningDbContext(DbContextOptions<LearningDbContext> options, MailService mail) : DbContext(options)
 {
+    public string? ViewerTenant { get; set; }
+    public string? OrganizerId { get; set; }
+    public string[] ManagedFaculties { get; set; } = [];
+    public DbSet<Faculty> Faculties => Set<Faculty>();
     public bool SuppressMail { get; set; }
     public bool SuppressInvitations { get; set; }
     private void ProtectLearningEvents()
@@ -69,6 +73,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
     public DbSet<Files.StoredFile> Files => Set<Files.StoredFile>();
+    public DbSet<Audit.Branding> Branding => Set<Audit.Branding>();
     public DbSet<Audit.SystemSettings> Settings => Set<Audit.SystemSettings>();
     public DbSet<Audit.AuditEntry> AuditLog => Set<Audit.AuditEntry>();
     public DbSet<Tracking.ActivityProgress> ActivityProgress => Set<Tracking.ActivityProgress>();
@@ -78,6 +83,27 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var faculties = modelBuilder.Entity<Faculty>();
+        faculties.HasKey(f => new { f.TenantId, f.Code });
+        faculties.HasIndex(f => new { f.TenantId, f.NormalizedCode }).IsUnique();
+        modelBuilder.Entity<Account>().HasOne<Faculty>().WithMany()
+            .HasForeignKey(a => new { a.TenantId, Code = a.Faculty }).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Cohort>().HasOne<Faculty>().WithMany()
+            .HasForeignKey(g => new { g.TenantId, Code = g.Faculty }).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Course>().HasOne<Faculty>().WithMany()
+            .HasForeignKey(c => new { c.TenantId, Code = c.Faculty }).OnDelete(DeleteBehavior.Restrict);
+
+        // Один контекст на запрос. Область применяется также к подзапросам и прямым маршрутам.
+        modelBuilder.Entity<Cohort>().HasQueryFilter(g => (ViewerTenant == null || g.TenantId == ViewerTenant) &&
+            (OrganizerId == null || ManagedFaculties.Contains(g.Faculty!)));
+        modelBuilder.Entity<Account>().HasQueryFilter(a => (ViewerTenant == null || a.TenantId == ViewerTenant) &&
+            (OrganizerId == null || a.Id == OrganizerId || (a.Role == "student" && a.Group != null
+                ? Cohorts.Any(g => g.TenantId == a.TenantId && g.Name == a.Group)
+                : ManagedFaculties.Contains(a.Faculty!))));
+        modelBuilder.Entity<LoginSession>().HasQueryFilter(s => ViewerTenant == null || Accounts.Any(a => a.Id == s.AccountId));
+        modelBuilder.Entity<Course>().HasQueryFilter(c => (ViewerTenant == null || c.TenantId == ViewerTenant) &&
+            (OrganizerId == null || ManagedFaculties.Contains(c.Faculty!) || CohortCourses.Any(l =>
+                l.CourseId == c.Id && Cohorts.Any(g => g.Id == l.CohortId))));
         modelBuilder.ConfigureAdaptive();
         modelBuilder.ConfigureMail();
         var enrollment = modelBuilder.Entity<CourseEnrollment>();
@@ -111,6 +137,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         var schedule = modelBuilder.Entity<Tracking.ScheduleSlot>();
         schedule.HasIndex(item => new { item.TenantId, item.Group });
         schedule.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Audit.Branding>().ToTable("Branding").HasKey(item => item.TenantId);
         modelBuilder.Entity<Audit.SystemSettings>().ToTable("Settings").HasKey(item => item.TenantId);
         var audit = modelBuilder.Entity<Audit.AuditEntry>();
         audit.ToTable("AuditLog");

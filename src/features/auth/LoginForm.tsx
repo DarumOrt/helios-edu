@@ -8,7 +8,7 @@ import { Button } from "@/shared/ui";
 import { AuthInput, Field, PasswordInput, describedBy } from "./Field";
 
 // Вход по почте и паролю — серверный режим (C# API, сессия в httpOnly-cookie).
-export function LoginForm() {
+export function LoginForm({ allowRegistration }: { allowRegistration: boolean }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -90,12 +90,14 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Впервые здесь?{" "}
-        <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
-          Создайте учётную запись
-        </Link>
-      </p>
+      {allowRegistration && (
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Впервые здесь?{" "}
+          <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+            Запросите доступ
+          </Link>
+        </p>
+      )}
     </section>
   );
 }

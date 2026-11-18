@@ -40,12 +40,15 @@ public static class EnrollmentEndpoints
             .RequireRateLimiting("enrollment");
     }
 
-    private static Task<Course?> Editable(string id, HttpContext context, LearningDbContext db) =>
-        AccessRules.VisibleCourses(db, context.User).SingleOrDefaultAsync(c => c.Id == id, context.RequestAborted);
+    private static async Task<Course?> Editable(string id, HttpContext context, LearningDbContext db, bool roster = false)
+    {
+        var course = await AccessRules.VisibleCourses(db, context.User).SingleOrDefaultAsync(c => c.Id == id, context.RequestAborted);
+        return course != null && (roster || AccessRules.CanEditCourse(Actor(context), course)) ? course : null;
+    }
 
     private static async Task<IResult> ListAsync(string id, HttpContext context, LearningDbContext db)
     {
-        var course = await Editable(id, context, db);
+        var course = await Editable(id, context, db, roster: true);
         if (course is null) return Fail(404, "not found");
         var token = context.RequestAborted;
         var tenant = Actor(context).TenantId;

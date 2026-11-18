@@ -8,6 +8,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { useState } from "react";
 import { api } from "@/shared/lib/api-client";
 import { roleMeta } from "@/shared/auth/role-meta";
+import { BrandingControl } from "./BrandingControl";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { DataSourceToggle } from "./DataSourceToggle";
 import { ThemeToggle } from "./ThemeToggle";
@@ -53,8 +54,9 @@ export function Header() {
       >
         <Menu size={20} aria-hidden />
       </button>
-      <DataSourceToggle state={dataSource} className="sm:mr-2 lg:mr-auto" />
+      {!user.previewContext && <DataSourceToggle state={dataSource} className="sm:mr-2 lg:mr-auto" />}
       <RoleSwitcher />
+      <BrandingControl />
       <ThemeToggle />
       <NotificationsBell />
       <Link

@@ -77,9 +77,9 @@ public static class CourseTrash
 
     public static async Task<CourseImpact> Impact(LearningDbContext db, string courseId, CancellationToken token) => new(
         await AccessRules.CourseStudents(db, courseId).CountAsync(token),
-        await db.Submissions.CountAsync(item => item.CourseId == courseId, token),
-        await db.Grades.CountAsync(item => item.CourseId == courseId, token),
-        await db.QuizAttempts.CountAsync(item => item.CourseId == courseId && item.SubmittedAt != null, token));
+        await db.Submissions.CountAsync(item => item.CourseId == courseId && (db.OrganizerId == null || db.Accounts.Any(a => a.Id == item.UserId)), token),
+        await db.Grades.CountAsync(item => item.CourseId == courseId && (db.OrganizerId == null || db.Accounts.Any(a => a.Id == item.UserId)), token),
+        await db.QuizAttempts.CountAsync(item => item.CourseId == courseId && item.SubmittedAt != null && (db.OrganizerId == null || db.Accounts.Any(a => a.Id == item.UserId)), token));
 
     private static async Task<IResult> ImpactAsync(string id, HttpContext context, LearningDbContext db) =>
         await EditableCourse(db, context, id, false) is { } course
@@ -123,7 +123,7 @@ public static class CourseTrash
                 (actor.Role != "tutor" || course.TutorId == actor.Id))
             .OrderByDescending(course => course.DeletedAt).ToListAsync(context.RequestAborted);
         var result = new List<DeletedCourseInfo>();
-        foreach (var course in deleted)
+        foreach (var course in deleted.Where(course => AccessRules.CanEditCourse(actor, course)))
             result.Add(new DeletedCourseInfo(course.Id, course.Code, course.Title, course.TutorId, course.DeletedAt!.Value,
                 course.DeletedByName ?? "—", course.DeletedAt.Value + Lifetime, await Impact(db, course.Id, context.RequestAborted)));
         return Results.Ok(result);

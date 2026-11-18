@@ -1,3 +1,4 @@
+import { demoFacultyCodes } from "@/mocks/faculties-store";
 import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward, isNotImplemented } from "@/shared/lib/backend";
@@ -33,6 +34,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (body.name !== undefined) patch.name = str(body.name) ?? "";
   if (body.faculty !== undefined) patch.faculty = str(body.faculty) || null;
   const fields = validateCohort(patch, true);
+  if (patch.faculty && !fields.faculty && !demoFacultyCodes(findCohort(id)?.faculty).includes(patch.faculty))
+    fields.faculty = "Выберите факультет из списка";
   if (body.courseIds !== undefined) {
     const ids = body.courseIds;
     if (!Array.isArray(ids) || ids.some((c) => typeof c !== "string" || !findDemoCourse(c)))

@@ -1,5 +1,7 @@
 "use client";
 
+import { FacultySelect } from "./FacultySelect";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,7 +23,7 @@ export function CohortDialog({
 }) {
   const router = useRouter();
   const [name, setName] = useState(cohort?.name ?? "");
-  const [faculty, setFaculty] = useState(cohort?.faculty ?? "ИНЭК");
+  const [faculty, setFaculty] = useState(cohort?.faculty ?? "");
   const { pending, fields, error, run, setFields } = useFormSubmit();
 
   async function submit(event: FormEvent) {
@@ -77,7 +79,7 @@ export function CohortDialog({
           />
         </Field>
         <Field id="cohort-faculty" label="Факультет" error={fields.faculty}>
-          <Input
+          <FacultySelect
             id="cohort-faculty"
             value={faculty}
             onChange={(e) => setFaculty(e.target.value)}

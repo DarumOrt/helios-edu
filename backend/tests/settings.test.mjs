@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { apiUrl, get, login } from "./client.mjs";
 
@@ -54,11 +55,13 @@ for (const [name, baseUrl] of [
       const register = await send("", "POST", "/api/auth/register", {
         name: "Закрытая Регистрация",
         email: `closed-${Date.now()}@example.ru`,
-        password: "Password2026",
         consent: true,
       });
       assert.equal(register.status, 403);
-      assert.equal((await register.json()).error, "Регистрация закрыта. Учётную запись создаст организатор.");
+      assert.equal(
+        (await register.json()).error,
+        "Приём заявок закрыт. Учётную запись создаёт администратор.",
+      );
       const announcement = await send(tutor.cookie, "POST", "/api/courses/c-dor-ai/announcements", {
         title: "Не уйдёт",
         body: "Объявления выключены",
@@ -68,6 +71,83 @@ for (const [name, baseUrl] of [
     } finally {
       const restored = await send(admin.cookie, "PUT", "/api/settings", before);
       assert.deepEqual(await restored.json(), before);
+    }
+  });
+  test(name + ": оформление доступно на входе, изменяет только администратор", async () => {
+    const admin = await login(baseUrl, "admin@pspu.ru");
+    const organizer = await login(baseUrl, "organizer@pspu.ru");
+    const path = "/api/branding";
+    const png =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aMioAAAAASUVORK5CYII=";
+    const put = (actor, body) =>
+      fetch(baseUrl + path, {
+        method: "PUT",
+        headers: {
+          Cookie: actor.cookie,
+          Origin: new URL(baseUrl).origin,
+          "Content-Type": "application/json",
+          "X-Helios-Client": "web",
+        },
+        body: JSON.stringify(body),
+      });
+    const dark = await readFile(new URL("../../src/shared/assets/pspu-logo-dark.png", import.meta.url));
+    const reset = {
+      subtitle: null,
+      loginText: null,
+      footerText: null,
+      logo: null,
+      darkLogo: null,
+      useLogo: null,
+      logoScale: null,
+    };
+    try {
+      assert.equal((await put(organizer, { subtitle: "Учебный центр" })).status, 403);
+      assert.equal((await put(admin, { logo: Buffer.from("<svg/>").toString("base64") })).status, 400);
+      assert.equal((await put(admin, { subtitle: "а".repeat(33) })).status, 400);
+      for (const logoScale of [49, 131, 75.5, "90"]) {
+        assert.equal((await put(admin, { logoScale })).status, 400);
+      }
+      const saved = await put(admin, {
+        subtitle: "Учебный центр",
+        loginText: "Добро пожаловать в учебный центр",
+        logo: png,
+      });
+      assert.equal(saved.status, 200, await saved.clone().text());
+      const brand = await saved.json();
+      assert.ok(brand.logoVersion);
+      assert.deepEqual(await (await get(baseUrl, path)).json(), brand);
+      const asset = await get(baseUrl, path + "/logo");
+      assert.equal(asset.status, 200);
+      assert.equal(asset.headers.get("content-type"), "image/png");
+      assert.equal(asset.headers.get("x-content-type-options"), "nosniff");
+      assert.equal(Buffer.from(await asset.arrayBuffer()).toString("base64"), png);
+      const changed = await put(admin, {
+        footerText: "Справочная служба",
+        darkLogo: dark.toString("base64"),
+        useLogo: true,
+        logoScale: 115,
+      });
+      const themed = await changed.json();
+      assert.equal(themed.logoVersion, brand.logoVersion);
+      assert.ok(themed.darkLogoVersion);
+      assert.equal(themed.logoScale, 115);
+      const night = await get(baseUrl, path + "/logo?theme=dark");
+      assert.equal(night.status, 200);
+      assert.deepEqual(Buffer.from(await night.arrayBuffer()), dark);
+      const text = await put(admin, { useLogo: false });
+      const signature = await text.json();
+      assert.equal(signature.useLogo, false);
+      assert.equal(signature.logoScale, 115);
+      assert.equal(signature.darkLogoVersion, themed.darkLogoVersion);
+      assert.equal((await put(admin, { darkLogo: null })).status, 200);
+      assert.equal((await get(baseUrl, path + "/logo?theme=dark")).status, 404);
+      assert.equal((await get(baseUrl, path + "/logo")).status, 200);
+      const log = await (await get(baseUrl, "/api/audit", admin.cookie)).json();
+      assert.ok(log.items.some((item) => item.target === "Оформление организации"));
+      if (name === "Next.js") assert.match(await (await get(baseUrl, "/login")).text(), /Учебный центр/);
+    } finally {
+      assert.deepEqual(await (await put(admin, reset)).json(), {});
+      assert.equal((await get(baseUrl, path + "/logo")).status, 404);
     }
   });
 }

@@ -29,7 +29,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   return (
     <SessionProvider initialUser={user} dataSource={dataSource}>
-      <div className="flex min-h-screen">
+      <div
+        className="flex min-h-screen"
+        data-helios-preview={user?.previewContext ?? undefined}
+        data-helios-inspection={user?.role === "admin" ? "" : undefined}
+      >
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header />

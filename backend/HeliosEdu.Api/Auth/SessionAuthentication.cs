@@ -35,12 +35,22 @@ public sealed class SessionAuthentication(
         var session = await db.LoginSessions.AsNoTracking().Include(session => session.Account)
             .SingleOrDefaultAsync(session => session.TokenHash == tokenHash &&
                 session.ExpiresAt > DateTimeOffset.UtcNow, Context.RequestAborted);
-        if (session is null || session.Account.Status is "blocked" or "deleted") return AuthenticateResult.Fail("Сессия завершена.");
-        Context.Items[typeof(Account)] = session.Account;
+        if (session is null || session.Account.Status != "active") return AuthenticateResult.Fail("Сессия завершена.");
+        db.ViewerTenant = session.Account.TenantId;
+        if (session.Account.Role == "organizer" && session.Account.OrganizerFaculties is { } codes)
+        {
+            db.OrganizerId = session.Account.Id;
+            db.ManagedFaculties = codes;
+        }
+        Context.Items[typeof(LoginSession)] = session;
+        var actor = session.Account;
+        if (session.PreviewId.HasValue && actor.Role == "admin" && session.PreviewRole is "student" or "tutor" or "organizer")
+            actor = RolePreview.Actor(session.PreviewRole, actor.TenantId);
+        Context.Items[typeof(Account)] = actor;
         var identity = new ClaimsIdentity([
-            new Claim(ClaimTypes.NameIdentifier, session.AccountId),
-            new Claim(ClaimTypes.Role, session.Account.Role),
-            new Claim(ClaimTypes.Name, session.Account.Name)
+            new Claim(ClaimTypes.NameIdentifier, actor.Id),
+            new Claim(ClaimTypes.Role, actor.Role),
+            new Claim(ClaimTypes.Name, actor.Name)
         ], SchemeName);
         return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName));
     }

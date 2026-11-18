@@ -1,21 +1,23 @@
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { FACULTIES } from "@/shared/lib/faculties";
+import type { Faculty } from "@/shared/lib/faculties";
 import type { CatalogCourse } from "@/shared/types/domain";
 import { coursesCount } from "../filters";
 
 // Компактная сетка факультетов: клик — все курсы факультета (фильтр ?faculty=…).
 export function FacultyGrid({
+  faculties,
   courses,
   onPick,
 }: {
+  faculties: Faculty[];
   courses: CatalogCourse[];
   onPick: (faculty: string) => void;
 }) {
   const counts = new Map<string, number>();
   for (const c of courses) if (c.faculty) counts.set(c.faculty, (counts.get(c.faculty) ?? 0) + 1);
   // факультеты с курсами — первыми, дальше в исходном порядке
-  const ordered = [...FACULTIES].sort((a, b) => Number(!counts.get(a.code)) - Number(!counts.get(b.code)));
+  const ordered = [...faculties].sort((a, b) => Number(!counts.get(a.code)) - Number(!counts.get(b.code)));
 
   return (
     <section aria-labelledby="faculties" className="space-y-3">
@@ -37,7 +39,7 @@ export function FacultyGrid({
               >
                 <span
                   className={cn(
-                    "flex h-10 w-12 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-semibold",
+                    "line-clamp-2 flex h-10 max-w-24 min-w-12 shrink-0 items-center justify-center rounded-lg px-1 font-mono text-xs font-semibold break-all",
                     n ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground",
                   )}
                 >

@@ -11,6 +11,9 @@ export interface User {
   role: Role;
   tenantId: string;
   avatarUrl?: string;
+  organizerFaculties?: string[];
+  /** Присутствует только в проверочном кабинете текущей серверной сессии. */
+  previewContext?: string;
   faculty?: string;
   /** название группы (когорты); у не-студентов не задаётся */
   group?: string;
@@ -19,6 +22,41 @@ export interface User {
   /** вошёл по временному паролю (создание, сброс) — попросить сменить на свой */
   mustChangePassword?: boolean;
 }
+
+export interface PendingUser {
+  id: string;
+  name: string;
+  email: string;
+  tenantId: string;
+  status: "pending";
+  organizerFaculties?: undefined;
+  role?: undefined;
+  group?: undefined;
+  faculty?: undefined;
+}
+
+export type DirectoryUser = (User | PendingUser) & { createdAt?: string };
+
+export interface DirectoryPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  faculties: string[];
+}
+
+export type UserDirectory = DirectoryPage<DirectoryUser> & { pendingCount: number; groups: string[] };
+
+export interface DirectoryCohort {
+  id: string;
+  name: string;
+  faculty?: string;
+  year?: number;
+  students: number;
+  courses: number;
+}
+
+export type CohortDirectory = DirectoryPage<DirectoryCohort> & { years: number[] };
 
 export interface Tenant {
   id: string;

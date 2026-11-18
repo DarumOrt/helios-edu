@@ -61,6 +61,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const next = learner && course ? nextCourseMaterial(course) : null;
   const deadline = learner && course ? pendingDeadlines([course])[0] : undefined;
   // преподаватель правит только свой курс; администратор и организатор — любой
+  const canViewRoster = can(user.role, "course.edit");
   const canEdit = course ? canEditCourse(user, course) : false;
   const [tab, setTab] = useState<"content" | "stats" | "skills" | "adaptive" | "trash" | "enrollment">(
     "content",
@@ -156,11 +157,13 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                     Статистика
                   </Tab>
                 )}
+                {canViewRoster && (
+                  <Tab active={tab === "enrollment"} onClick={() => setTab("enrollment")} icon={Users}>
+                    Участники
+                  </Tab>
+                )}
                 {canEdit && (
                   <>
-                    <Tab active={tab === "enrollment"} onClick={() => setTab("enrollment")} icon={Users}>
-                      Участники
-                    </Tab>
                     <Tab active={tab === "skills"} onClick={() => setTab("skills")} icon={Target}>
                       Навыки
                     </Tab>
@@ -266,7 +269,9 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             )}
 
             {tab === "stats" && canSeeStats && <CourseStatsPanel courseId={course.id} />}
-            {tab === "enrollment" && canEdit && <EnrollmentPanel courseId={course.id} />}
+            {tab === "enrollment" && canViewRoster && (
+              <EnrollmentPanel courseId={course.id} readOnly={!canEdit} />
+            )}
             {tab === "skills" && canEdit && <SkillsEditor course={course} />}
             {tab === "adaptive" && canEdit && <AdaptivePanel course={course} />}
             {tab === "trash" && canEdit && <CourseTrashPanel course={course} />}

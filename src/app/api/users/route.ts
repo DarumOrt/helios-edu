@@ -1,3 +1,4 @@
+import { demoFacultyCodes } from "@/mocks/faculties-store";
 import { audit } from "@/mocks/audit-store";
 import { NextResponse } from "next/server";
 import { backendForward, backendGet } from "@/shared/lib/backend";
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
   if (actor instanceof NextResponse) return actor;
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
+  if ("organizerFaculties" in body) return fail(501, "Назначение полномочий доступно в режиме «Сервер»");
 
   const input = {
     name: str(body.name) ?? "",
@@ -43,6 +45,8 @@ export async function POST(req: Request) {
     faculty: str(body.faculty) || undefined,
   };
   const fields = validateUser(input);
+  if (input.faculty && !fields.faculty && !demoFacultyCodes().includes(input.faculty))
+    fields.faculty = "Выберите факультет из списка";
   if (!fields.role && !assignableRoles(actor.role).includes(input.role))
     fields.role = "Эту роль может назначить только администратор";
   if (input.group && !fields.group && !findCohortByName(input.group)) fields.group = "Такой группы нет";

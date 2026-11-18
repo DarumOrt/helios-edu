@@ -13,7 +13,8 @@ public static class AccessRules
     /// </summary>
     public static IQueryable<Account> CourseStudents(LearningDbContext db, string courseId) =>
         db.Accounts.Where(account => account.Role == "student" && (db.CourseEnrollments.Any(link =>
-            link.CourseId == courseId && link.UserId == account.Id) || db.CohortCourses.Any(link =>
+            link.CourseId == courseId && link.UserId == account.Id && (db.OrganizerId == null || db.Courses.Any(c =>
+                c.Id == courseId && db.ManagedFaculties.Contains(c.Faculty!)))) || db.CohortCourses.Any(link =>
             link.CourseId == courseId && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
                 cohort.TenantId == account.TenantId && cohort.Name == account.Group))));
 
@@ -30,13 +31,16 @@ public static class AccessRules
     public const string ManageSystem = "system.manage";
 
     public static bool CanEditCourse(Account actor, Course course) =>
-        actor.Role is "admin" or "organizer" || actor.Role == "tutor" && course.TutorId == actor.Id;
+        actor.TenantId == course.TenantId && (actor.Role == "admin" || actor.Role == "organizer" &&
+            (actor.OrganizerFaculties == null || actor.OrganizerFaculties.Contains(course.Faculty)) ||
+            actor.Role == "tutor" && course.TutorId == actor.Id);
 
     public static bool CanManageUser(Account actor, Account target) =>
-        target.Role != "admin" || actor.Role == "admin";
+        actor.Role == "admin" || actor.Role == "organizer" &&
+        (target.Role is not ("admin" or "organizer") || target.Id == actor.Id);
 
     public static bool CanAssignRole(Account actor, string role) =>
-        role != "admin" || actor.Role == "admin";
+        actor.Role == "admin" || actor.Role == "organizer" && role is ("student" or "tutor");
 
     public static bool CanViewGroup(Account account, string group) =>
         account.Role != "student" || (!string.IsNullOrEmpty(account.Group) && account.Group == group);

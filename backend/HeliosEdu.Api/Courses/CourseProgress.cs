@@ -57,7 +57,8 @@ public static class CourseProgress
                           select new { link.CourseId, account.Id };
         var individual = from link in db.CourseEnrollments
                          join account in db.Accounts on link.UserId equals account.Id
-                         where courseIds.Contains(link.CourseId) && account.Role == "student"
+                         where courseIds.Contains(link.CourseId) && account.Role == "student" &&
+                             (db.OrganizerId == null || db.Courses.Any(c => c.Id == link.CourseId && db.ManagedFaculties.Contains(c.Faculty!)))
                          select new { link.CourseId, account.Id };
         var rows = await grouped.Union(individual).ToListAsync(token);
         return rows.GroupBy(row => row.CourseId).ToDictionary(group => group.Key, group => group.Select(row => row.Id).ToList());

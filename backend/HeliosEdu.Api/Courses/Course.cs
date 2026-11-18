@@ -6,6 +6,7 @@ namespace HeliosEdu.Api.Courses;
 // Идентификаторы разделов и материалов уникальны только внутри курса.
 public sealed class Course
 {
+    public string TenantId { get; set; } = "pspu";
     public bool AdaptiveEnabled { get; set; } = true;
     public required string Id { get; set; }
     public required string Code { get; set; }

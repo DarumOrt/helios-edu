@@ -23,20 +23,46 @@ import type { Cohort, EnrollmentInfo, EnrolledStudent } from "@/shared/types/dom
 
 const sourceLabel = { group: "Через группу", manual: "Вручную", self: "По кодовому слову" };
 
-export function EnrollmentPanel({ courseId }: { courseId: string }) {
+export function EnrollmentPanel({ courseId, readOnly = false }: { courseId: string; readOnly?: boolean }) {
   const url = `/api/courses/${courseId}/enrollment`;
   const { data, error, isLoading } = useSWR<EnrollmentInfo>(url, fetcher);
   const { data: cohorts, error: groupsError } = useSWR<Cohort[]>("/api/cohorts", fetcher);
   return (
     <DataState loading={isLoading || (!cohorts && !groupsError)} error={error ?? groupsError} empty={!data}>
-      {data && cohorts && (
-        <EnrollmentForm
-          key={JSON.stringify(data.cohortIds)}
-          courseId={courseId}
-          data={data}
-          cohorts={cohorts}
-        />
-      )}
+      {data &&
+        cohorts &&
+        (readOnly ? (
+          <Card>
+            <CardHeader title="Участники ваших групп" />
+            <CardBody className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {cohorts
+                  .filter((group) => data.cohortIds.includes(group.id))
+                  .map((group) => group.name)
+                  .join(", ")}
+              </p>
+              {data.students.length ? (
+                <ul className="divide-y">
+                  {data.students.map((student) => (
+                    <li key={student.id} className="flex flex-wrap justify-between gap-2 py-2">
+                      <span>{student.name}</span>
+                      <span className="text-muted-foreground">{student.group}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm">В назначенных группах пока нет студентов.</p>
+              )}
+            </CardBody>
+          </Card>
+        ) : (
+          <EnrollmentForm
+            key={JSON.stringify(data.cohortIds)}
+            courseId={courseId}
+            data={data}
+            cohorts={cohorts}
+          />
+        ))}
     </DataState>
   );
 }

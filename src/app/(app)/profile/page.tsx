@@ -56,7 +56,7 @@ export default function ProfilePage() {
               </ul>
             </CardBody>
           </Card>
-          <ChangePassword />
+          {!user.previewContext && <ChangePassword />}
         </div>
 
         {/* контекст роли */}

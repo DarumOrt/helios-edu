@@ -17,6 +17,8 @@ export async function backendRequest(path: string, init?: RequestInit): Promise<
     const token = (await cookies()).get("helios-auth")?.value;
     const headers = new Headers(init?.headers);
     headers.set("X-Helios-Client", "web");
+    const preview = (await requestHeaders()).get("x-helios-preview");
+    if (preview) headers.set("X-Helios-Preview", preview);
     if (token) headers.set("Cookie", `helios-auth=${token}`);
     // Адрес пользователя — для лимита входов в C#. Берём только за своим прокси (TRUSTED_PROXY=on, Caddyfile):
     // он сам записывает X-Real-IP; без прокси этот заголовок подставил бы кто угодно.
@@ -84,7 +86,11 @@ export async function backendForward(request: Request, path: string): Promise<Re
   const hasBody = !["GET", "HEAD", "DELETE"].includes(request.method);
   const response = await backendRequest(path, {
     signal: AbortSignal.timeout(
-      path.startsWith("/api/users/import") ? 120000 : path === "/api/mail/check" ? 30000 : 5000,
+      path.startsWith("/api/users/import") || path === "/api/auth/preview"
+        ? 120000
+        : path === "/api/mail/check"
+          ? 30000
+          : 5000,
     ),
     method: request.method,
     headers: hasBody ? { "Content-Type": "application/json" } : undefined,

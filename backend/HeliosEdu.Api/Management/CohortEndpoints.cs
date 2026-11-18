@@ -11,6 +11,8 @@ public static partial class ManagementEndpoints
     private static void MapCohorts(WebApplication app)
     {
         var cohorts = app.MapGroup("/api/cohorts").AddEndpointFilter<ManagementWriteFilter>();
+        cohorts.MapGet("/directory", CohortDirectoryAsync).RequireAuthorization(AccessRules.ManageCohorts)
+            .Produces<CohortDirectory>();
         cohorts.MapGet("", async (HttpContext context, LearningDbContext db) =>
         {
             var groups = await db.Cohorts.Where(group => group.TenantId == Actor(context).TenantId)
@@ -31,6 +33,8 @@ public static partial class ManagementEndpoints
         {
             var group = await FindCohort(db, id, Actor(context).TenantId, true, context.RequestAborted);
             if (group is null) return Fail(404, "not found");
+            if (db.OrganizerId != null && await db.CohortCourses.AnyAsync(l => l.CohortId == id && db.Courses.Any(c => c.Id == l.CourseId && !db.ManagedFaculties.Contains(c.Faculty!)), context.RequestAborted))
+                return Fail(409, "Сначала снимите назначение общего курса через администратора");
             if (await db.Accounts.AnyAsync(user => user.TenantId == group.TenantId && user.Role == "student" && user.Group == group.Name,
                     context.RequestAborted))
                 return Fail(409, "В группе есть студенты — сначала уберите их из группы");
@@ -66,6 +70,7 @@ public static partial class ManagementEndpoints
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");
         var fields = Cohort(input, false);
+        await ValidateFaculty(context, db, input.OptionalText("faculty"), fields);
         if (fields.Count > 0) return Invalid(fields);
         var name = input.Text("name");
         var normalized = name.ToUpperInvariant();
@@ -88,6 +93,7 @@ public static partial class ManagementEndpoints
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");
         var fields = Cohort(input, true);
+        if (input.Has("faculty")) await ValidateFaculty(context, db, input.OptionalText("faculty"), fields, group.Faculty);
         var courseIds = input.Ids("courseIds");
         if (input.Has("courseIds") && (courseIds is null ||
                 await db.Courses.CountAsync(course => courseIds.Contains(course.Id) && course.DeletedAt == null, context.RequestAborted) != courseIds.Length))
@@ -108,6 +114,13 @@ public static partial class ManagementEndpoints
         if (input.Has("faculty")) group.Faculty = input.OptionalText("faculty");
         if (courseIds is not null)
         {
+            if (db.OrganizerId != null)
+            {
+                var shared = db.Courses.Where(c => c.DeletedAt == null && !db.ManagedFaculties.Contains(c.Faculty!));
+                if (await shared.AnyAsync(c => courseIds.Contains(c.Id) != db.CohortCourses.Any(l =>
+                    l.CohortId == id && l.CourseId == c.Id), context.RequestAborted))
+                    return Fail(403, "Назначение общего курса меняет его факультет или администратор");
+            }
             // связь с курсом из корзины не трогаем: восстановленный курс вернётся к своим группам
             var oldLinks = await db.CohortCourses.Where(link => link.CohortId == id &&
                     db.Courses.Any(course => course.Id == link.CourseId && course.DeletedAt == null))

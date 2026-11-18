@@ -4,6 +4,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
+import { useFaculties } from "@/shared/lib/use-faculties";
 import { facultyName } from "@/shared/lib/faculties";
 import { Badge, Breadcrumbs, Card, CardBody, CourseCover, DataState, buttonVariants } from "@/shared/ui";
 import type { CatalogCourse } from "@/shared/types/domain";
@@ -15,6 +16,7 @@ import { can } from "@/shared/auth/permissions";
 // Карточка курса из поиска: описание, преподаватель, группы и модули — без материалов.
 export function CatalogPreview({ courseId }: { courseId: string }) {
   const { data, error, isLoading } = useSWR<CatalogCourse[]>("/api/catalog", fetcher);
+  const { data: facultyDirectory } = useFaculties();
   const course = data?.find((c) => c.id === courseId);
   const role = useSession((s) => s.role);
 
@@ -34,7 +36,11 @@ export function CatalogPreview({ courseId }: { courseId: string }) {
             <CardBody className="space-y-4">
               <div>
                 <p className="font-mono text-xs text-muted-foreground">
-                  {[course.code, course.faculty && facultyName(course.faculty), course.academicYear]
+                  {[
+                    course.code,
+                    course.faculty && facultyName(course.faculty, facultyDirectory ?? []),
+                    course.academicYear,
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>

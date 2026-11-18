@@ -1,5 +1,4 @@
-// Факультеты ПГГПУ (pspu.ru/about_the_university/departments). code — короткое название,
-// как в группах и курсах («ИНЭК»); в C# тот же список — Management/Faculties.cs.
+// Начальный справочник ПГГПУ для демо. Рабочие списки приходят из /api/faculties.
 export interface Faculty {
   code: string;
   name: string;
@@ -23,8 +22,8 @@ export const FACULTIES: Faculty[] = [
 
 export const FACULTY_CODES = FACULTIES.map((f) => f.code);
 
-export function facultyName(code: string | undefined): string {
-  return FACULTIES.find((f) => f.code === code)?.name ?? code ?? "";
+export function facultyName(code: string | undefined, faculties: Faculty[] = FACULTIES): string {
+  return faculties.find((f) => f.code === code)?.name ?? code ?? "";
 }
 
 /** Учебный год идёт с 1 сентября: в октябре 2026 — «2026/2027». */

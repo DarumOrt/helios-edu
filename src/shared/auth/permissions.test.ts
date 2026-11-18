@@ -47,6 +47,12 @@ describe("navForRole — меню", () => {
       expect(navForRole(role).some((i) => i.href === "/admin/settings")).toBe(role === "admin");
   });
 
+  it("проверка работ остаётся в меню преподавателя и в правах администратора", () => {
+    expect(navForRole("admin").some((item) => item.href === "/submissions")).toBe(false);
+    expect(navForRole("tutor").some((item) => item.href === "/submissions")).toBe(true);
+    expect(can("admin", "submission.review")).toBe(true);
+  });
+
   it("рассылки видит только администратор", () => {
     for (const role of roles)
       expect(navForRole(role).some((i) => i.href === "/admin/mail")).toBe(role === "admin");

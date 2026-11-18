@@ -1,11 +1,14 @@
 "use client";
 
+import { FacultyDirectory } from "@/features/admin/components/FacultyDirectory";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { api, apiErrorInfo, fetcher } from "@/shared/lib/api-client";
 import { Card, CardBody, DataState, EmptyState, PageHeader } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
 import { can } from "@/shared/auth/permissions";
+import { useUiStore } from "@/stores/ui-store";
+import { Button } from "@/shared/ui";
 import { ShieldAlert } from "lucide-react";
 
 interface Settings {
@@ -16,9 +19,9 @@ interface Settings {
 const items: { key: keyof Settings; title: string; on: string; off: string }[] = [
   {
     key: "allowRegistration",
-    title: "Открытая регистрация студентов",
-    on: "Студенты сами создают учётную запись на странице регистрации",
-    off: "Регистрация закрыта — учётные записи создаёт организатор",
+    title: "Приём заявок на регистрацию",
+    on: "Новые заявки видны в разделе «Пользователи» → «Без роли»",
+    off: "Доступ выдаётся по приглашению или через создание учётной записи",
   },
   {
     key: "announcementsEnabled",
@@ -29,6 +32,8 @@ const items: { key: keyof Settings; title: string; on: string; off: string }[] =
 ];
 
 export default function SettingsPage() {
+  const backend = useSession((s) => s.backendEnabled);
+  const editBranding = useUiStore((s) => s.setBrandingOpen);
   const role = useSession((s) => s.role);
   const { data, error, isLoading, mutate } = useSWR<Settings>("/api/settings", fetcher);
 
@@ -84,6 +89,17 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
       </DataState>
+      {backend && (
+        <Card className="mt-5">
+          <CardBody className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold">Оформление организации</h2>
+            <Button variant="outline" onClick={() => editBranding(true)}>
+              Открыть редактор
+            </Button>
+          </CardBody>
+        </Card>
+      )}
+      <FacultyDirectory />
     </div>
   );
 }

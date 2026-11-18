@@ -12,7 +12,8 @@ public static class AuthEndpoints
     private static readonly string DummyHash = new PasswordHasher<Account>().HashPassword(DummyAccount, "not-an-account");
     public sealed record LoginRequest(string? Email, string? Password);
     public sealed record PasswordChangeRequest(string? CurrentPassword, string? NewPassword);
-    public sealed record RegisterRequest(string? Name, string? Email, string? Password, bool? Consent);
+    public sealed record RegisterRequest(string? Name, string? Email, bool? Consent);
+    public sealed record RegistrationResult(string Status);
     public sealed record ActivationRequest(string? Token, string? Password);
     private const int PasswordMin = 8;
 
@@ -41,7 +42,7 @@ public static class AuthEndpoints
                 context.RequestAborted);
             var verification = hasher.VerifyHashedPassword(account ?? DummyAccount,
                 account?.PasswordHash ?? DummyHash, input.Password);
-            if (account is null || verification == PasswordVerificationResult.Failed || account.Status == "blocked")
+            if (account is null || verification == PasswordVerificationResult.Failed || account.Status != "active")
             {
                 // неудачная попытка — в журнал с введённой почтой (без пароля и адреса), как в Moodle
                 var email = input.Email.Trim();
@@ -51,7 +52,7 @@ public static class AuthEndpoints
                         : [new AuditChange("Причина", null, "неверная почта или пароль")],
                     actorName: email);
                 await db.SaveChangesAsync(context.RequestAborted);
-                return account is null || verification == PasswordVerificationResult.Failed
+                return account?.Status != "blocked" || verification == PasswordVerificationResult.Failed
                     ? Results.Json(new { error = "Неверная почта или пароль." }, statusCode: 401)
                     : Results.Json(new { error = "Учётная запись заблокирована. Обратитесь к организатору." }, statusCode: 403);
             }
@@ -91,7 +92,7 @@ public static class AuthEndpoints
         {
             // выключатель — в настройках системы (администратор), начальное значение — Auth:AllowRegistration
             if (!(await AuditEndpoints.SettingsAsync(db, "pspu", configuration, context.RequestAborted)).AllowRegistration)
-                return Results.Json(new { error = "Регистрация закрыта. Учётную запись создаст организатор." }, statusCode: 403);
+                return Results.Json(new { error = "Приём заявок закрыт. Учётную запись создаёт администратор." }, statusCode: 403);
             var fields = ValidateRegistration(input);
             if (fields.Count > 0) return Results.BadRequest(new { error = "Проверьте поля формы.", fields });
 
@@ -99,13 +100,13 @@ public static class AuthEndpoints
             var normalizedEmail = email.ToUpperInvariant();
             if (await db.Accounts.AnyAsync(account => account.NormalizedEmail == normalizedEmail, context.RequestAborted))
                 return EmailTaken();
-            // Роль и группа от клиента не принимаются: сам регистрируется только студент, группу назначает организатор.
+            // До одобрения заявку нельзя использовать для входа. Пароль устанавливает получатель приглашения.
             var account = new Account
             {
                 Id = $"u-{Guid.NewGuid():N}", Name = input.Name!.Trim(), Email = email,
-                NormalizedEmail = normalizedEmail, Role = "student", TenantId = "pspu"
+                NormalizedEmail = normalizedEmail, Role = Account.Pending, Status = Account.Pending, TenantId = "pspu"
             };
-            account.PasswordHash = hasher.HashPassword(account, input.Password!);
+            account.PasswordHash = hasher.HashPassword(account, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)));
             db.Accounts.Add(account);
             AuditLog.Write(db, account, "auth.registered", "account", account.Id, $"{account.Name} · {account.Email}");
             try
@@ -117,9 +118,8 @@ public static class AuthEndpoints
                 // Параллельная регистрация той же почты упирается в уникальный индекс.
                 return EmailTaken();
             }
-            await StartSessionAsync(db, account, context, configuration);
-            return Results.Created("/api/auth/me", UserInfo.From(account));
-        }).RequireRateLimiting("login");
+            return Results.Accepted(value: new RegistrationResult(Account.Pending));
+        }).RequireRateLimiting("login").Produces<RegistrationResult>(202);
 
         // смена своего пароля: старый, новый по правилам регистрации; остальные сессии закрываются
         auth.MapPost("/password", async (PasswordChangeRequest input, LearningDbContext db, IPasswordHasher<Account> hasher,
@@ -146,7 +146,7 @@ public static class AuthEndpoints
         }).RequireAuthorization().RequireRateLimiting("login").Produces<UserInfo>();
 
         auth.MapGet("/me", (HttpContext context) =>
-            Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!))).RequireAuthorization().Produces<UserInfo>();
+            Results.Ok(UserInfo.From((Account)context.Items[typeof(Account)]!) with { PreviewContext = RolePreview.ContextKey(context) })).RequireAuthorization().Produces<UserInfo>();
 
         auth.MapPost("/logout", async (HttpContext context, LearningDbContext db, IConfiguration configuration) =>
         {
@@ -178,10 +178,12 @@ public static class AuthEndpoints
             return Results.Ok(classmates.Select(user => new ClassmateInfo(user.Id, user.Name, user.Group)));
         }).RequireAuthorization().Produces<ClassmateInfo[]>();
 
-        app.MapGet("/api/users", async (LearningDbContext db, CancellationToken cancellationToken) =>
+        app.MapGet("/api/users", async (HttpContext context, LearningDbContext db, CancellationToken cancellationToken) =>
         {
             // удалённые (обезличенные) не показываются: их данные видны только в оценках и журнале
-            var accounts = await db.Accounts.AsNoTracking().Where(account => account.Status != "deleted")
+            var tenant = ((Account)context.Items[typeof(Account)]!).TenantId;
+            var accounts = await db.Accounts.AsNoTracking()
+                .Where(account => account.TenantId == tenant && account.Status != "deleted" && account.Status != Account.Pending)
                 .OrderBy(account => account.Name).ToListAsync(cancellationToken);
             return Results.Ok(accounts.Select(UserInfo.From));
         }).RequireAuthorization(AccessRules.ManageUsers).Produces<UserInfo[]>();
@@ -206,9 +208,7 @@ public static class AuthEndpoints
         else if (email.Length > 254 || !LooksLikeEmail(email))
             fields["email"] = "Почта выглядит неполной, например name@pspu.ru";
 
-        if (PasswordError(input.Password) is { } passwordError) fields["password"] = passwordError;
-
-        if (input.Consent != true) fields["consent"] = "Без согласия мы не сможем создать учётную запись";
+        if (input.Consent != true) fields["consent"] = "Без согласия мы не сможем принять заявку";
         return fields;
     }
 

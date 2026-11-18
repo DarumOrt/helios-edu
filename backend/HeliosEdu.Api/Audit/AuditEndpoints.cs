@@ -13,7 +13,7 @@ public static class AuditEndpoints
     private const string DefaultTenant = "pspu";
     private static readonly Dictionary<string, string> SettingLabels = new()
     {
-        ["allowRegistration"] = "Открытая регистрация студентов",
+        ["allowRegistration"] = "Приём заявок на регистрацию",
         ["announcementsEnabled"] = "Объявления преподавателей",
     };
 
@@ -42,7 +42,7 @@ public static class AuditEndpoints
         if (settings is not null) return settings;
         settings = new SystemSettings
         {
-            TenantId = tenantId, AllowRegistration = configuration.GetValue("Auth:AllowRegistration", true),
+            TenantId = tenantId, AllowRegistration = configuration.GetValue("Auth:AllowRegistration", false),
             AnnouncementsEnabled = true, UpdatedAt = DateTimeOffset.UtcNow,
         };
         db.Settings.Add(settings);

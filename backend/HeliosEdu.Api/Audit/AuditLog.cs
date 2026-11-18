@@ -22,6 +22,8 @@ public static class AuditLog
             ["mail.invitation"] = ("Приглашение по почте", "users"),
             ["mail.campaign"] = ("Создана рассылка", "settings"),
             ["user.updated"] = ("Изменён пользователь", "users"),
+            ["user.application_approved"] = ("Заявка одобрена", "users"),
+            ["user.application_rejected"] = ("Заявка отклонена", "users"),
             ["user.blocked"] = ("Заблокирован пользователь", "users"),
             ["user.unblocked"] = ("Разблокирован пользователь", "users"),
             ["user.deleted"] = ("Удалён пользователь", "users"),
@@ -63,6 +65,9 @@ public static class AuditLog
             ["grade.updated"] = ("Изменена оценка", "grades"),
             ["file.uploaded"] = ("Загружен файл", "files"),
             ["file.cleanup"] = ("Очистка хранилища", "files"),
+            ["faculty.created"] = ("Создан факультет", "settings"),
+            ["faculty.updated"] = ("Изменён факультет", "settings"),
+            ["faculty.deleted"] = ("Удалён факультет", "settings"),
             ["settings.updated"] = ("Изменены настройки", "settings"),
         };
 

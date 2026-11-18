@@ -8,7 +8,7 @@ import type { SystemSettings } from "@/shared/types/domain";
 // Настройки системы. Сервер — C# (Audit/AuditEndpoints.cs: читать могут все, менять — администратор),
 // демо — моки ниже с теми же правилами и текстами.
 const LABELS: Record<keyof SystemSettings, string> = {
-  allowRegistration: "Открытая регистрация студентов",
+  allowRegistration: "Приём заявок на регистрацию",
   announcementsEnabled: "Объявления преподавателей",
 };
 const yesNo = (v: boolean) => (v ? "да" : "нет");

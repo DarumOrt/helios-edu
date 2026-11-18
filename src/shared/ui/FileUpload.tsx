@@ -29,9 +29,14 @@ export function FileUpload({
   disabled?: boolean;
 }) {
   const server = useSession((s) => s.dataSource.source === "server");
+  const preview = useSession((s) => Boolean(s.user.previewContext));
   const input = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
-  const hint = server ? `${formatsOf(kind)} — до ${FILE_RULES[kind].limitText}` : FILES_SERVER_ONLY;
+  const hint = preview
+    ? "Файлы можно загрузить в основном кабинете"
+    : server
+      ? `${formatsOf(kind)} — до ${FILE_RULES[kind].limitText}`
+      : FILES_SERVER_ONLY;
 
   async function pick(file: File | undefined) {
     if (!file) return;
@@ -54,7 +59,7 @@ export function FileUpload({
           variant="outline"
           size="sm"
           onClick={() => input.current?.click()}
-          disabled={!server || disabled || progress !== null}
+          disabled={!server || preview || disabled || progress !== null}
         >
           <Upload size={15} aria-hidden /> {progress === null ? label : `Загрузка… ${progress}%`}
         </Button>
@@ -64,6 +69,7 @@ export function FileUpload({
       <input
         ref={input}
         type="file"
+        disabled={!server || preview || disabled || progress !== null}
         accept={acceptOf(kind)}
         className="sr-only"
         tabIndex={-1}

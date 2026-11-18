@@ -288,9 +288,9 @@ public sealed class CourseEditorFilter : IEndpointFilter
         if (lockedId is null) return Fail(404, "not found");
         var course = await db.Courses.Include(course => course.Sections.OrderBy(section => section.Order))
             .ThenInclude(section => section.Activities.OrderBy(activity => EF.Property<int>(activity, "Position")))
-            .AsSplitQuery().SingleAsync(course => course.Id == lockedId, http.RequestAborted);
+            .AsSplitQuery().SingleOrDefaultAsync(course => course.Id == lockedId, http.RequestAborted);
         var actor = (Account)http.Items[typeof(Account)]!;
-        if (course.DeletedAt is not null || !AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
+        if (course == null || course.DeletedAt is not null || !AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
         http.Items[typeof(Course)] = course;
         return await next(context);
     }

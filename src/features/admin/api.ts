@@ -16,6 +16,7 @@ export interface UserPayload {
   email?: string;
   role?: Role;
   group?: string | null;
+  organizerFaculties?: string[] | null;
   faculty?: string | null;
   status?: UserStatus;
 }
@@ -40,6 +41,11 @@ export const adminApi = {
   /** с данными — обезличить, без данных — удалить полностью */
   deleteUser: (id: string) => api.del<void>(`/api/users/${id}`),
   updateUser: (id: string, p: UserPayload) => api.patch<User>(`/api/users/${id}`, p),
+  approveApplication: (
+    id: string,
+    p: Pick<UserPayload, "role" | "group" | "faculty" | "organizerFaculties">,
+  ) => api.post<User>(`/api/users/${encodeURIComponent(id)}/application`, p),
+  rejectApplication: (id: string) => api.del<void>(`/api/users/${encodeURIComponent(id)}/application`),
   createCohort: (p: { name: string; faculty?: string }) => api.post<Cohort>("/api/cohorts", p),
   updateCohort: (id: string, p: { name?: string; faculty?: string | null; courseIds?: string[] }) =>
     api.patch<Cohort>(`/api/cohorts/${id}`, p),

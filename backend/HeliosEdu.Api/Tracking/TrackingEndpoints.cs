@@ -57,6 +57,7 @@ public static class TrackingEndpoints
         var course = await VisibleCourse(db, context, input.Text("courseId"));
         var activity = course is null ? null : TrackedActivities(course).FirstOrDefault(item => item.Id == input.Text("activityId"));
         if (course is null || activity is null) return Fail(404, "not found");
+        if (Actor(context).Role == "admin") return Results.Ok(new TrackingAccepted(true, 0));
         var session = input.Text("sessionId");
         if (session.Length is 0 or > 100) return Invalid(new() { ["sessionId"] = "Нет идентификатора сессии" });
 
@@ -118,6 +119,7 @@ public static class TrackingEndpoints
         if (events.GetArrayLength() > MaxBatch) return Fail(400, $"Не больше {MaxBatch} событий за раз");
         var course = await VisibleCourse(db, context, input.Text("courseId"));
         if (course is null) return Fail(404, "not found");
+        if (Actor(context).Role == "admin") return Results.Ok(new TrackingAccepted(true, 0));
         var materials = TrackedActivities(course).ToDictionary(activity => activity.Id, activity => activity.Type);
         var actor = Actor(context);
         var now = DateTimeOffset.UtcNow;
@@ -201,7 +203,7 @@ public static class TrackingEndpoints
         List<TrackingEventInfo>? events = null;
         if (!string.IsNullOrEmpty(userId))
             events = (await db.TrackingEvents.AsNoTracking().Where(item => item.CourseId == course.Id &&
-                    item.ActivityId == activityId && item.UserId == userId).OrderBy(item => item.At).ThenBy(item => item.Id)
+                    item.ActivityId == activityId && ids.Contains(item.UserId) && item.UserId == userId).OrderBy(item => item.At).ThenBy(item => item.Id)
                     .Take(2000).ToListAsync(context.RequestAborted))
                 .Select(item => new TrackingEventInfo(item.Id.ToString(), item.SessionId, item.UserId, item.ActivityId,
                     item.ActivityType, item.Verb, item.Position, item.Payload, Ms(item.At))).ToList();
@@ -291,7 +293,7 @@ public static class TrackingEndpoints
     {
         if (string.IsNullOrWhiteSpace(group)) return Fail(400, "Укажите группу");
         var actor = Actor(context);
-        if (!AccessRules.CanViewGroup(actor, group)) return Fail(403, "Недостаточно прав");
+        if (!AccessRules.CanViewGroup(actor, group) || db.OrganizerId != null && !await db.Cohorts.AnyAsync(g => g.Name == group, context.RequestAborted)) return Fail(403, "Недостаточно прав");
         var slots = await db.ScheduleSlots.AsNoTracking().Where(slot => slot.TenantId == actor.TenantId && slot.Group == group)
             .OrderBy(slot => slot.Weekday).ThenBy(slot => slot.Pair).ToListAsync(context.RequestAborted);
         var courseIds = slots.Select(slot => slot.CourseId).Distinct().ToList();

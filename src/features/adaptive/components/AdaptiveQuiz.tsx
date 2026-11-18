@@ -1,5 +1,7 @@
 "use client";
 
+import { previewHeaders } from "@/shared/lib/api-client";
+
 import { useState } from "react";
 import Link from "next/link";
 import useSWR, { mutate } from "swr";
@@ -109,7 +111,7 @@ export function AdaptiveQuiz({ courseId, activityId }: { courseId: string; activ
       // результат теста — и в рейтинг группы (трекинг), как раньше
       void fetch("/api/tracking/progress", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...previewHeaders() },
         body: JSON.stringify({
           courseId,
           sessionId: newSessionId(),

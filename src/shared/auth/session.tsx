@@ -33,7 +33,9 @@ export function SessionProvider({
   const expired = error instanceof ApiError && error.status === 401;
   useEffect(() => {
     if (expired) router.replace("/login");
-  }, [expired, router]);
+    else if (data && initialUser && data.previewContext !== initialUser.previewContext)
+      window.location.reload();
+  }, [expired, router, initialUser, data]);
   if (expired) return <p className="p-8 text-muted-foreground">Сессия завершена. Переходим ко входу…</p>;
   return (
     <DataSourceContext.Provider value={dataSource}>

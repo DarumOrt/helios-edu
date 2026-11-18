@@ -72,6 +72,17 @@ export type AuditPage = {
   nextCursor: number | null;
 };
 
+export type BrandingInfo = {
+  subtitle: string | null;
+  loginText: string | null;
+  footerText: string | null;
+  logoVersion: string | null;
+  darkLogoVersion: string | null;
+  useLogo: boolean | null;
+  logoScale: number | null;
+  menuLogoScale: number | null;
+};
+
 export type CampaignInfo = {
   id: string;
   subject: string;
@@ -143,6 +154,15 @@ export type CleanupResult = {
   orphans: number;
   courses?: number;
   courseItems?: number;
+};
+
+export type CohortDirectory = {
+  items: DirectoryCohort[];
+  total: number;
+  page: number;
+  pageSize: number;
+  faculties: string[];
+  years: number[];
 };
 
 export type CohortInfo = {
@@ -224,6 +244,28 @@ export type DeletedCourseInfo = {
   impact: CourseImpact;
 };
 
+export type DirectoryCohort = {
+  id: string;
+  name: string;
+  faculty: string | null;
+  year: number | null;
+  students: number;
+  courses: number;
+};
+
+export type DirectoryUser = {
+  id: string;
+  name: string;
+  email: string;
+  tenantId: string;
+  role: string | null;
+  status: string;
+  faculty: string | null;
+  group: string | null;
+  createdAt: string | null;
+  organizerFaculties: string[] | null;
+};
+
 export type EnrolledStudent = {
   id: string;
   name: string;
@@ -236,6 +278,12 @@ export type EnrollmentInfo = {
   keyEnabled: boolean;
   cohortIds: string[];
   students: EnrolledStudent[];
+};
+
+export type FacultyInfo = {
+  code: string;
+  name: string;
+  archived: boolean;
 };
 
 export type GradeItem = {
@@ -429,8 +477,11 @@ export type RecipientInfo = {
 export type RegisterRequest = {
   name: string | null;
   email: string | null;
-  password: string | null;
   consent: boolean | null;
+};
+
+export type RegistrationResult = {
+  status: string;
 };
 
 export type ScheduleCourse = {
@@ -461,6 +512,11 @@ export type Section = {
   title: string;
   order?: number;
   activities?: Activity[];
+};
+
+export type Selection = {
+  role: string | null;
+  courseId: string | null;
 };
 
 export type SettingsInfo = {
@@ -570,6 +626,16 @@ export type UploadTicket = {
   expiresAt: string;
 };
 
+export type UserDirectory = {
+  items: DirectoryUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pendingCount: number;
+  faculties: string[];
+  groups: string[];
+};
+
 export type UserInfo = {
   id: string;
   name: string;
@@ -580,4 +646,6 @@ export type UserInfo = {
   group: string | null;
   status: string;
   mustChangePassword: boolean | null;
+  organizerFaculties: string[] | null;
+  previewContext?: string | null;
 };

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BrandMark } from "@/shared/ui";
+import { defaultBranding, useBranding, type Branding } from "@/shared/lib/branding";
+import { BrandIdentity } from "@/shared/layout/BrandIdentity";
 import { FormulaWaves } from "@/shared/ui/FormulaWaves";
 import { DataSourceToggle } from "@/shared/layout/DataSourceToggle";
 import { ThemeToggle } from "@/shared/layout/ThemeToggle";
@@ -15,24 +16,26 @@ import type { DataSourceState } from "@/shared/lib/data-source";
 export function AuthShell({
   dataSource,
   active,
+  allowRegistration,
+  branding,
   children,
 }: {
   dataSource: DataSourceState;
   active: "login" | "register";
+  allowRegistration: boolean;
+  branding?: Branding;
   children: ReactNode;
 }) {
   const day = useDayPart();
+  const { data } = useBranding(branding);
+  const brand = { ...defaultBranding, ...data };
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <aside className="relative isolate flex min-h-52 flex-col overflow-hidden px-6 pt-6 pb-10 text-waves-ink sm:px-10 lg:min-h-screen lg:pt-10 lg:pb-16">
         <FormulaWaves className="-z-10" />
         <Link href="/" className="relative flex w-fit items-center gap-2.5 rounded-md">
-          <BrandMark size={30} />
-          <span>
-            <span className="block text-lg leading-tight font-bold tracking-tight">HeliosEDU</span>
-            <span className="block font-mono text-xs text-waves-ink/70">ПГГПУ · ИНЭК</span>
-          </span>
+          <BrandIdentity branding={data} />
         </Link>
 
         <div className="relative mt-8 max-w-md lg:mt-auto">
@@ -40,9 +43,7 @@ export function AuthShell({
           <h2 className="mt-2 animate-enter text-3xl font-bold tracking-tight text-balance lg:text-4xl">
             {day?.greeting ?? "Здравствуйте"}
           </h2>
-          <p className="mt-3 hidden text-base text-waves-ink/80 lg:block">
-            Курсы, задания и оценки в одном месте. Сразу видно, что уже сделано и с чего продолжить.
-          </p>
+          <p className="mt-3 text-sm wrap-break-word text-waves-ink/80 lg:text-base">{brand.loginText}</p>
         </div>
       </aside>
 
@@ -51,15 +52,13 @@ export function AuthShell({
           <ThemeToggle />
           <DataSourceToggle state={dataSource} />
         </div>
-        <div className="flex flex-1 items-center justify-center py-10">
+        <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
           <div className="w-full max-w-md">
-            <AuthTabs active={active} />
+            {allowRegistration && <AuthTabs active={active} />}
             {children}
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground">
-          Электронная образовательная среда ПГГПУ · учебный проект
-        </p>
+        <p className="text-center text-xs wrap-anywhere text-muted-foreground">{brand.footerText}</p>
       </main>
     </div>
   );
@@ -68,7 +67,7 @@ export function AuthShell({
 function AuthTabs({ active }: { active: "login" | "register" }) {
   const tabs = [
     { key: "login", href: "/login", label: "Вход" },
-    { key: "register", href: "/register", label: "Регистрация" },
+    { key: "register", href: "/register", label: "Запросить доступ" },
   ] as const;
   return (
     <nav aria-label="Вход или регистрация" className="mb-8 grid grid-cols-2 gap-1 rounded-md bg-muted p-1">

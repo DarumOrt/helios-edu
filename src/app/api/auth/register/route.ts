@@ -4,8 +4,7 @@ import { backendRequest, getDataSource, isSameOrigin } from "@/shared/lib/backen
 import { validateRegistration, type RegistrationInput } from "@/shared/lib/registration";
 import { findDemoUserByEmail, registerDemoUser } from "@/mocks/users-store";
 
-// POST { name, email, password, consent } — самостоятельная регистрация студента.
-// Сервер: создаёт аккаунт и сессию в C# API. Демо: пользователь в памяти, вход выполняет клиент.
+// POST { name, email, consent } — заявка на доступ, без создания сессии.
 export async function POST(request: Request) {
   if (!isSameOrigin(request))
     return NextResponse.json({ error: "Недопустимый источник запроса" }, { status: 403 });
@@ -13,20 +12,20 @@ export async function POST(request: Request) {
   // на сервере запрет регистрации проверяет C# (настройки системы в базе)
   if ((await getDataSource()).source === "demo" && !getSettings().allowRegistration)
     return NextResponse.json(
-      { error: "Регистрация закрыта. Учётную запись создаст организатор." },
+      { error: "Приём заявок закрыт. Учётную запись создаёт администратор." },
       { status: 403 },
     );
 
   let body: Partial<RegistrationInput>;
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error();
   } catch {
     return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
   }
   const input = {
     name: typeof body.name === "string" ? body.name : "",
     email: typeof body.email === "string" ? body.email : "",
-    password: typeof body.password === "string" ? body.password : "",
     consent: body.consent === true,
   };
 
@@ -45,5 +44,6 @@ export async function POST(request: Request) {
       { error: "Эта почта уже зарегистрирована", fields: { email: "Эта почта уже зарегистрирована" } },
       { status: 409 },
     );
-  return NextResponse.json(registerDemoUser(input), { status: 201 });
+  registerDemoUser(input);
+  return NextResponse.json({ status: "pending" }, { status: 202 });
 }
