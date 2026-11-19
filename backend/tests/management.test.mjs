@@ -440,12 +440,12 @@ for (const [name, baseUrl] of [
           200,
         );
         assert.deepEqual([own.title, own.description], ["Свой курс", "Новое"]);
-        for (const field of ["tutorId", "faculty", "academicYear"]) {
+        for (const field of ["tutorId", "academicYear"]) {
           const denied = await expect(
             await send("PATCH", `/api/courses/${course.id}`, { [field]: null }, tutor),
             403,
           );
-          assert.equal(denied.error, "Преподавателя, факультет и учебный год курса меняет организатор");
+          assert.equal(denied.error, "Преподавателя и учебный год курса меняет организатор");
         }
         const stranger = await login(baseUrl, "tutor2@pspu.ru");
         assert.equal(
@@ -456,6 +456,13 @@ for (const [name, baseUrl] of [
           (await send("PATCH", `/api/courses/${course.id}`, { title: "Попытка" }, student)).status,
           403,
         );
+        await expect(
+          await patchCourse(course.id, { status: "published" }),
+          400,
+          "faculty",
+          "Для публикации выберите факультет",
+        );
+        await expect(await send("PATCH", `/api/courses/${course.id}`, { faculty: "ИНЭК" }, tutor), 200);
         for (const status of ["draft", "published", "archived"]) {
           const changed = await expect(await patchCourse(course.id, { status }), 200);
           assert.equal(changed.coverColor, course.coverColor);

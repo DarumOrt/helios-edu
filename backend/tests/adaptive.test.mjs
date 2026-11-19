@@ -98,7 +98,7 @@ test("P5: навыки, BKT, попытки, рекомендации и руч�
   const root = `/api/courses/${course.id}`;
   t.after(async () => expect(await send("PATCH", root, { status: "draft" }, organizer), 200));
   const me = `/api/me/courses/${course.id}`;
-  await expect(await send("PATCH", root, { status: "published" }, organizer), 200);
+  await expect(await send("PATCH", root, { faculty: "ИНЭК", status: "published" }, organizer), 200);
   // Ученики курса — студенты групп, которым он назначен: своя группа из двух учеников, outsider в ней нет.
   const cohort = await expect(await send("POST", "/api/cohorts", { name: `А-${unique}` }, organizer), 201);
   await expect(

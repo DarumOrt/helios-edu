@@ -41,7 +41,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");
   if (actor.role === "tutor" && MANAGED_COURSE_FIELDS.some((key) => body[key] !== undefined))
-    return fail(403, "Преподавателя, факультет и учебный год курса меняет организатор");
+    return fail(403, "Преподавателя и учебный год курса меняет организатор");
 
   const patch: Partial<CourseInput> = {};
   if (body.cohortIds !== undefined) patch.cohortIds = body.cohortIds as string[];
@@ -54,7 +54,15 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (body.code !== undefined)
     return fail(400, "Код курса изменить нельзя", { code: "Код курса изменить нельзя" });
 
-  const fields = validateCourse(patch, true, demoFacultyCodes(existing.faculty));
+  const fields = validateCourse(
+    {
+      ...patch,
+      status: patch.status ?? (body.faculty !== undefined ? existing.status : undefined),
+      faculty: body.faculty !== undefined ? patch.faculty : existing.faculty,
+    },
+    true,
+    demoFacultyCodes(existing.faculty),
+  );
   if (!fields.cohortIds && patch.cohortIds?.some((id) => !findCohort(id)))
     fields.cohortIds = "Выберите существующие группы (не более 200)";
   if (patch.tutorId && !fields.tutorId && findDemoUser(patch.tutorId)?.role !== "tutor")

@@ -16,15 +16,17 @@ public static partial class ManagementEndpoints
             fields["cohortIds"] = "Выберите существующие группы (не более 200)";
     }
 
+    private static async Task LockCourseGroups(ManagementInput input, HttpContext context, LearningDbContext db)
+    {
+        if (input.Ids("cohortIds") is not { } ids) return;
+        // Тот же порядок блокировок, что у управления группами: группы, затем курс.
+        foreach (var id in ids.Order())
+            await FindCohort(db, id, Actor(context).TenantId, true, context.RequestAborted);
+    }
+
     private static async Task SetCourseGroups(ManagementInput input, Course course, HttpContext context, LearningDbContext db)
     {
         if (input.Ids("cohortIds") is not { } ids) return;
-        // Тот же порядок блокировок, что у управления группами: группы, затем связи.
-        foreach (var id in ids.Order())
-            await FindCohort(db, id, Actor(context).TenantId, true, context.RequestAborted);
-        // Разные выбранные группы не должны позволять двум PATCH объединить два полных списка.
-        if (db.Entry(course).State != EntityState.Added)
-            await db.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM \"Courses\" WHERE \"Id\" = {course.Id} FOR UPDATE", context.RequestAborted);
         var current = await db.CohortCourses.Where(l => l.CourseId == course.Id &&
             db.Cohorts.Any(g => g.Id == l.CohortId && g.TenantId == Actor(context).TenantId))
             .ToListAsync(context.RequestAborted);
