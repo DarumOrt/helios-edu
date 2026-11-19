@@ -1237,6 +1237,42 @@
         }
       }
     },
+    "/api/courses/{id}/enrollment/access/{action}/{target}": {
+      "post": {
+        "tags": ["EnrollmentEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/courses/{id}/enrollment/key": {
       "put": {
         "tags": ["EnrollmentEndpoints"],
@@ -3560,7 +3596,7 @@
         }
       },
       "EnrollmentInfo": {
-        "required": ["keyEnabled", "cohortIds", "students"],
+        "required": ["keyEnabled", "cohortIds", "students", "excluded"],
         "type": "object",
         "properties": {
           "keyEnabled": {
@@ -3573,6 +3609,12 @@
             }
           },
           "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrolledStudent"
+            }
+          },
+          "excluded": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EnrolledStudent"

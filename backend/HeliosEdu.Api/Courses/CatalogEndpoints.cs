@@ -43,13 +43,15 @@ public static class CatalogEndpoints
                 .ToListAsync(token);
             var accessible = (await AccessRules.VisibleCourses(db, context.User)
                 .Where(course => ids.Contains(course.Id)).Select(course => course.Id).ToListAsync(token)).ToHashSet();
+            var excluded = (await db.CourseExclusions.Where(x => x.UserId == accountId && ids.Contains(x.CourseId))
+                .Select(x => x.CourseId).ToListAsync(token)).ToHashSet();
             return Results.Ok(courses.Select(course => new CatalogCourse(course.Id, course.Code, course.Title,
                 course.Description, course.Cover, course.CoverColor, course.Category, course.Faculty, course.AcademicYear,
                 new CatalogTutor(course.TutorId, tutors.GetValueOrDefault(course.TutorId, "")),
                 links.Where(link => link.CourseId == course.Id).Select(link => link.Cohort).ToList(),
                 course.Sections.OrderBy(section => section.Order)
                     .Select(section => new CatalogSection(section.Title, section.Activities.Count)).ToList(),
-                accessible.Contains(course.Id), course.EnrollmentKeyHash is not null)));
+                accessible.Contains(course.Id), course.EnrollmentKeyHash is not null && !excluded.Contains(course.Id))));
         }).RequireAuthorization().Produces<CatalogCourse[]>();
     }
 }

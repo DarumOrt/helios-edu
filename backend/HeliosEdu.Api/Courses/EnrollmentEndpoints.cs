@@ -18,8 +18,14 @@ public sealed class CourseEnrollment
     public DateTimeOffset CreatedAt { get; set; }
 }
 
+public sealed class CourseExclusion
+{
+    public string CourseId { get; set; } = "";
+    public string UserId { get; set; } = "";
+}
+
 public sealed record EnrolledStudent(string Id, string Name, string Email, string? Group, string[] Sources);
-public sealed record EnrollmentInfo(bool KeyEnabled, IReadOnlyList<string> CohortIds, IReadOnlyList<EnrolledStudent> Students);
+public sealed record EnrollmentInfo(bool KeyEnabled, IReadOnlyList<string> CohortIds, IReadOnlyList<EnrolledStudent> Students, IReadOnlyList<EnrolledStudent> Excluded);
 
 public static class EnrollmentEndpoints
 {
@@ -32,6 +38,7 @@ public static class EnrollmentEndpoints
             .AddEndpointFilter<ManagementWriteFilter>();
         group.MapGet("", ListAsync).Produces<EnrollmentInfo>();
         group.MapGet("/students", SearchAsync).Produces<EnrolledStudent[]>();
+        group.MapPost("/access/{action}/{target}", ChangeAccessAsync).Produces(StatusCodes.Status204NoContent);
         group.MapPut("/key", SetKeyAsync);
         group.MapPost("/students", AddStudentAsync);
         group.MapDelete("/students/{userId}", RemoveStudentAsync).Produces(StatusCodes.Status204NoContent);
@@ -42,6 +49,8 @@ public static class EnrollmentEndpoints
 
     private static async Task<Course?> Editable(string id, HttpContext context, LearningDbContext db, bool roster = false)
     {
+        if (!HttpMethods.IsGet(context.Request.Method))
+            await db.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM \"Courses\" WHERE \"Id\" = {id} AND \"TenantId\" = {Actor(context).TenantId} FOR UPDATE", context.RequestAborted);
         var course = await AccessRules.VisibleCourses(db, context.User).SingleOrDefaultAsync(c => c.Id == id, context.RequestAborted);
         return course != null && (roster || AccessRules.CanEditCourse(Actor(context), course)) ? course : null;
     }
@@ -63,9 +72,14 @@ public static class EnrollmentEndpoints
                 Individual = db.CourseEnrollments.Where(l => l.CourseId == id && l.UserId == a.Id)
                     .Select(l => l.Source).FirstOrDefault()
             }).ToListAsync(token);
+        var excluded = AccessRules.CanEditCourse(Actor(context), course)
+            ? await db.Accounts.Where(a => a.TenantId == tenant && a.Role == "student" &&
+                db.CourseExclusions.Any(x => x.CourseId == id && x.UserId == a.Id))
+                .OrderBy(a => a.Name).Select(a => new EnrolledStudent(a.Id, a.Name, a.Email, a.Group, Array.Empty<string>()))
+                .ToListAsync(token) : [];
         return Results.Ok(new EnrollmentInfo(course.EnrollmentKeyHash is not null, cohortIds,
             students.Select(a => new EnrolledStudent(a.Id, a.Name, a.Email, a.Group,
-                a.Individual is { } source ? (a.ViaGroup ? ["group", source] : [source]) : ["group"])).ToList()));
+                a.Individual is { } source ? (a.ViaGroup ? ["group", source] : [source]) : ["group"])).ToList(), excluded));
     }
 
     private static async Task<IResult> SearchAsync(string id, string? q, HttpContext context, LearningDbContext db)
@@ -108,6 +122,8 @@ public static class EnrollmentEndpoints
         var student = await db.Accounts.SingleOrDefaultAsync(a => a.Id == userId && a.TenantId == tenant &&
             a.Role == "student" && a.Status == "active", context.RequestAborted);
         if (student is null) return Invalid(new() { ["userId"] = "Выберите действующего студента" });
+        if (await db.CourseExclusions.AnyAsync(x => x.CourseId == id && x.UserId == student.Id, context.RequestAborted))
+            return Fail(409, "Сначала восстановите доступ студента");
         await Add(db, context, course, student, "manual");
         return Results.Ok(new { ok = true });
     }
@@ -131,6 +147,54 @@ public static class EnrollmentEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> ChangeAccessAsync(string id, string action, string target, HttpContext context, LearningDbContext db)
+    {
+        var course = await Editable(id, context, db);
+        if (course is null) return Fail(404, "not found");
+        var token = context.RequestAborted;
+        var students = AccessRules.CourseStudents(db, id);
+        string summary;
+        if (action == "restore")
+        {
+            var student = await db.Accounts.SingleOrDefaultAsync(a => a.Id == target && a.Role == "student" &&
+                a.TenantId == course.TenantId, token);
+            if (student is null) return Fail(404, "not found");
+            var removed = await db.CourseExclusions.Where(x => x.CourseId == id && x.UserId == target).ExecuteDeleteAsync(token);
+            if (removed == 0) return Results.NoContent();
+            if (!await students.AnyAsync(a => a.Id == target, token)) await Add(db, context, course, student, "manual");
+            summary = $"Восстановлен доступ · {student.Name}";
+        }
+        else if (action == "exclude")
+        {
+            var student = await students.SingleOrDefaultAsync(a => a.Id == target, token);
+            if (student is null) return Fail(404, "Участник не найден");
+            db.CourseExclusions.Add(new() { CourseId = id, UserId = target });
+            summary = $"Исключён студент · {student.Name}";
+        }
+        else if (action is "exclude-group" or "detach")
+        {
+            var group = await db.Cohorts.SingleOrDefaultAsync(g => g.Id == target && g.TenantId == course.TenantId &&
+                (action != "detach" || db.CohortCourses.Any(l => l.CourseId == id && l.CohortId == g.Id)), token);
+            if (group is null) return Fail(404, "Группа не назначена курсу");
+            var members = students.Where(a => a.Group == group.Name);
+            if (action == "detach")
+                members = members.Where(a => !db.CourseEnrollments.Any(l => l.CourseId == id && l.UserId == a.Id));
+            var affected = await members.Select(a => a.Id).ToListAsync(token);
+            var input = await ManagementInput.ReadAsync(context.Request);
+            if (input?.Ids("studentIds") is not { } confirmed) return Fail(400, "Подтвердите состав группы");
+            if (!affected.ToHashSet().SetEquals(confirmed)) return Fail(409, "Состав изменился. Обновите список и проверьте последствия.");
+            if (action == "detach")
+                await db.CohortCourses.Where(l => l.CourseId == id && l.CohortId == target).ExecuteDeleteAsync(token);
+            else
+                db.CourseExclusions.AddRange(affected.Select(userId => new CourseExclusion { CourseId = id, UserId = userId }));
+            summary = $"{(action == "detach" ? "Снята группа" : "Исключены студенты группы")} · {group.Name} · потеряли доступ: {affected.Count}";
+        }
+        else return Fail(404, "not found");
+        AuditLog.Write(db, context, "course.updated", "course", id, $"{course.Code} · {summary}");
+        await db.SaveChangesAsync(token);
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> EnrollAsync(string id, HttpContext context, LearningDbContext db)
     {
         var actor = Actor(context);
@@ -140,6 +204,8 @@ public static class EnrollmentEndpoints
         if (course is null || course.DeletedAt is not null || course.Status != "published") return Fail(404, "not found");
         var tenant = await db.Accounts.Where(a => a.Id == course.TutorId).Select(a => a.TenantId).SingleOrDefaultAsync(context.RequestAborted);
         if (tenant != actor.TenantId) return Fail(404, "not found");
+        if (await db.CourseExclusions.AnyAsync(x => x.CourseId == id && x.UserId == actor.Id, context.RequestAborted))
+            return Fail(403, "Доступ к курсу может восстановить преподаватель");
         if (await AccessRules.IsCourseStudent(db, actor, id, context.RequestAborted)) return Results.Ok(new { ok = true });
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");

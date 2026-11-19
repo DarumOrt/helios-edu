@@ -33,7 +33,7 @@ export interface CourseInput {
   description: string;
   tutorId: string;
   status?: CourseStatus;
-  /** факультет (код из FACULTIES) и учебный год «2026/2027» — необязательны, нужны для поиска */
+  /** код факультета из справочника обязателен при публикации, учебный год необязателен */
   faculty?: string;
   academicYear?: string;
 }
@@ -87,6 +87,7 @@ export function validateCourse(
     e.description = "Описание — до 1000 символов";
   if (has("tutorId") && !text(input.tutorId)) e.tutorId = "Назначьте преподавателя";
   const faculty = text(input.faculty);
+  if (input.status === "published" && !faculty) e.faculty = "Для публикации выберите факультет";
   if (faculty && !facultyCodes.includes(faculty)) e.faculty = "Выберите факультет из списка";
   const academicYear = text(input.academicYear);
   if (academicYear && !isAcademicYear(academicYear)) e.academicYear = "Учебный год в формате 2026/2027";

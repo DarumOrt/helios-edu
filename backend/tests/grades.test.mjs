@@ -117,6 +117,31 @@ for (const [name, baseUrl] of [
     assert.equal(mine.items.find((i) => i.itemId === "ma1").grade, 87);
     assert.equal((await get(baseUrl, "/api/gradebook?courseId=c-dor-ai", student.cookie)).status, 403);
 
+    // Исключение перекрывает назначение группы; после восстановления видны те же работа, оценка и прогресс.
+    const coursePath = "/api/courses/c-dor-ai";
+    const before = await (await get(baseUrl, coursePath, student.cookie)).json();
+    const access = coursePath + "/enrollment/access/";
+    try {
+      assert.equal((await send(tutor.cookie, "POST", access + "exclude/" + student.user.id, {})).status, 204);
+      assert.equal((await get(baseUrl, coursePath, student.cookie)).status, 404);
+      assert.equal(
+        (await get(baseUrl, "/api/assignment/ma1/submission?courseId=c-dor-ai", student.cookie)).status,
+        404,
+      );
+    } finally {
+      assert.equal((await send(tutor.cookie, "POST", access + "restore/" + student.user.id, {})).status, 204);
+    }
+    const after = await (await get(baseUrl, coursePath, student.cookie)).json();
+    assert.ok(before.progress > 0);
+    assert.equal(after.progress, before.progress);
+    const retained = await (
+      await get(baseUrl, "/api/assignment/ma1/submission?courseId=c-dor-ai", student.cookie)
+    ).json();
+    assert.equal(retained.submission.id, work.id);
+    assert.equal(retained.submission.text, ownWork.submission.text);
+    assert.equal(retained.submission.grade, 87);
+    assert.deepEqual(await row(tutor.cookie), tutorRow);
+
     // оценка за тест вручную: ставится, итог пересчитывается, null — снимает
     const set = (cookie, grade) =>
       send(cookie, "POST", "/api/gradebook/grade", {

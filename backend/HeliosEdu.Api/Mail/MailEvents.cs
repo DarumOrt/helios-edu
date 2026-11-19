@@ -37,7 +37,8 @@ public static class MailEvents
                     if (s.GroupAdded) Queue("Вы добавлены в учебную группу", $"Ваша группа: {name}", [e.Entity]);
                     if (s.CourseAssigned)
                     {
-                        var titles = await db.Courses.Where(c => c.DeletedAt == null && c.Status == "published" && db.CohortCourses.Any(l =>
+                        var titles = await db.Courses.Where(c => c.DeletedAt == null && c.Status == "published" &&
+                            !db.CourseExclusions.Any(x => x.CourseId == c.Id && x.UserId == e.Entity.Id) && db.CohortCourses.Any(l =>
                             l.CourseId == c.Id && db.Cohorts.Any(g => g.Id == l.CohortId && g.TenantId == s.TenantId && g.Name == name)))
                             .Select(c => c.Title).ToListAsync(ct);
                         if (titles.Count > 0) Queue("Вам назначены курсы", string.Join("\n", titles), [e.Entity]);
@@ -51,7 +52,8 @@ public static class MailEvents
                     var users = await AccessRules.CourseStudents(db, e.Entity.Id).Where(u => u.TenantId == s.TenantId &&
                         !db.Cohorts.Any(g => removedIds.Contains(g.Id) && g.TenantId == s.TenantId && g.Name == u.Group)).ToListAsync(ct);
                     var addedGroups = links.Where(l => l.CourseId == e.Entity.Id).Select(l => l.CohortId).ToList();
-                    users.AddRange(await db.Accounts.Where(u => u.TenantId == s.TenantId && u.Role == "student" && db.Cohorts.Any(g =>
+                    users.AddRange(await db.Accounts.Where(u => u.TenantId == s.TenantId && u.Role == "student" &&
+                        !db.CourseExclusions.Any(x => x.CourseId == e.Entity.Id && x.UserId == u.Id) && db.Cohorts.Any(g =>
                         addedGroups.Contains(g.Id) && g.TenantId == s.TenantId && g.Name == u.Group)).ToListAsync(ct));
                     Queue("Опубликован курс", e.Entity.Title, users);
                 }
@@ -64,6 +66,7 @@ public static class MailEvents
                 if (s.CoursePublished && courses.Any(e => e.Entity.Id == course.Id)) continue;
                 var ids = byCourse.Select(l => l.CohortId).ToArray();
                 var users = await db.Accounts.Where(u => u.TenantId == s.TenantId && u.Role == "student" &&
+                    !db.CourseExclusions.Any(x => x.CourseId == course.Id && x.UserId == u.Id) &&
                     db.Cohorts.Any(g => ids.Contains(g.Id) && g.TenantId == s.TenantId && g.Name == u.Group)).ToListAsync(ct);
                 Queue("Вам назначен курс", course.Title, users);
             }

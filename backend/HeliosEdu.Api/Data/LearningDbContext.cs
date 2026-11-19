@@ -56,6 +56,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
     public DbSet<Cohort> Cohorts => Set<Cohort>();
     public DbSet<CohortCourse> CohortCourses => Set<CohortCourse>();
+    public DbSet<CourseExclusion> CourseExclusions => Set<CourseExclusion>();
     public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
     public DbSet<Skill> Skills => Set<Skill>();
     public DbSet<SkillPrerequisite> SkillPrerequisites => Set<SkillPrerequisite>();
@@ -106,6 +107,10 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
                 l.CourseId == c.Id && Cohorts.Any(g => g.Id == l.CohortId))));
         modelBuilder.ConfigureAdaptive();
         modelBuilder.ConfigureMail();
+        var exclusion = modelBuilder.Entity<CourseExclusion>();
+        exclusion.HasKey(item => new { item.CourseId, item.UserId });
+        exclusion.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        exclusion.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
         var enrollment = modelBuilder.Entity<CourseEnrollment>();
         enrollment.HasKey(item => new { item.CourseId, item.UserId });
         enrollment.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);

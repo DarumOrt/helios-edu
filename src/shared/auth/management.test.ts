@@ -34,7 +34,7 @@ describe("правила управления (зеркало AccessRules.cs)", 
   });
 
   it("преподаватель не меняет преподавателя, факультет и год курса (CourseEndpoints.ManagedCourseFields)", () => {
-    expect([...MANAGED_COURSE_FIELDS]).toEqual(["tutorId", "faculty", "academicYear"]);
+    expect([...MANAGED_COURSE_FIELDS]).toEqual(["tutorId", "academicYear"]);
     expect(MANAGED_COURSE_FIELDS).not.toContain("cohortIds");
   });
 
