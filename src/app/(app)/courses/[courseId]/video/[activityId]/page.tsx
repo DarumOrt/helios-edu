@@ -23,26 +23,23 @@ export default function VideoLessonPage({
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
     .find((a) => a.id === activityId && a.type === "video");
-  const onComplete = useActivityEvents(courseId, activity?.id);
+  const { onViewed, onComplete } = useActivityEvents(courseId, activity?.id);
+
+  const src = activity?.src ?? "/media/lesson-matan.mp4";
 
   return (
     <div>
       <DataState loading={isLoading} error={error} empty={!activity}>
         {course && activity && (
           <>
-            <LessonHeader
-              courseId={courseId}
-              courseCode={course.code}
-              title={activity.title}
-              type="video"
-              durationMin={activity.durationMin}
-            />
+            <LessonHeader courseId={courseId} courseCode={course.code} title={activity.title} type="video" />
             <VideoPlayer
               key={`${courseId}/${activity.id}`}
               courseId={courseId}
               activityId={activity.id}
-              src={activity.src ?? "/media/lesson-matan.mp4"}
+              src={src}
               title={activity.title}
+              onViewed={onViewed}
               onComplete={onComplete}
               navigation={<LessonRoute course={course} activityId={activity.id} />}
             />

@@ -23,6 +23,7 @@ public sealed class ActivityProgress
     public double? DurationSec { get; set; }
     /// <summary>видео: где остановился, сек — с этого места продолжается просмотр</summary>
     public int? Position { get; set; }
+    public JsonElement? Media { get; set; }
     public int Sessions { get; set; } = 1;
     public string LastSessionId { get; set; } = "";
     public DateTimeOffset FirstAt { get; set; }
@@ -65,7 +66,7 @@ public sealed class ScheduleSlot
 
 public sealed record ProgressInfo(string SessionId, string UserId, string ActivityId, string ActivityType, int Coverage,
     int ActiveTimeSec, bool Completed, int? Seeks, int? Pauses, double? MaxRate, int? PagesViewed, int? TotalPages,
-    double? DurationSec, int? Position, long Ts, string UserName, string? Group, long FirstAt, long LastAt, int Sessions);
+    double? DurationSec, int? Position, long Ts, string UserName, string? Group, long FirstAt, long LastAt, int Sessions, MediaRanges? Media);
 
 public sealed record TrackingEventInfo(string Id, string SessionId, string UserId, string ActivityId, string ActivityType,
     string Verb, double? Position, JsonElement? Payload, long Ts);

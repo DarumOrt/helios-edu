@@ -413,6 +413,12 @@ export type MailSettingsInput = {
   coursePublished: boolean;
 };
 
+export type MediaRanges = {
+  watched: number[][];
+  active: number[][];
+  positionAt: number;
+};
+
 export type MySubmission = {
   submission: SubmissionInfo | null;
 };
@@ -466,6 +472,7 @@ export type ProgressInfo = {
   firstAt: number;
   lastAt: number;
   sessions: number;
+  media: MediaRanges | null;
 };
 
 export type RecipientInfo = {

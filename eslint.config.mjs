@@ -46,6 +46,7 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     "out/**",
+    "public/pdfjs/**",
     "build/**",
     "coverage/**",
     "next-env.d.ts",

@@ -6,6 +6,7 @@ import type {
   LessonStatRow,
   TrackedActivityType,
 } from "@/shared/lib/tracking/types";
+import { mediaProgress } from "@/shared/lib/tracking/media";
 import { users, cohorts } from "./data";
 import { findDemoCourse, listDemoCourses } from "./course-store";
 
@@ -13,7 +14,7 @@ import { findDemoCourse, listDemoCourses } from "./course-store";
 // В проде: ingest → event store (ClickHouse) → агрегация → этот же интерфейс.
 
 interface Store {
-  events: TrackingEvent[];
+  events: (TrackingEvent & { courseId: string })[];
   progress: Map<string, ActivityProgress>; // key: userId::activityId
   seeded: boolean;
 }
@@ -49,8 +50,8 @@ function userInfo(userId: string) {
   return { name: u?.name ?? "Студент", group: u?.group };
 }
 
-function key(userId: string, activityId: string) {
-  return `${userId}::${activityId}`;
+function key(userId: string, activityId: string, courseId: string | null) {
+  return JSON.stringify([courseId, userId, activityId]);
 }
 
 // ---- сид: правдоподобная активность группы М1227 по курсу c-dor-ai ----
@@ -150,8 +151,8 @@ function seed() {
   });
 }
 
-export function upsert(s: ProgressSnapshot) {
-  const k = key(s.userId, s.activityId);
+export function upsert(s: ProgressSnapshot, courseId = "c-dor-ai") {
+  const k = key(s.userId, s.activityId, courseId);
   const prev = store.progress.get(k);
   const info = userInfo(s.userId);
   const merged: ActivityProgress = {
@@ -166,34 +167,42 @@ export function upsert(s: ProgressSnapshot) {
     activeTimeSec: Math.max(prev?.activeTimeSec ?? 0, s.activeTimeSec),
     pagesViewed: Math.max(prev?.pagesViewed ?? 0, s.pagesViewed ?? 0),
     completed: (prev?.completed ?? false) || s.completed,
+    ...(s.media && mediaProgress(prev, s)),
   };
   store.progress.set(k, merged);
 }
 
-export function ingest(events: TrackingEvent[]) {
-  store.events.push(...events);
+export function ingest(events: TrackingEvent[], courseId: string) {
+  store.events.push(...events.map((e) => ({ ...e, courseId })));
   if (store.events.length > 5000) store.events = store.events.slice(-5000);
 }
 
-export function getProgress(userId: string, activityId: string): ActivityProgress | null {
+export function getProgress(
+  userId: string,
+  activityId: string,
+  courseId: string | null,
+): ActivityProgress | null {
   seed();
-  return store.progress.get(key(userId, activityId)) ?? null;
+  return store.progress.get(key(userId, activityId, courseId)) ?? null;
 }
 
-export function getActivityEvents(activityId: string, userId?: string): TrackingEvent[] {
+export function getActivityEvents(
+  activityId: string,
+  courseId: string | null,
+  userId?: string,
+): TrackingEvent[] {
   seed();
   return store.events
-    .filter((e) => e.activityId === activityId && (!userId || e.userId === userId))
+    .filter((e) => e.activityId === activityId && e.courseId === courseId && (!userId || e.userId === userId))
     .sort((a, b) => a.ts - b.ts);
 }
 
 // статистика по уроку (одна активность) — для преподавателя
-export function lessonStats(activityId: string): LessonStatRow[] {
+export function lessonStats(activityId: string, courseId: string | null): LessonStatRow[] {
   seed();
-  const courseId = activityCourse(activityId);
   const roster = rosterForCourse(courseId);
   return roster.map((userId) => {
-    const p = store.progress.get(key(userId, activityId));
+    const p = store.progress.get(key(userId, activityId, courseId));
     const info = userInfo(userId);
     const status: LessonStatRow["status"] = !p ? "not_started" : p.completed ? "completed" : "in_progress";
     return {
@@ -223,7 +232,7 @@ export function courseStats(courseId: string) {
   const acts = courseActivities(courseId);
   const roster = rosterForCourse(courseId);
   return acts.map((a) => {
-    const rows = roster.map((u) => store.progress.get(key(u, a.id)));
+    const rows = roster.map((u) => store.progress.get(key(u, a.id, courseId)));
     const present = rows.filter(Boolean) as ActivityProgress[];
     const completed = present.filter((r) => r.completed).length;
     const avgCoverage = present.length
@@ -255,17 +264,19 @@ export function leaderboard(courseId: string, currentUserId?: string): Leaderboa
 
   const entries = roster.map((userId) => {
     const info = userInfo(userId);
-    const contentCovs = content.map((a) => store.progress.get(key(userId, a.id))?.coverage ?? 0);
+    const contentCovs = content.map((a) => store.progress.get(key(userId, a.id, courseId))?.coverage ?? 0);
     const avgCoverage = contentCovs.length
       ? Math.round(contentCovs.reduce((s, c) => s + c, 0) / contentCovs.length)
       : 0;
     const quizScores = quizzes
-      .map((a) => store.progress.get(key(userId, a.id))?.coverage)
+      .map((a) => store.progress.get(key(userId, a.id, courseId))?.coverage)
       .filter((v): v is number => v != null);
     const quizAvg = quizScores.length
       ? Math.round(quizScores.reduce((s, c) => s + c, 0) / quizScores.length)
       : null;
-    const materialsCompleted = acts.filter((a) => store.progress.get(key(userId, a.id))?.completed).length;
+    const materialsCompleted = acts.filter(
+      (a) => store.progress.get(key(userId, a.id, courseId))?.completed,
+    ).length;
 
     // композитный балл: 50% покрытие материалов + 30% тесты + 20% доля завершённого
     const completionRate = (materialsCompleted / acts.length) * 100;

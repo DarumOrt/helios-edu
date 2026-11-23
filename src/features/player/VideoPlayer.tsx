@@ -1,288 +1,176 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import useSWR from "swr";
-import { toast } from "sonner";
 import { Card, CardBody, Badge, Progress } from "@/shared/ui";
 import { Eye, Gauge, MousePointerClick, Pause, CheckCircle2, Activity } from "lucide-react";
-import { tracker, newSessionId } from "@/shared/lib/tracking/tracker";
-import { useSession } from "@/shared/auth/session";
 import { fmtDuration } from "@/shared/lib/format";
-import { fetcher } from "@/shared/lib/api-client";
-import type { ActivityProgress } from "@/shared/lib/tracking/types";
-
-const BUCKET_SEC = 5; // размер корзины покрытия
-const COMPLETE_AT = 90; // % покрытия для статуса "завершено"
-const PROGRESS_EVERY_MS = 4000; // как часто слать снимок прогресса
-
-interface LiveStats {
-  coverage: number;
-  activeTimeSec: number;
-  seeks: number;
-  pauses: number;
-  maxRate: number;
-  playing: boolean;
-  completed: boolean;
-  duration: number;
-  position: number;
-}
+import { MaterialActions } from "./MaterialActions";
+import { isActiveTab, useMediaTracking } from "./useMediaTracking";
 
 export function VideoPlayer({
   courseId,
   activityId,
   src,
   title,
+  onViewed,
   onComplete,
   navigation,
 }: {
-  /** курс материала — id материалов уникальны только внутри курса */
   courseId: string;
   activityId: string;
   src: string;
   title: string;
-  /** вызывается один раз, когда материал засчитан */
+  onViewed?: () => void;
   onComplete?: (coverage: number) => void;
   navigation?: ReactNode;
 }) {
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-  const user = useSession((s) => s.user);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  // прежний прогресс: покрытие не начинается с нуля, просмотр продолжается с места остановки
-  const { data: prior } = useSWR<ActivityProgress | null>(
-    `/api/tracking/progress?courseId=${encodeURIComponent(courseId)}&activityId=${encodeURIComponent(activityId)}&userId=${encodeURIComponent(user.id)}`,
-    fetcher,
-    { revalidateOnFocus: false, revalidateIfStale: false },
-  );
-  const priorRef = useRef<ActivityProgress | null>(null);
-  const resumed = useRef(false);
-  // переход к месту остановки — не перемотка ученика
-  const autoSeek = useRef(false);
-
-  const sessionRef = useRef(newSessionId());
-  const watched = useRef<Set<number>>(new Set());
-  const activeSec = useRef(0);
-  const seeks = useRef(0);
-  const pauses = useRef(0);
-  const maxRate = useRef(1);
-  const completedRef = useRef(false);
-  const lastProgressSent = useRef(0);
+  const tracking = useMediaTracking(courseId, activityId, "video", onViewed, onComplete);
+  const stats = tracking.stats;
+  const shownCoverage = stats.coverage;
+  const shownCompleted = stats.completed;
+  const restoring = useRef(false);
+  const previous = useRef<{ time: number; wall: number } | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [seeks, setSeeks] = useState(0);
+  const [pauses, setPauses] = useState(0);
+  const [maxRate, setMaxRate] = useState(1);
 
   useEffect(() => {
-    priorRef.current = prior ?? null;
-    if (prior?.completed) completedRef.current = true;
-    resume();
-  }, [prior]);
+    const reset = () => {
+      previous.current = null;
+    };
+    window.addEventListener("blur", reset);
+    document.addEventListener("visibilitychange", reset);
+    return () => {
+      window.removeEventListener("blur", reset);
+      document.removeEventListener("visibilitychange", reset);
+    };
+  }, []);
 
-  /** Перейти к месту остановки — один раз, когда известны и прогресс, и длина видео. */
-  function resume() {
-    const v = videoRef.current;
-    const at = priorRef.current?.position;
-    if (resumed.current || !v || !v.duration || at == null) return;
-    resumed.current = true;
-    // досмотренное до конца начинаем сначала
-    if (at > 1 && at < v.duration - 5) {
-      autoSeek.current = true;
-      v.currentTime = at;
+  function anchor(v: HTMLVideoElement) {
+    previous.current =
+      isActiveTab() && v.playbackRate > 0 && v.playbackRate <= 2
+        ? { time: Math.round(v.currentTime * 1000), wall: Date.now() }
+        : null;
+  }
+
+  function sample(v: HTMLVideoElement) {
+    const last = previous.current;
+    if (v.seeking || !Number.isFinite(v.duration) || !isActiveTab() || v.playbackRate > 2) {
+      previous.current = null;
+      return;
+    }
+    if (v.paused && !last) return;
+    anchor(v);
+    const next = previous.current;
+    if (!last || !next || next.time <= last.time || next.wall - last.wall > 2000) return;
+    // played содержит только реально воспроизведённые участки, даже при перемотке между событиями.
+    for (let i = 0; i < v.played.length; i++) {
+      const from = Math.max(last.time, Math.round(v.played.start(i) * 1000));
+      const to = Math.min(next.time, Math.round(v.played.end(i) * 1000));
+      if (to > from)
+        tracking.record(
+          { durationSec: v.duration, position: Math.floor(v.currentTime), seeks, pauses, maxRate },
+          [from, to],
+          [last.wall, next.wall],
+        );
     }
   }
 
-  const [stats, setStats] = useState<LiveStats>({
-    coverage: 0,
-    activeTimeSec: 0,
-    seeks: 0,
-    pauses: 0,
-    maxRate: 1,
-    playing: false,
-    completed: false,
-    duration: 0,
-    position: 0,
-  });
-
-  // открытие
-  useEffect(() => {
-    const sessionId = sessionRef.current;
-    tracker.event({
-      courseId,
-      sessionId,
-      userId: user.id,
-      activityId,
-      activityType: "video",
-      verb: "opened",
-    });
-    return () => {
-      sendProgress(true);
-      tracker.event({
-        courseId,
-        sessionId,
-        userId: user.id,
-        activityId,
-        activityType: "video",
-        verb: "closed",
-      });
-      tracker.flush(true);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function totalBuckets() {
-    const d = videoRef.current?.duration ?? 0;
-    return d > 0 ? Math.ceil(d / BUCKET_SEC) : 0;
-  }
-
-  /** Покрытие: эта сессия, но не меньше прежнего (корзины прошлых сессий не хранятся). */
-  function coverage() {
-    const tb = totalBuckets();
-    const session = tb > 0 ? Math.min(100, Math.round((watched.current.size / tb) * 100)) : 0;
-    return Math.max(session, priorRef.current?.coverage ?? 0);
-  }
-
-  function sendProgress(useBeacon = false) {
-    const v = videoRef.current;
-    tracker.progress(
-      {
-        courseId,
-        sessionId: sessionRef.current,
-        userId: user.id,
-        activityId,
-        activityType: "video",
-        coverage: coverage(),
-        activeTimeSec: Math.round(activeSec.current),
-        completed: completedRef.current,
-        seeks: seeks.current,
-        pauses: pauses.current,
-        maxRate: maxRate.current,
-        durationSec: v?.duration ?? 0,
-        position: v ? Math.round(v.currentTime) : undefined,
-        ts: Date.now(),
-      },
-      useBeacon,
-    );
-  }
-
-  // тик раз в секунду: накапливаем активное время и помечаем корзину,
-  // только если играет + вкладка в фокусе + скорость <= 2x
-  useEffect(() => {
-    const id = setInterval(() => {
-      const v = videoRef.current;
-      if (!v) return;
-      const focused = document.visibilityState === "visible";
-      const eligible = !v.paused && !v.ended && focused && v.playbackRate <= 2;
-
-      if (eligible) {
-        activeSec.current += 1;
-        watched.current.add(Math.floor(v.currentTime / BUCKET_SEC));
-      }
-
-      const cov = coverage();
-      if (!completedRef.current && cov >= COMPLETE_AT) {
-        completedRef.current = true;
-        tracker.event({
-          courseId,
-          sessionId: sessionRef.current,
-          userId: user.id,
-          activityId,
-          activityType: "video",
-          verb: "completed",
-          position: v.currentTime,
-        });
-        toast.success("Материал засчитан", { description: `Покрытие ${cov}%` });
-        onCompleteRef.current?.(cov);
-      }
-
-      setStats({
-        coverage: cov,
-        activeTimeSec: Math.round(activeSec.current),
-        seeks: seeks.current,
-        pauses: pauses.current,
-        maxRate: maxRate.current,
-        playing: !v.paused && !v.ended,
-        completed: completedRef.current,
-        duration: v.duration || 0,
-        position: v.currentTime || 0,
-      });
-
-      if (Date.now() - lastProgressSent.current > PROGRESS_EVERY_MS) {
-        lastProgressSent.current = Date.now();
-        sendProgress();
-        tracker.event({
-          courseId,
-          sessionId: sessionRef.current,
-          userId: user.id,
-          activityId,
-          activityType: "video",
-          verb: "heartbeat",
-          position: v.currentTime,
-          payload: { coverage: cov, playing: !v.paused },
-        });
-      }
-    }, 1000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const ev = (
-    verb: "played" | "paused" | "seeked" | "ratechanged",
-    position?: number,
-    payload?: Record<string, unknown>,
-  ) =>
-    tracker.event({
-      courseId,
-      sessionId: sessionRef.current,
-      userId: user.id,
-      activityId,
-      activityType: "video",
-      verb,
-      position,
-      payload,
-    });
-
-  // до первого тика — прежние покрытие и статус
-  const shownCoverage = Math.max(stats.coverage, prior?.coverage ?? 0);
-  const shownCompleted = stats.completed || Boolean(prior?.completed);
-
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <div className="min-w-0">
+      <div className="min-w-0 space-y-3">
         <Card className="overflow-hidden">
-          <video
-            ref={videoRef}
-            src={src}
-            aria-label={title}
-            controls
-            className="aspect-video w-full bg-black"
-            onPlay={(e) => ev("played", e.currentTarget.currentTime)}
-            onPause={(e) => {
-              if (e.currentTarget.ended) return;
-              pauses.current += 1;
-              ev("paused", e.currentTarget.currentTime);
-            }}
-            onLoadedMetadata={resume}
-            onSeeked={(e) => {
-              if (autoSeek.current) {
-                autoSeek.current = false;
-                return;
-              }
-              seeks.current += 1;
-              ev("seeked", e.currentTarget.currentTime);
-            }}
-            onRateChange={(e) => {
-              maxRate.current = Math.max(maxRate.current, e.currentTarget.playbackRate);
-              ev("ratechanged", e.currentTarget.currentTime, { rate: e.currentTarget.playbackRate });
-            }}
-            onEnded={() => sendProgress()}
-          />
+          {tracking.prior !== undefined ? (
+            <video
+              src={src}
+              aria-label={title}
+              controls
+              className="aspect-video w-full bg-black"
+              preload="metadata"
+              onError={() => setFailed(true)}
+              onLoadedMetadata={({ currentTarget: v }) => {
+                const resume = tracking.prior?.position ?? 0;
+                if (resume > 0 && resume < v.duration - 1) {
+                  restoring.current = true;
+                  v.currentTime = resume;
+                }
+                setDuration(Number.isFinite(v.duration) ? v.duration : 0);
+              }}
+              onPlaying={({ currentTarget: v }) => {
+                anchor(v);
+                setPlaying(true);
+              }}
+              onPlay={({ currentTarget: v }) => tracking.event("played", v.currentTime)}
+              onTimeUpdate={({ currentTarget: v }) => sample(v)}
+              onWaiting={() => {
+                previous.current = null;
+              }}
+              onPause={({ currentTarget: v }) => {
+                sample(v);
+                previous.current = null;
+                setPlaying(false);
+                if (!v.ended && Number.isFinite(v.duration) && isActiveTab()) {
+                  setPauses((n) => n + 1);
+                  tracking.event("paused", v.currentTime);
+                  tracking.record({
+                    durationSec: v.duration,
+                    position: Math.floor(v.currentTime),
+                    pauses: pauses + 1,
+                  });
+                }
+              }}
+              onSeeking={() => {
+                previous.current = null;
+              }}
+              onSeeked={({ currentTarget: v }) => {
+                if (restoring.current) restoring.current = false;
+                else if (isActiveTab()) {
+                  setSeeks((n) => n + 1);
+                  tracking.event("seeked", v.currentTime);
+                  tracking.record({
+                    durationSec: v.duration,
+                    position: Math.floor(v.currentTime),
+                    seeks: seeks + 1,
+                  });
+                }
+                if (!v.paused) anchor(v);
+              }}
+              onRateChange={({ currentTarget: v }) => {
+                previous.current = null;
+                setMaxRate((n) => Math.max(n, v.playbackRate));
+                tracking.event("ratechanged", v.currentTime, { rate: v.playbackRate });
+              }}
+            />
+          ) : (
+            <p className="p-4">
+              {tracking.error ? "Не удалось загрузить прогресс просмотра." : "Загрузка видео…"}
+            </p>
+          )}
+          {failed && (
+            <p role="alert" className="p-3 text-sm">
+              Не удалось воспроизвести видео. Проверьте доступ к оригиналу.
+            </p>
+          )}
           <CardBody className="py-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">Видео</span>
-              <Badge tone={shownCompleted ? "success" : stats.playing ? "info" : "neutral"}>
-                {shownCompleted ? "Завершено" : stats.playing ? "Идёт просмотр" : "На паузе"}
+              <span className="text-sm font-medium">
+                {duration ? `Длительность ${fmtDuration(duration)}` : "Видео"}
+              </span>
+              <Badge tone={shownCompleted ? "success" : playing ? "info" : "neutral"}>
+                {shownCompleted ? "Завершено" : playing ? "Идёт просмотр" : "На паузе"}
               </Badge>
             </div>
           </CardBody>
         </Card>
+        <MaterialActions
+          courseId={courseId}
+          activity={{ id: activityId, type: "video" }}
+          src={src}
+          beforeOpen={tracking.saveNow}
+        />
       </div>
 
       <div className="min-w-0 space-y-4">
@@ -310,9 +198,9 @@ export function VideoPlayer({
 
             <div className="grid grid-cols-2 gap-2">
               <Metric icon={Eye} label="Активное время" value={fmtDuration(stats.activeTimeSec)} />
-              <Metric icon={Gauge} label="Макс. скорость" value={`${stats.maxRate}x`} />
-              <Metric icon={MousePointerClick} label="Перемоток" value={String(stats.seeks)} />
-              <Metric icon={Pause} label="Пауз" value={String(stats.pauses)} />
+              <Metric icon={Gauge} label="Макс. скорость" value={`${maxRate}x`} />
+              <Metric icon={MousePointerClick} label="Перемоток" value={String(seeks)} />
+              <Metric icon={Pause} label="Пауз" value={String(pauses)} />
             </div>
 
             <div className="flex items-center gap-2 border-t pt-2 text-xs">
@@ -321,9 +209,7 @@ export function VideoPlayer({
                   <CheckCircle2 size={14} /> Материал изучен
                 </span>
               ) : (
-                <span className="text-muted-foreground">
-                  Для зачёта нужно посмотреть {COMPLETE_AT}% видео.
-                </span>
+                <span className="text-muted-foreground">Для зачёта нужно посмотреть 90% видео.</span>
               )}
             </div>
           </CardBody>

@@ -12,15 +12,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ activity
     `/api/analytics/lesson/${encodeURIComponent(activityId)}${url.search}`,
   );
   if (forwarded) return forwarded;
+  const courseId = url.searchParams.get("courseId");
   const userId = url.searchParams.get("userId");
 
   // детализация по конкретному студенту (таймлайн событий)
   if (userId) {
     return NextResponse.json({
-      rows: lessonStats(activityId).filter((r) => r.userId === userId),
-      events: getActivityEvents(activityId, userId),
+      rows: lessonStats(activityId, courseId).filter((r) => r.userId === userId),
+      events: getActivityEvents(activityId, courseId, userId),
     });
   }
 
-  return NextResponse.json({ rows: lessonStats(activityId) });
+  return NextResponse.json({ rows: lessonStats(activityId, courseId) });
 }

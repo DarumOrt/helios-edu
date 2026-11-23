@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { use } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
@@ -13,6 +14,11 @@ import { RoleGate } from "@/shared/auth/RoleGate";
 import { useActivityEvents } from "@/features/adaptive/useActivityEvents";
 import type { Course, Activity } from "@/shared/types/domain";
 
+const PdfReader = dynamic(() => import("@/features/player/PdfReader"), {
+  ssr: false,
+  loading: () => <p>Загрузка PDF…</p>,
+});
+
 export default function DocumentLessonPage({
   params,
 }: {
@@ -24,7 +30,11 @@ export default function DocumentLessonPage({
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
     .find((a) => a.id === activityId && (a.type === "pdf" || a.type === "presentation"));
-  const onComplete = useActivityEvents(courseId, activity?.id);
+  const { onViewed, onComplete } = useActivityEvents(
+    courseId,
+    activity?.id,
+    activity?.type === "presentation",
+  );
 
   const kind = activity?.type === "presentation" ? "presentation" : "pdf";
 
@@ -40,7 +50,7 @@ export default function DocumentLessonPage({
               type={kind}
               durationMin={activity.durationMin}
               actions={
-                // сам файл (загруженный — /api/files/…); встроенный просмотр PDF — следующий шаг (PDF.js)
+                kind === "presentation" &&
                 activity.src && (
                   <a
                     href={activity.src}
@@ -53,16 +63,28 @@ export default function DocumentLessonPage({
                 )
               }
             />
-            <DocumentReader
-              key={`${courseId}/${activity.id}`}
-              courseId={courseId}
-              activityId={activity.id}
-              kind={kind}
-              hasFile={Boolean(activity.src)}
-              totalPages={activity.pages ?? 10}
-              onComplete={onComplete}
-              navigation={<LessonRoute course={course} activityId={activity.id} />}
-            />
+            {kind === "pdf" ? (
+              <PdfReader
+                key={`${courseId}/${activity.id}/${activity.src}`}
+                courseId={courseId}
+                activityId={activity.id}
+                src={activity.src}
+                navigation={<LessonRoute course={course} activityId={activity.id} />}
+                onViewed={onViewed}
+                onComplete={onComplete}
+              />
+            ) : (
+              <DocumentReader
+                key={`${courseId}/${activity.id}`}
+                courseId={courseId}
+                activityId={activity.id}
+                kind={kind}
+                hasFile={Boolean(activity.src)}
+                totalPages={activity.pages ?? 10}
+                onComplete={onComplete}
+                navigation={<LessonRoute course={course} activityId={activity.id} />}
+              />
+            )}
             <RoleGate roles={["tutor", "admin", "organizer"]}>
               <div className="mt-8">
                 <LessonStatsPanel courseId={courseId} activityId={activity.id} title="Статистика по уроку" />

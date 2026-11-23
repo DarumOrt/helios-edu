@@ -42,7 +42,13 @@ export function LessonStatsPanel({
     <Card>
       <CardHeader
         title={title}
-        subtitle={`${completed} изучили · ${started} начали · ${rows.length} в группе`}
+        subtitle={
+          <span className="flex flex-wrap gap-x-3 gap-y-1">
+            <span>Изучили: {completed}</span>
+            <span>Начали: {started}</span>
+            <span>В группе: {rows.length}</span>
+          </span>
+        }
         icon={<BarChart3 size={18} />}
         action={<Badge tone="info">обновляется live</Badge>}
       />

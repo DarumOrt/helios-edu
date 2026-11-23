@@ -73,6 +73,24 @@ public static class TrackingEndpoints
         int? total = input.Number("totalPages") is { } all ? Clamp(all, 0, 10_000) : null;
         double? duration = input.Number("durationSec") is { } length && length >= 0 ? length : null;
         int? position = input.Number("position") is { } at ? Clamp(at, 0, 1_000_000) : null;
+        var media = input.Value("media");
+        var limit = activity.Type switch
+        {
+            "pdf" => total ?? 0,
+            "video" when duration is > 0 and <= 604800 => (long)Math.Round(duration.Value * 1000),
+            _ => 0L
+        };
+        MediaRanges? incoming = null;
+        if (media is { } detail)
+        {
+            incoming = MediaRanges.Parse(detail, limit, now);
+            if (incoming is null) return Fail(400, "Некорректные интервалы просмотра");
+            // Сначала upsert берёт блокировку строки до конца транзакции ManagementWriteFilter.
+            // Поля покрытия обновим по объединённым интервалам, позицию — по времени действия.
+            coverage = activeTime = 0;
+            completed = false;
+            pages = position = null;
+        }
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO "ActivityProgress" AS t ("UserId", "CourseId", "ActivityId", "ActivityType", "Coverage",
                 "ActiveTimeSec", "Completed", "Seeks", "Pauses", "MaxRate", "PagesViewed", "TotalPages", "DurationSec",
@@ -93,6 +111,13 @@ public static class TrackingEndpoints
                 "LastSessionId" = EXCLUDED."LastSessionId",
                 "LastAt" = EXCLUDED."LastAt"
             """, context.RequestAborted);
+        if (incoming is not null)
+        {
+            var row = await db.ActivityProgress.SingleAsync(item => item.UserId == actor.Id &&
+                item.CourseId == course.Id && item.ActivityId == activity.Id, context.RequestAborted);
+            incoming.Apply(row, limit, input.Number("position") is { } pos ? Clamp(pos, 0, 1_000_000) : null);
+            await db.SaveChangesAsync(context.RequestAborted);
+        }
         return Results.Ok(new TrackingAccepted(true, 1));
     }
 
@@ -109,7 +134,7 @@ public static class TrackingEndpoints
     private static ProgressInfo Info(ActivityProgress row, string name, string? group) => new(row.LastSessionId, row.UserId,
         row.ActivityId, row.ActivityType, row.Coverage, row.ActiveTimeSec, row.Completed, row.Seeks, row.Pauses,
         row.MaxRate, row.PagesViewed, row.TotalPages, row.DurationSec, row.Position, Ms(row.LastAt), name, group,
-        Ms(row.FirstAt), Ms(row.LastAt), row.Sessions);
+        Ms(row.FirstAt), Ms(row.LastAt), row.Sessions, MediaRanges.Stored(row));
 
     /// <summary>POST { courseId, events: [{ sessionId, activityId, activityType, verb, position?, payload?, ts }] } — до 200 за раз.</summary>
     private static async Task<IResult> SaveEventsAsync(HttpContext context, LearningDbContext db)

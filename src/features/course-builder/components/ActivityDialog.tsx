@@ -60,6 +60,7 @@ export function ActivityDialog({
   const { pending, fields, error, run, setFields } = useFormSubmit();
   // имя только что загруженного файла — в поле ссылки остаётся /api/files/…
   const [uploaded, setUploaded] = useState<string>();
+  const uploadOnly = type === "video" && !editing;
   const has = (k: string) => (ACTIVITY_FIELDS[type] as string[]).includes(k);
   const set = (key: keyof typeof v, value: string) => setV((x) => ({ ...x, [key]: value }));
 
@@ -138,7 +139,13 @@ export function ActivityDialog({
                       name="activity-type"
                       value={t}
                       checked={type === t}
-                      onChange={() => setType(t)}
+                      onChange={() => {
+                        if (t !== type) {
+                          setType(t);
+                          setUploaded(undefined);
+                          setV((x) => ({ ...x, src: "", pages: "", durationMin: "" }));
+                        }
+                      }}
                       className="sr-only"
                     />
                     <Icon size={20} aria-hidden />
@@ -165,45 +172,48 @@ export function ActivityDialog({
           <Field
             id="act-src"
             label={type === "video" ? "Видеофайл" : "Файл (необязательно)"}
-            error={fields.src}
+            error={uploadOnly && fields.src ? "Загрузите видеофайл" : fields.src}
             hint={
               uploaded
                 ? `Загружен: ${uploaded}`
-                : type === "video"
-                  ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
-                  : "Загрузите PDF или укажите ссылку на файл"
+                : uploadOnly
+                  ? "Длительность определяется из файла"
+                  : type === "video"
+                    ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
+                    : "Загрузите PDF или укажите ссылку на файл"
             }
           >
             <div className="mb-2">
               <FileUpload
+                key={type}
+                id={uploadOnly ? "act-src" : undefined}
                 kind={type === "video" ? "video" : "document"}
                 courseId={courseId}
                 disabled={pending}
-                onUploaded={(file) => {
+                onUploaded={(file, durationMin) => {
                   set("src", file.url);
+                  if (type === "video") set("durationMin", durationMin?.toString() ?? "");
                   setUploaded(file.fileName);
                 }}
               />
             </div>
-            <Input
-              id="act-src"
-              inputMode="url"
-              className="font-mono"
-              value={v.src}
-              onChange={(e) => set("src", e.target.value)}
-              disabled={pending}
-              {...describedBy("act-src", fields.src, type === "video")}
-            />
+            {!uploadOnly && (
+              <Input
+                id="act-src"
+                inputMode="url"
+                className="font-mono"
+                value={v.src}
+                onChange={(e) => set("src", e.target.value)}
+                disabled={pending}
+                {...describedBy("act-src", fields.src, type === "video")}
+              />
+            )}
           </Field>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {has("pages") && (
-            <Field
-              id="act-pages"
-              label={type === "presentation" ? "Слайдов" : "Страниц"}
-              error={fields.pages}
-            >
+          {has("pages") && type === "presentation" && (
+            <Field id="act-pages" label="Слайдов" error={fields.pages}>
               <Input
                 id="act-pages"
                 type="number"
@@ -216,12 +226,8 @@ export function ActivityDialog({
               />
             </Field>
           )}
-          {has("durationMin") && (
-            <Field
-              id="act-duration"
-              label={type === "video" ? "Длительность, мин" : "Примерное время, мин"}
-              error={fields.durationMin}
-            >
+          {has("durationMin") && type !== "video" && (
+            <Field id="act-duration" label="Примерное время, мин" error={fields.durationMin}>
               <Input
                 id="act-duration"
                 type="number"

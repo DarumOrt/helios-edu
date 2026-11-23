@@ -71,6 +71,55 @@ for (const [name, baseUrl] of [
       );
     });
 
+    await t.test(
+      "две вкладки объединяют чтение, сохраняют позицию и учитывают пересечение времени один раз",
+      async () => {
+        const created = await send(tutor, "/api/courses/c-dor-ai/sections/s1/activities", {
+          type: "pdf",
+          title: "Проверка чтения PDF",
+          src: "/demo/quality-guide.pdf",
+        });
+        assert.equal(created.status, 201);
+        const { id } = await created.json();
+        try {
+          const base = { courseId: "c-dor-ai", activityId: id, totalPages: 5 };
+          const start = Date.now() - 10000;
+          const first = {
+            ...base,
+            sessionId: session,
+            position: 1,
+            media: { watched: [[0, 2]], active: [[start, start + 5000]], positionAt: start + 5000 },
+          };
+          const second = {
+            ...base,
+            sessionId: session + "-2",
+            position: 4,
+            media: { watched: [[3, 5]], active: [[start + 3000, start + 8000]], positionAt: start + 8000 },
+          };
+          const save = (body) => send(student, "/api/tracking/progress", body);
+          for (const response of await Promise.all([save(first), save(second)]))
+            assert.equal(response.status, 200);
+          assert.equal((await save(first)).status, 200);
+          const result = await read(student, `/api/tracking/progress?courseId=c-dor-ai&activityId=${id}`);
+          assert.deepEqual(result.media.watched, [
+            [0, 2],
+            [3, 5],
+          ]);
+          assert.equal(result.pagesViewed, 4);
+          assert.equal(result.coverage, 80);
+          assert.equal(result.completed, true);
+          assert.equal(result.activeTimeSec, 8);
+          assert.equal(result.position, 4);
+        } finally {
+          const removed = await fetch(`${baseUrl}/api/courses/c-dor-ai/activities/${id}`, {
+            method: "DELETE",
+            headers: { Cookie: tutor.cookie, Origin: origin, "X-Helios-Client": "web" },
+          });
+          assert.ok(removed.ok);
+        }
+      },
+    );
+
     await t.test("события: «пульс» и чужие материалы не сохраняются, не больше 200 за раз", async () => {
       const event = (verb, extra = {}) => ({
         sessionId: session,

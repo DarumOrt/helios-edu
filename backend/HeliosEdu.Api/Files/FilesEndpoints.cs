@@ -110,7 +110,7 @@ public static class FilesEndpoints
             context.RequestAborted);
         if (file is null || !await CanReadAsync(db, context, file)) return Fail(404, "not found");
         var url = await storage.DownloadUrlAsync(file.ObjectKey, file.FileName, file.ContentType,
-            DateTime.UtcNow.Add(DownloadLifetime));
+            DateTime.UtcNow.Add(DownloadLifetime), context.Request.Query["download"] == "1");
         return Results.Redirect(url);
     }
 

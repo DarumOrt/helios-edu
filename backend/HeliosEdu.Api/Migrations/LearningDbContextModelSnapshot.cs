@@ -1273,6 +1273,9 @@ namespace HeliosEdu.Api.Migrations
                     b.Property<double>("MaxRate")
                         .HasColumnType("double precision");
 
+                    b.Property<JsonElement?>("Media")
+                        .HasColumnType("jsonb");
+
                     b.Property<int?>("PagesViewed")
                         .HasColumnType("integer");
 

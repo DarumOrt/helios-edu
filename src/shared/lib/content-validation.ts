@@ -55,8 +55,7 @@ export function validateActivity(input: Partial<ActivityInput>, partial = false)
     e.maxAttempts = "Попыток — от 1 до 20 или без ограничения";
   // обязательные поля по типу (при создании)
   if (!partial && input.type === "video" && !text(input.src)) e.src = "Укажите ссылку на видеофайл";
-  if (!partial && (input.type === "pdf" || input.type === "presentation") && input.pages == null)
-    e.pages = "Укажите число страниц";
+  if (!partial && input.type === "presentation" && input.pages == null) e.pages = "Укажите число страниц";
   return e;
 }
 

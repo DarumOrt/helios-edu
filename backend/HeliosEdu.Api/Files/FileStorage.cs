@@ -94,7 +94,7 @@ public sealed class FileStorage : IDisposable
         });
 
     /// <summary>Временная ссылка на чтение; имя файла — для «Сохранить как».</summary>
-    public Task<string> DownloadUrlAsync(string key, string fileName, string contentType, DateTime expires)
+    public Task<string> DownloadUrlAsync(string key, string fileName, string contentType, DateTime expires, bool attachment)
     {
         var request = new GetPreSignedUrlRequest
         {
@@ -102,7 +102,7 @@ public sealed class FileStorage : IDisposable
         };
         request.ResponseHeaderOverrides.ContentType = contentType;
         request.ResponseHeaderOverrides.ContentDisposition =
-            $"inline; filename*=UTF-8''{Uri.EscapeDataString(fileName)}";
+            $"{(attachment ? "attachment" : "inline")}; filename*=UTF-8''{Uri.EscapeDataString(fileName)}";
         return Signer.GetPreSignedURLAsync(request);
     }
 
