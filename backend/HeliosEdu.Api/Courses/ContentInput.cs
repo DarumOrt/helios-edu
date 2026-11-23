@@ -74,7 +74,7 @@ public sealed class ContentInput
             if (Provided(key) && (Number(key) is not { } number || number < 1 || number > max)) errors[key] = message;
         if ((Text("description")?.Length ?? 0) > 4000) errors["description"] = "Условие — до 4000 символов";
         if (!partial && type == "video" && string.IsNullOrEmpty(Text("src"))) errors["src"] = "Укажите ссылку на видеофайл";
-        if (!partial && type is "pdf" or "presentation" && !Provided("pages")) errors["pages"] = "Укажите число страниц";
+        if (!partial && type == "presentation" && !Provided("pages")) errors["pages"] = "Укажите число страниц";
         return errors;
     }
 

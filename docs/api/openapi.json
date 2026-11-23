@@ -4047,6 +4047,39 @@
           }
         }
       },
+      "MediaRanges": {
+        "required": ["watched", "active", "positionAt"],
+        "type": "object",
+        "properties": {
+          "watched": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": ["integer", "string"],
+                "format": "int64"
+              }
+            }
+          },
+          "active": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": ["integer", "string"],
+                "format": "int64"
+              }
+            }
+          },
+          "positionAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        }
+      },
       "MySubmission": {
         "required": ["submission"],
         "type": "object",
@@ -4159,7 +4192,8 @@
           "group",
           "firstAt",
           "lastAt",
-          "sessions"
+          "sessions",
+          "media"
         ],
         "type": "object",
         "properties": {
@@ -4248,6 +4282,16 @@
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": ["integer", "string"],
             "format": "int32"
+          },
+          "media": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MediaRanges"
+              }
+            ]
           }
         }
       },

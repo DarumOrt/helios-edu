@@ -34,7 +34,7 @@
 | --- | --- | --- |
 | `POST /api/files` | `{ kind, courseId, fileName, size }` | `201 UploadTicket { id, uploadUrl, contentType, expiresAt }` (ссылка — 1 час). `400 fields.kind = "Неизвестный вид файла"`, `fields.fileName = "Этот формат не подходит. Можно: …"`, `fields.size = "Файл пустой"` / `"Файл больше 1 ГБ"`; курс не виден — `404`; нет прав — `403` |
 | `POST /api/files/{id}/complete` | — | `200 StoredFileInfo { id, kind, courseId, fileName, contentType, size, url }`. Не загружен — `409 "Файл не загружен — попробуйте ещё раз"`; размер не совпал — файл удаляется, `400 fields.size`; чужая запись — `404` |
-| `GET /api/files/{id}` | — | `302` на временную ссылку (1 час). Нет доступа или файл не готов — `404` |
+| `GET /api/files/{id}` | — | `302` на временную ссылку (1 час). Параметр `?download=1` включает `Content-Disposition: attachment` с исходным именем. Нет доступа или файл не готов — `404` |
 | `POST /api/files/cleanup` | — | только администратор: `200 CleanupResult { abandoned, trashed, restored, deleted, orphans }` |
 | `PUT /api/courses/{id}/cover` | `{ coverColor?, cover? }` | `200 CourseSummary`; `cover` — `/api/files/{id}` вида `cover` этого курса или `null`; `coverColor: null` — цвет по умолчанию. `400 fields.coverColor = "Неизвестный цвет обложки"`, `fields.cover = "Картинка не найдена — загрузите её ещё раз"` |
 

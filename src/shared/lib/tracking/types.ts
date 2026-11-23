@@ -1,6 +1,8 @@
 // Модель событий трекинга, вдохновлённая xAPI (actor + verb + object + result + context).
 // В мокапе сериализуется на /api/tracking/events.
 
+import type { MediaRanges } from "./media";
+
 export type TrackedActivityType = "video" | "pdf" | "presentation" | "quiz";
 
 export type TrackingVerb =
@@ -38,6 +40,7 @@ export interface ProgressSnapshot {
   /** активное время с фокусом, сек */
   activeTimeSec: number;
   completed: boolean;
+  media?: MediaRanges;
   // детализация
   seeks?: number;
   pauses?: number;
@@ -45,7 +48,7 @@ export interface ProgressSnapshot {
   pagesViewed?: number;
   totalPages?: number;
   durationSec?: number;
-  /** видео: где остановился, сек — с этого места просмотр продолжается при следующем открытии */
+  /** видео — секунды, PDF — индекс последней открытой страницы с нуля */
   position?: number;
   ts: number;
 }

@@ -83,12 +83,14 @@ class Tracker {
       navigator.sendBeacon("/api/tracking/progress", new Blob([body], { type: "application/json" }));
       return;
     }
-    fetch("/api/tracking/progress", {
+    return fetch("/api/tracking/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...previewHeaders() },
       body,
       keepalive: true,
-    }).catch(() => {});
+    })
+      .then((response) => response.ok)
+      .catch(() => false);
   }
 }
 

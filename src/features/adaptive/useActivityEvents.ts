@@ -8,20 +8,25 @@ import { revalidateCourseProgress } from "@/shared/lib/revalidate-course-progres
 import { adaptiveApi, adaptiveKeys } from "./api";
 
 // События просмотра материала для адаптивной модели (только ученик): открыл — viewed, досмотрел — completed.
-export function useActivityEvents(courseId: string, activityId: string | undefined) {
+export function useActivityEvents(courseId: string, activityId: string | undefined, viewOnMount = false) {
   const role = useSession((s) => s.role);
   const learner = can(role, "quiz.take");
 
   useEffect(() => {
-    if (learner && activityId) void adaptiveApi.event(courseId, "activity.viewed", activityId);
-  }, [learner, courseId, activityId]);
+    if (viewOnMount && learner && activityId) void adaptiveApi.event(courseId, "activity.viewed", activityId);
+  }, [learner, courseId, activityId, viewOnMount]);
 
-  return (coverage: number) => {
+  function onViewed() {
+    if (learner && activityId) void adaptiveApi.event(courseId, "activity.viewed", activityId);
+  }
+
+  function onComplete(coverage: number) {
     if (!learner || !activityId) return;
     void adaptiveApi.event(courseId, "activity.completed", activityId, coverage).then(() => {
       void mutate(adaptiveKeys.progress(courseId));
       void mutate(adaptiveKeys.next(courseId));
       void revalidateCourseProgress(courseId);
     });
-  };
+  }
+  return { onViewed, onComplete };
 }

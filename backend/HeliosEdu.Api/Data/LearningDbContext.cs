@@ -123,6 +123,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         trash.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
         // прогресс — один на ученика и материал курса (id материалов уникальны только внутри курса)
         var progress = modelBuilder.Entity<Tracking.ActivityProgress>();
+        progress.Property(item => item.Media).HasColumnType("jsonb");
         progress.HasKey(item => new { item.UserId, item.CourseId, item.ActivityId });
         progress.HasIndex(item => new { item.CourseId, item.ActivityId });
         progress.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);

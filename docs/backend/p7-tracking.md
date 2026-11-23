@@ -11,9 +11,11 @@
 
 | Таблица | Что | Правила |
 | --- | --- | --- |
-| `ActivityProgress` | прогресс ученика по материалу (видео, PDF, презентация, тест): покрытие, активное время, перемотки, паузы, страницы, место остановки, завершено | одна строка на ученика + курс + материал; слияние одним `INSERT … ON CONFLICT`: покрытие, время, страницы, скорость — максимум, «завершено» не снимается, новая сессия — `+1` к `Sessions` |
+| `ActivityProgress` | прогресс ученика по материалу (видео, PDF, презентация, тест): покрытие, активное время, перемотки, паузы, страницы, место остановки, завершено | одна строка на ученика + курс + материал; слияние в транзакции под блокировкой строки. Для снимков без диапазонов сохраняется максимум, «завершено» не снимается, новая сессия — `+1` к `Sessions` |
 | `TrackingEvents` | события просмотра: `opened`, `played`, `paused`, `seeked`, `ratechanged`, `page_viewed`, `completed`, `closed` | «пульс» (`heartbeat`) не хранится — он только обновляет прогресс; хранится бессрочно (когда событий станут миллионы — ClickHouse, см. ROADMAP) |
 | `ScheduleSlots` | пары группы на неделю | по названию группы, как `Account.Group` |
+
+У новых PDF и видео `media` содержит полуоткрытые интервалы `watched` (индексы страниц с нуля или миллисекунды видео), `active` (миллисекунды UTC) и `positionAt` (время действия в мс UTC). Позиция PDF — индекс страницы, видео — секунды. Перекрытия объединяются. Более поздняя позиция сохраняется при запоздалой доставке снимка. Скачивание файла не отправляет снимок.
 
 Засчитанный трекингом материал считается «пройдено» и в прогрессе курса (`CourseProgress`), и в P5 (`AdaptiveEngine.Completed`).
 
@@ -21,7 +23,7 @@
 
 | Метод и путь | Права | Тело и ответ |
 | --- | --- | --- |
-| `POST /api/tracking/progress` | кто видит курс | `{ courseId, activityId, sessionId, coverage, activeTimeSec, completed, seeks?, pauses?, maxRate?, pagesViewed?, totalPages?, durationSec?, position? }` → `200 { ok, accepted }`. Курс не виден или материал не из курса / не отслеживается — `404`; нет `sessionId` — `400` |
+| `POST /api/tracking/progress` | кто видит курс | `{ courseId, activityId, sessionId, coverage, activeTimeSec, completed, seeks?, pauses?, maxRate?, pagesViewed?, totalPages?, durationSec?, position?, media? }` → `200 { ok, accepted }`. Курс не виден или материал не из курса / не отслеживается — `404`; нет `sessionId` — `400` |
 | `GET /api/tracking/progress?courseId=&activityId=` | кто видит курс | свой `ProgressInfo` или `null` |
 | `POST /api/tracking/events` | кто видит курс | `{ courseId, events: [{ sessionId, activityId, activityType, verb, position?, payload?, ts }] }` → `200 { ok, accepted }`; больше 200 — `400`; чужие материалы и неизвестные глаголы пропускаются |
 | `GET /api/analytics/course/{courseId}` | преподаватель своего курса, организатор, администратор (студент — `403`, чужой курс — `404`) | `{ activities: [{ activityId, title, type, started, completed, total, avgCoverage, avgTimeSec }] }` — по ученикам групп курса |
