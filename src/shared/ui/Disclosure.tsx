@@ -7,6 +7,7 @@ export function Disclosure({
   icon,
   meta,
   defaultOpen,
+  onOpenChange,
   children,
   className,
 }: {
@@ -14,12 +15,14 @@ export function Disclosure({
   icon?: ReactNode;
   meta?: ReactNode;
   defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <details
       open={defaultOpen}
+      onToggle={onOpenChange && ((event) => onOpenChange(event.currentTarget.open))}
       className={cn("group/disclosure min-w-0 rounded-xl border bg-card shadow-card", className)}
     >
       <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2.5 rounded-xl px-3 py-2.5 hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-inset sm:px-4 [&::-webkit-details-marker]:hidden">

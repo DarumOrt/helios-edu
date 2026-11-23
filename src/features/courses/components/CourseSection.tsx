@@ -65,7 +65,11 @@ export function CourseSection({
                     <span className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
                       {kind && <span>{kind}</span>}
                       {activity.durationMin ? <span>{activity.durationMin} мин</span> : null}
-                      {activity.due && <span>До {formatDate(activity.due)}</span>}
+                      {activity.due && (
+                        <span>
+                          {activity.type === "assignment" ? "Сдать до" : "До"} {formatDate(activity.due)}
+                        </span>
+                      )}
                     </span>
                   )}
                 </span>
