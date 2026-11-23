@@ -1,17 +1,20 @@
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Check, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight } from "lucide-react";
 import { activityHref, hasActivityPage } from "@/shared/lib/activity-href";
 import { activityKindLabel } from "@/shared/lib/activity-meta";
 import { pluralCount } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
-import { Badge, Disclosure } from "@/shared/ui";
+import { Badge, Disclosure, buttonVariants } from "@/shared/ui";
 import type { Course } from "@/shared/types/domain";
 
 export function LessonRoute({ course, activityId }: { course: Course; activityId: string }) {
-  const section = course.sections?.find((section) =>
-    section.activities.some((item) => item.id === activityId),
-  );
+  const sections = course.sections ?? [];
+  const section = sections.find((section) => section.activities.some((item) => item.id === activityId));
   if (!section) return null;
+
+  const materials = sections.flatMap((item) => item.activities);
+  const currentIndex = materials.findIndex((item) => item.id === activityId);
+  const next = materials.slice(currentIndex + 1).find((item) => hasActivityPage(item.type));
 
   return (
     <section aria-labelledby="lesson-route-title" className="min-w-0">
@@ -69,12 +72,22 @@ export function LessonRoute({ course, activityId }: { course: Course; activityId
           })}
         </ul>
       </Disclosure>
-      <Link
-        href={`/courses/${encodeURIComponent(course.id)}`}
-        className="mt-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-primary underline-offset-3 hover:underline"
-      >
-        <ArrowLeft size={15} aria-hidden /> К содержанию курса
-      </Link>
+      <nav aria-label="Переходы по курсу" className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <Link
+          href={`/courses/${encodeURIComponent(course.id)}`}
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-primary underline-offset-3 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+        >
+          <ArrowLeft size={15} aria-hidden /> К содержанию курса
+        </Link>
+        {next && (
+          <Link
+            href={activityHref(course.id, next)}
+            className={buttonVariants({ variant: "outline", className: "min-h-11" })}
+          >
+            Следующий материал <ArrowRight size={15} aria-hidden />
+          </Link>
+        )}
+      </nav>
     </section>
   );
 }
