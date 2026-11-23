@@ -128,7 +128,8 @@ public static class TrackingEndpoints
         var actor = Actor(context);
         var row = await db.ActivityProgress.AsNoTracking().SingleOrDefaultAsync(item => item.UserId == actor.Id &&
             item.CourseId == courseId && item.ActivityId == activityId, context.RequestAborted);
-        return Results.Json(row is null ? null : Info(row, actor.Name, actor.Group));
+        // Без записи клиент ожидает JSON null. Results.Json(null) оставляет тело пустым.
+        return row is null ? Results.Text("null", "application/json") : Results.Json(Info(row, actor.Name, actor.Group));
     }
 
     private static ProgressInfo Info(ActivityProgress row, string name, string? group) => new(row.LastSessionId, row.UserId,

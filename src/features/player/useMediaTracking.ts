@@ -123,7 +123,7 @@ export function useMediaTracking(
     };
   }, [courseId, sessionId, user.id, activityId, activityType]);
 
-  return { prior, error, record, event, stats, saveNow };
+  return { prior, error, readyToView: prior !== undefined || Boolean(error), record, event, stats, saveNow };
 }
 
 export function isActiveTab() {

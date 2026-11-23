@@ -106,9 +106,7 @@ export default function PdfReader({
           <div ref={frame} className="min-w-0">
             {!src ? (
               <p className="p-4">PDF-файл пока не добавлен.</p>
-            ) : tracking.error && tracking.prior === undefined ? (
-              <p className="p-4">Не удалось загрузить прогресс просмотра.</p>
-            ) : tracking.prior === undefined ? (
+            ) : !tracking.readyToView ? (
               <p className="p-4">Загрузка прогресса…</p>
             ) : (
               <Document
@@ -192,6 +190,11 @@ export default function PdfReader({
             </CardBody>
           )}
         </Card>
+        {src && tracking.error && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Не удалось загрузить прогресс просмотра.
+          </p>
+        )}
         {src && (
           <MaterialActions
             courseId={courseId}

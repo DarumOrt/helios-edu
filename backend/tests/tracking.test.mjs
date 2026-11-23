@@ -82,6 +82,9 @@ for (const [name, baseUrl] of [
         assert.equal(created.status, 201);
         const { id } = await created.json();
         try {
+          const progressPath = `/api/tracking/progress?courseId=c-dor-ai&activityId=${id}`;
+          assert.equal(await read(tutor, progressPath), null);
+          assert.equal(await read(student, progressPath), null);
           const base = { courseId: "c-dor-ai", activityId: id, totalPages: 5 };
           const start = Date.now() - 10000;
           const first = {
@@ -100,7 +103,7 @@ for (const [name, baseUrl] of [
           for (const response of await Promise.all([save(first), save(second)]))
             assert.equal(response.status, 200);
           assert.equal((await save(first)).status, 200);
-          const result = await read(student, `/api/tracking/progress?courseId=c-dor-ai&activityId=${id}`);
+          const result = await read(student, progressPath);
           assert.deepEqual(result.media.watched, [
             [0, 2],
             [3, 5],

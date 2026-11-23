@@ -83,7 +83,7 @@ export function VideoPlayer({
     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-3">
         <Card className="overflow-hidden">
-          {tracking.prior !== undefined ? (
+          {tracking.readyToView ? (
             <video
               src={src}
               aria-label={title}
@@ -145,9 +145,7 @@ export function VideoPlayer({
               }}
             />
           ) : (
-            <p className="p-4">
-              {tracking.error ? "Не удалось загрузить прогресс просмотра." : "Загрузка видео…"}
-            </p>
+            <p className="p-4">Загрузка видео…</p>
           )}
           {failed && (
             <p role="alert" className="p-3 text-sm">
@@ -165,6 +163,11 @@ export function VideoPlayer({
             </div>
           </CardBody>
         </Card>
+        {tracking.error && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Не удалось загрузить прогресс просмотра.
+          </p>
+        )}
         <MaterialActions
           courseId={courseId}
           activity={{ id: activityId, type: "video" }}
