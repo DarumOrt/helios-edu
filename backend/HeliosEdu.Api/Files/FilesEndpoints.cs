@@ -63,6 +63,8 @@ public static class FilesEndpoints
         };
         // ключ без имени файла: имя хранится в записи, в ключе нет кириллицы и пробелов
         file.ObjectKey = $"{course.Id}/{kind.Name}/{file.Id}";
+        if (file.PreviewKey is not null && !storage.CanConvertPresentations)
+            return Fail(503, "Сервис подготовки презентаций не подключён");
         db.Files.Add(file);
         await db.SaveChangesAsync(context.RequestAborted);
         var expires = now.Add(UploadLifetime);
@@ -88,6 +90,23 @@ public static class FilesEndpoints
             await db.SaveChangesAsync(context.RequestAborted);
             return Fail(400, "Размер файла не совпал — загрузите его ещё раз", new() { ["size"] = "Размер файла не совпал" });
         }
+        if (file.PreviewKey is { } previewKey)
+        {
+            if (!storage.CanConvertPresentations) return Fail(503, "Сервис подготовки презентаций не подключён");
+            try
+            {
+                if (!await storage.PreparePresentationAsync(file, previewKey, context.RequestAborted))
+                    return Fail(422, "Не удалось открыть презентацию. Сохраните её как PDF или загрузите другой файл.");
+            }
+            catch (HttpRequestException)
+            {
+                return Fail(503, "Не удалось подготовить презентацию. Попробуйте ещё раз или загрузите PDF.");
+            }
+            catch (OperationCanceledException) when (!context.RequestAborted.IsCancellationRequested)
+            {
+                return Fail(503, "Подготовка презентации заняла слишком много времени. Попробуйте загрузить PDF.");
+            }
+        }
         file.Status = "ready";
         file.ReadyAt = DateTimeOffset.UtcNow;
         // файлы курса — в журнал; файлы работ — часть учёбы (видны в работе студента)
@@ -109,8 +128,11 @@ public static class FilesEndpoints
         var file = await db.Files.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id && item.Status == "ready",
             context.RequestAborted);
         if (file is null || !await CanReadAsync(db, context, file)) return Fail(404, "not found");
-        var url = await storage.DownloadUrlAsync(file.ObjectKey, file.FileName, file.ContentType,
-            DateTime.UtcNow.Add(DownloadLifetime), context.Request.Query["download"] == "1");
+        var attachment = context.Request.Query["download"] == "1";
+        var preview = !attachment && context.Request.Query["preview"] == "1" ? file.PreviewKey : null;
+        var url = await storage.DownloadUrlAsync(preview ?? file.ObjectKey,
+            preview is null ? file.FileName : Path.GetFileNameWithoutExtension(file.FileName) + ".pdf",
+            preview is null ? file.ContentType : "application/pdf", DateTime.UtcNow.Add(DownloadLifetime), attachment);
         return Results.Redirect(url);
     }
 
@@ -150,7 +172,8 @@ public static class FilesEndpoints
     {
         if (url is null || !url.StartsWith(UrlPrefix, StringComparison.Ordinal)) return null;
         var id = url[UrlPrefix.Length..];
-        var ok = await db.Files.AnyAsync(file => file.Id == id && file.CourseId == courseId && file.Kind == kind &&
+        var ok = await db.Files.AnyAsync(file => file.Id == id && file.CourseId == courseId &&
+            (file.Kind == kind || kind == FileKinds.Presentation.Name && file.Kind == FileKinds.Document.Name) &&
             file.Status != "pending" && (ownerId == null || file.OwnerId == ownerId), token);
         return ok ? null : "Файл не найден — загрузите его ещё раз";
     }

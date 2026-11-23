@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { use } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
+import { useMaterialView } from "@/shared/lib/material-view";
 import { ExternalLink } from "lucide-react";
 import { DataState, buttonVariants } from "@/shared/ui";
 import { DocumentReader } from "@/features/player/DocumentReader";
@@ -25,18 +26,19 @@ export default function DocumentLessonPage({
   params: Promise<{ courseId: string; activityId: string }>;
 }) {
   const { courseId, activityId } = use(params);
+  const standalone = useMaterialView();
   const { data: course, isLoading, error } = useSWR<Course>(`/api/courses/${courseId}`, fetcher);
 
   const activity: Activity | undefined = course?.sections
     ?.flatMap((s) => s.activities)
     .find((a) => a.id === activityId && (a.type === "pdf" || a.type === "presentation"));
-  const { onViewed, onComplete } = useActivityEvents(
-    courseId,
-    activity?.id,
-    activity?.type === "presentation",
-  );
-
   const kind = activity?.type === "presentation" ? "presentation" : "pdf";
+  const src = activity?.src;
+  const showPdf =
+    kind === "pdf" || Boolean(src?.startsWith("/api/files/") || /\.pdf(?:[?#]|$)/i.test(src ?? ""));
+  const { onViewed, onComplete } = useActivityEvents(courseId, activity?.id, !showPdf);
+  const navigation =
+    course && !standalone ? <LessonRoute course={course} activityId={activityId} /> : undefined;
 
   return (
     <div>
@@ -49,8 +51,9 @@ export default function DocumentLessonPage({
               title={activity.title}
               type={kind}
               durationMin={activity.durationMin}
+              standalone={standalone}
               actions={
-                kind === "presentation" &&
+                !showPdf &&
                 activity.src && (
                   <a
                     href={activity.src}
@@ -63,13 +66,15 @@ export default function DocumentLessonPage({
                 )
               }
             />
-            {kind === "pdf" ? (
+            {showPdf ? (
               <PdfReader
                 key={`${courseId}/${activity.id}/${activity.src}`}
                 courseId={courseId}
                 activityId={activity.id}
                 src={activity.src}
-                navigation={<LessonRoute course={course} activityId={activity.id} />}
+                kind={kind}
+                standalone={standalone}
+                navigation={navigation}
                 onViewed={onViewed}
                 onComplete={onComplete}
               />
@@ -78,18 +83,24 @@ export default function DocumentLessonPage({
                 key={`${courseId}/${activity.id}`}
                 courseId={courseId}
                 activityId={activity.id}
-                kind={kind}
+                kind="presentation"
                 hasFile={Boolean(activity.src)}
                 totalPages={activity.pages ?? 10}
                 onComplete={onComplete}
-                navigation={<LessonRoute course={course} activityId={activity.id} />}
+                navigation={navigation}
               />
             )}
-            <RoleGate roles={["tutor", "admin", "organizer"]}>
-              <div className="mt-8">
-                <LessonStatsPanel courseId={courseId} activityId={activity.id} title="Статистика по уроку" />
-              </div>
-            </RoleGate>
+            {!standalone && (
+              <RoleGate roles={["tutor", "admin", "organizer"]}>
+                <div className="mt-8">
+                  <LessonStatsPanel
+                    courseId={courseId}
+                    activityId={activity.id}
+                    title="Статистика по уроку"
+                  />
+                </div>
+              </RoleGate>
+            )}
           </>
         )}
       </DataState>

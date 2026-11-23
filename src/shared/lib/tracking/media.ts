@@ -25,8 +25,8 @@ export function mediaProgress(prior: ProgressSnapshot | null | undefined, snapsh
   const previous = prior?.media;
   const watched = union(previous?.watched ?? [], incoming.watched);
   const active = union(previous?.active ?? [], incoming.active);
-  const pdf = snapshot.activityType === "pdf";
-  const limit = pdf ? snapshot.totalPages : Math.round((snapshot.durationSec ?? 0) * 1000);
+  const paged = snapshot.activityType !== "video";
+  const limit = paged ? snapshot.totalPages : Math.round((snapshot.durationSec ?? 0) * 1000);
   const covered = length(watched);
   const coverage = Math.max(
     prior?.coverage ?? 0,
@@ -34,14 +34,14 @@ export function mediaProgress(prior: ProgressSnapshot | null | undefined, snapsh
   );
   return {
     coverage,
-    completed: Boolean(prior?.completed) || coverage >= (pdf ? 80 : 90),
+    completed: Boolean(prior?.completed) || coverage >= (paged ? 80 : 90),
     activeTimeSec: Math.min(
       604800,
       (prior?.activeTimeSec ?? 0) +
         Math.floor(length(active) / 1000) -
         Math.floor(length(previous?.active ?? []) / 1000),
     ),
-    pagesViewed: pdf ? Math.max(prior?.pagesViewed ?? 0, covered) : undefined,
+    pagesViewed: paged ? Math.max(prior?.pagesViewed ?? 0, covered) : undefined,
     position:
       snapshot.position !== undefined && incoming.positionAt >= (previous?.positionAt ?? 0)
         ? snapshot.position

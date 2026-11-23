@@ -3,6 +3,7 @@
 import { use } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/shared/lib/api-client";
+import { useMaterialView } from "@/shared/lib/material-view";
 import { DataState } from "@/shared/ui";
 import { VideoPlayer } from "@/features/player/VideoPlayer";
 import { LessonHeader } from "@/features/player/LessonHeader";
@@ -18,6 +19,7 @@ export default function VideoLessonPage({
   params: Promise<{ courseId: string; activityId: string }>;
 }) {
   const { courseId, activityId } = use(params);
+  const standalone = useMaterialView();
   const { data: course, isLoading, error } = useSWR<Course>(`/api/courses/${courseId}`, fetcher);
 
   const activity: Activity | undefined = course?.sections
@@ -32,7 +34,13 @@ export default function VideoLessonPage({
       <DataState loading={isLoading} error={error} empty={!activity}>
         {course && activity && (
           <>
-            <LessonHeader courseId={courseId} courseCode={course.code} title={activity.title} type="video" />
+            <LessonHeader
+              courseId={courseId}
+              courseCode={course.code}
+              title={activity.title}
+              type="video"
+              standalone={standalone}
+            />
             <VideoPlayer
               key={`${courseId}/${activity.id}`}
               courseId={courseId}
@@ -41,13 +49,20 @@ export default function VideoLessonPage({
               title={activity.title}
               onViewed={onViewed}
               onComplete={onComplete}
-              navigation={<LessonRoute course={course} activityId={activity.id} />}
+              standalone={standalone}
+              navigation={!standalone && <LessonRoute course={course} activityId={activity.id} />}
             />
-            <RoleGate roles={["tutor", "admin", "organizer"]}>
-              <div className="mt-8">
-                <LessonStatsPanel courseId={courseId} activityId={activity.id} title="Статистика по уроку" />
-              </div>
-            </RoleGate>
+            {!standalone && (
+              <RoleGate roles={["tutor", "admin", "organizer"]}>
+                <div className="mt-8">
+                  <LessonStatsPanel
+                    courseId={courseId}
+                    activityId={activity.id}
+                    title="Статистика по уроку"
+                  />
+                </div>
+              </RoleGate>
+            )}
           </>
         )}
       </DataState>

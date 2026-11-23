@@ -276,7 +276,7 @@ export interface AuditPage {
 }
 
 /** Вид загружаемого файла — лимиты и форматы в shared/lib/file-rules.ts (зеркало Files/StoredFile.cs) */
-export type FileKind = "video" | "document" | "cover" | "submission";
+export type FileKind = "video" | "document" | "presentation" | "cover" | "submission";
 
 /** Ссылка на загрузку файла в хранилище: POST /api/files → PUT uploadUrl с Content-Type = contentType */
 export interface UploadTicket {

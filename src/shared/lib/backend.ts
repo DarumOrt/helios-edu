@@ -88,9 +88,11 @@ export async function backendForward(request: Request, path: string): Promise<Re
     signal: AbortSignal.timeout(
       path.startsWith("/api/users/import") || path === "/api/auth/preview"
         ? 120000
-        : path === "/api/mail/check"
-          ? 30000
-          : 5000,
+        : /^\/api\/files\/[^/]+\/complete$/.test(path)
+          ? 65000
+          : path === "/api/mail/check"
+            ? 30000
+            : 5000,
     ),
     method: request.method,
     headers: hasBody ? { "Content-Type": "application/json" } : undefined,

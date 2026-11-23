@@ -165,7 +165,7 @@ for (const [name, baseUrl] of [
     await t.test("валидация полей и неизменность типа", async () => {
       for (const [input, field, message] of [
         [{ type: "video", title: "Видео" }, "src", "Укажите ссылку на видеофайл"],
-        [{ type: "presentation", title: "Слайды", pages: " " }, "pages", "Укажите число страниц"],
+        [{ type: "presentation", title: "Слайды", pages: " " }, "src", "Загрузите файл презентации"],
         [
           { type: "assignment", title: "Задание", maxGrade: 0 },
           "maxGrade",

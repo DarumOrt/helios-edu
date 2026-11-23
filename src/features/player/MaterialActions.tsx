@@ -2,6 +2,7 @@ import { Download, ExternalLink } from "lucide-react";
 import { useState, type MouseEvent } from "react";
 import { buttonVariants } from "@/shared/ui";
 import { activityHref } from "@/shared/lib/activity-href";
+import { useMaterialView } from "@/shared/lib/material-view";
 import type { Activity } from "@/shared/types/domain";
 
 export function MaterialActions({
@@ -16,6 +17,7 @@ export function MaterialActions({
   beforeOpen: () => Promise<void> | undefined;
 }) {
   const [externalHelp, setExternalHelp] = useState(false);
+  const standalone = useMaterialView();
   const style = buttonVariants({ variant: "outline", size: "sm" });
   const downloadUrl = src.startsWith("/api/files/") ? src + "?download=1" : src;
 
@@ -59,15 +61,17 @@ export function MaterialActions({
       <a download href={downloadUrl} onClick={downloadExternal} className={style}>
         <Download size={15} aria-hidden /> Скачать оригинал
       </a>
-      <a
-        href={activityHref(courseId, activity)}
-        onClick={openLesson}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={style}
-      >
-        <ExternalLink size={15} aria-hidden /> Открыть в новой вкладке
-      </a>
+      {!standalone && (
+        <a
+          href={activityHref(courseId, activity) + "?view=material"}
+          onClick={openLesson}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={style}
+        >
+          <ExternalLink size={15} aria-hidden /> Открыть просмотр в новой вкладке
+        </a>
+      )}
       {externalHelp && (
         <p className="w-full text-sm" role="status">
           Для сохранения файла с внешнего сайта используйте команду браузера «Сохранить ссылку как…» для

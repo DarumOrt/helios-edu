@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 import { Button, Card, CardBody, Progress } from "@/shared/ui";
 import { fmtDuration } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
 import { MaterialActions } from "./MaterialActions";
 import { isActiveTab, useMediaTracking } from "./useMediaTracking";
 
@@ -22,6 +23,8 @@ export default function PdfReader({
   courseId,
   activityId,
   src,
+  kind = "pdf",
+  standalone,
   navigation,
   onViewed,
   onComplete,
@@ -29,11 +32,15 @@ export default function PdfReader({
   courseId: string;
   activityId: string;
   src?: string;
-  navigation: ReactNode;
+  kind?: "pdf" | "presentation";
+  standalone?: boolean;
+  navigation?: ReactNode;
   onViewed: () => void;
   onComplete: (coverage: number) => void;
 }) {
-  const tracking = useMediaTracking(courseId, activityId, "pdf", onViewed, onComplete);
+  const tracking = useMediaTracking(courseId, activityId, kind, onViewed, onComplete);
+  const slides = kind === "presentation";
+  const file = slides && src?.startsWith("/api/files/") ? src + "?preview=1" : src;
   const [totalPages, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [rendered, setRendered] = useState<number | null>(null);
@@ -93,14 +100,18 @@ export default function PdfReader({
   }, [rendered, page]);
 
   function go(next: number) {
-    setRendered(null);
     setRenderError(false);
     lastTick.current = null;
     setPage(next);
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div
+      className={cn(
+        "grid gap-4",
+        standalone ? "mx-auto max-w-5xl" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]",
+      )}
+    >
       <div className="min-w-0 space-y-3">
         <Card className="overflow-hidden">
           <div ref={frame} className="min-w-0">
@@ -110,8 +121,9 @@ export default function PdfReader({
               <p className="p-4">Загрузка прогресса…</p>
             ) : (
               <Document
-                file={src}
+                file={file}
                 options={options}
+                className="relative overflow-hidden"
                 suspense={false}
                 loading={<p className="p-4">Загрузка PDF…</p>}
                 error={
@@ -124,22 +136,32 @@ export default function PdfReader({
                   setTotal(numPages);
                 }}
               >
-                {totalPages > 0 && width > 0 && (
-                  <Page
-                    key={page}
-                    pageNumber={page + 1}
-                    width={width}
-                    suspense={false}
-                    renderAnnotationLayer={false}
-                    loading="Загрузка страницы…"
-                    error="Не удалось загрузить страницу."
-                    onRenderSuccess={({ pageNumber }) => setRendered(pageNumber - 1)}
-                    onRenderError={() => {
-                      setRendered(null);
-                      setRenderError(true);
-                    }}
-                  />
-                )}
+                {totalPages > 0 &&
+                  width > 0 &&
+                  (rendered !== null && page !== rendered ? [rendered, page] : [page]).map((number) => {
+                    const pending = rendered !== null && number !== rendered;
+                    return (
+                      <div
+                        key={number}
+                        aria-hidden={pending || undefined}
+                        className={cn(pending && "pointer-events-none absolute inset-0 opacity-0")}
+                      >
+                        <Page
+                          pageNumber={number + 1}
+                          width={width}
+                          suspense={false}
+                          renderAnnotationLayer={false}
+                          loading="Загрузка страницы…"
+                          error="Не удалось загрузить страницу."
+                          onRenderSuccess={() => {
+                            if (number === page) setRendered(number);
+                          }}
+                          onLoadError={() => setRenderError(true)}
+                          onRenderError={() => setRenderError(true)}
+                        />
+                      </div>
+                    );
+                  })}
               </Document>
             )}
             {renderError && (
@@ -154,7 +176,7 @@ export default function PdfReader({
                 Назад
               </Button>
               <label className="flex flex-wrap items-center gap-1 text-sm tabular-nums">
-                Страница
+                {slides ? "Слайд" : "Страница"}
                 <input
                   key={page}
                   type="number"
@@ -198,7 +220,7 @@ export default function PdfReader({
         {src && (
           <MaterialActions
             courseId={courseId}
-            activity={{ id: activityId, type: "pdf" }}
+            activity={{ id: activityId, type: kind }}
             src={src}
             beforeOpen={tracking.saveNow}
           />
@@ -208,14 +230,19 @@ export default function PdfReader({
         {totalPages > 0 && (
           <Card>
             <CardBody className="space-y-2">
-              <h2 className="font-semibold">Прогресс чтения</h2>
+              <h2 className="font-semibold">{slides ? "Прогресс просмотра" : "Прогресс чтения"}</h2>
               <p>
-                Просмотрено страниц: {tracking.stats.pagesViewed} из {totalPages}
+                Просмотрено {slides ? "слайдов" : "страниц"}: {tracking.stats.pagesViewed} из {totalPages}
               </p>
-              <Progress value={tracking.stats.coverage} label="Просмотренные страницы" />
+              <Progress
+                value={tracking.stats.coverage}
+                label={slides ? "Просмотренные слайды" : "Просмотренные страницы"}
+              />
               <p className="text-sm">Активное время: {fmtDuration(tracking.stats.activeTimeSec)}</p>
               <p className="text-sm">
-                {tracking.stats.completed ? "Материал изучен" : "Для зачёта откройте 80% страниц."}
+                {tracking.stats.completed
+                  ? "Материал изучен"
+                  : `Для зачёта откройте 80% ${slides ? "слайдов" : "страниц"}.`}
               </p>
             </CardBody>
           </Card>

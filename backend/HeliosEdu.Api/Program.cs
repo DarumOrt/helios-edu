@@ -23,6 +23,7 @@ var connectionString = builder.Configuration.GetConnectionString("Database")
 builder.Services.AddDbContext<LearningDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<AdaptiveEngine>();
 builder.Services.AddSingleton<FileStorage>();
+builder.Services.AddHttpClient();
 builder.Services.AddHostedService<FileJanitor>();
 builder.Services.AddDataProtection().SetApplicationName("HeliosEDU")
     .PersistKeysToFileSystem(new DirectoryInfo(builder.Configuration["Mail:KeyDirectory"] ?? "./mail-keys"));

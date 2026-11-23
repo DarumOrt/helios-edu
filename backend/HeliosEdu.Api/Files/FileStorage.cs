@@ -31,8 +31,13 @@ public sealed class FileStorage : IDisposable
     private readonly AmazonS3Client? client;
     private readonly AmazonS3Client? signer;
 
-    public FileStorage(IConfiguration configuration)
+    private readonly IHttpClientFactory httpClients;
+    private readonly string? converterUrl;
+
+    public FileStorage(IConfiguration configuration, IHttpClientFactory httpClients)
     {
+        this.httpClients = httpClients;
+        converterUrl = configuration["PresentationConverter:Url"]?.TrimEnd('/');
         options = configuration.GetSection("Storage").Get<StorageOptions>() ?? new StorageOptions();
         if (string.IsNullOrWhiteSpace(options.ServiceUrl)) return;
         var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
@@ -41,6 +46,7 @@ public sealed class FileStorage : IDisposable
     }
 
     public bool IsConfigured => client is not null;
+    public bool CanConvertPresentations => !string.IsNullOrEmpty(converterUrl);
     public StorageOptions Options => options;
 
     private static AmazonS3Config Config(string url) => new()
@@ -121,6 +127,31 @@ public sealed class FileStorage : IDisposable
     }
 
     public Task DeleteAsync(string key, CancellationToken token) => Client.DeleteObjectAsync(options.Bucket, key, token);
+
+    public async Task<bool> PreparePresentationAsync(StoredFile file, string previewKey, CancellationToken token)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(55));
+        var deadline = timeout.Token;
+        using var source = await Client.GetObjectAsync(options.Bucket, file.ObjectKey, deadline);
+        using var form = new MultipartFormDataContent();
+        var content = new StreamContent(source.ResponseStream);
+        content.Headers.ContentLength = file.Size;
+        form.Add(content, "files", file.FileName);
+        using var request = new HttpRequestMessage(HttpMethod.Post, converterUrl + "/forms/libreoffice/convert") { Content = form };
+        using var converter = httpClients.CreateClient();
+        using var response = await converter.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline);
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest) return false;
+        response.EnsureSuccessStatusCode();
+        if (response.Content.Headers.ContentType?.MediaType != "application/pdf") return false;
+        await response.Content.LoadIntoBufferAsync(FileKinds.Presentation.MaxBytes, deadline);
+        await using var pdf = await response.Content.ReadAsStreamAsync(deadline);
+        await Client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = options.Bucket, Key = previewKey, ContentType = "application/pdf", InputStream = pdf,
+        }, deadline);
+        return true;
+    }
 
     /// <summary>Все объекты хранилища с датой изменения — для поиска «осиротевших» файлов.</summary>
     public async Task<List<(string Key, DateTimeOffset Modified)>> ListAsync(CancellationToken token)

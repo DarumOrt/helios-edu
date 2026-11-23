@@ -12,7 +12,7 @@ import type { ActivityProgress, ProgressSnapshot, TrackingVerb } from "@/shared/
 export function useMediaTracking(
   courseId: string,
   activityId: string,
-  activityType: "pdf" | "video",
+  activityType: "pdf" | "presentation" | "video",
   onViewed?: () => void,
   onComplete?: (coverage: number) => void,
 ) {

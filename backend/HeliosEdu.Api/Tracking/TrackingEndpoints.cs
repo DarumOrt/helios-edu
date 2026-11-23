@@ -76,7 +76,7 @@ public static class TrackingEndpoints
         var media = input.Value("media");
         var limit = activity.Type switch
         {
-            "pdf" => total ?? 0,
+            "pdf" or "presentation" => total ?? 0,
             "video" when duration is > 0 and <= 604800 => (long)Math.Round(duration.Value * 1000),
             _ => 0L
         };

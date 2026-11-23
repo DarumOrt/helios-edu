@@ -9,7 +9,7 @@ public sealed class StoredFile
 {
     public string Id { get; set; } = "";
     public string CourseId { get; set; } = "";
-    /// <summary>video, document, cover, submission — см. FileKinds</summary>
+    /// <summary>video, document, presentation, cover, submission — см. FileKinds</summary>
     public string Kind { get; set; } = "";
     public string ObjectKey { get; set; } = "";
     public string FileName { get; set; } = "";
@@ -22,6 +22,8 @@ public sealed class StoredFile
     public DateTimeOffset? TrashedAt { get; set; }
 
     public string Url => $"/api/files/{Id}";
+    public string? PreviewKey => Kind == FileKinds.Presentation.Name && ContentType != "application/pdf"
+        ? ObjectKey + ".pdf" : null;
 }
 
 /// <summary>Вид файла: форматы (расширение → тип) и предельный размер.</summary>
@@ -43,6 +45,13 @@ public static class FileKinds
     {
         [".pdf"] = "application/pdf",
     });
+    public static readonly FileKind Presentation = new("presentation", 50 * Mb, "50 МБ", new Dictionary<string, string>
+    {
+        [".pdf"] = "application/pdf",
+        [".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        [".ppt"] = "application/vnd.ms-powerpoint",
+        [".odp"] = "application/vnd.oasis.opendocument.presentation",
+    });
     public static readonly FileKind Cover = new("cover", 5 * Mb, "5 МБ", new Dictionary<string, string>
     {
         [".jpg"] = "image/jpeg", [".jpeg"] = "image/jpeg", [".png"] = "image/png", [".webp"] = "image/webp",
@@ -63,13 +72,14 @@ public static class FileKinds
     });
 
     public static readonly IReadOnlyDictionary<string, FileKind> All =
-        new[] { Video, Document, Cover, Submission }.ToDictionary(kind => kind.Name);
+        new[] { Video, Document, Presentation, Cover, Submission }.ToDictionary(kind => kind.Name);
 
     /// <summary>Какой вид файла подходит материалу курса (src у видео, PDF и презентации).</summary>
     public static string? ForActivity(string activityType) => activityType switch
     {
         "video" => Video.Name,
-        "pdf" or "presentation" => Document.Name,
+        "pdf" => Document.Name,
+        "presentation" => Presentation.Name,
         _ => null,
     };
 }

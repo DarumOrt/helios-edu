@@ -58,14 +58,15 @@ export function ActivityDialog({
     sectionId,
   });
   const { pending, fields, error, run, setFields } = useFormSubmit();
-  // имя только что загруженного файла — в поле ссылки остаётся /api/files/…
   const [uploaded, setUploaded] = useState<string>();
-  const uploadOnly = type === "video" && !editing;
+  const [uploading, setUploading] = useState(false);
+  const uploadOnly = type !== "video" || !editing;
   const has = (k: string) => (ACTIVITY_FIELDS[type] as string[]).includes(k);
   const set = (key: keyof typeof v, value: string) => setV((x) => ({ ...x, [key]: value }));
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (uploading) return;
     const all: ActivityPayload = {
       title: v.title,
       src: v.src || null,
@@ -111,7 +112,7 @@ export function ActivityDialog({
           <Button variant="ghost" onClick={onClose} disabled={pending}>
             Отмена
           </Button>
-          <Button type="submit" form="activity-form" disabled={pending}>
+          <Button type="submit" form="activity-form" disabled={pending || uploading}>
             {pending ? "Сохраняем…" : editing ? "Сохранить" : "Добавить"}
           </Button>
         </>
@@ -139,6 +140,7 @@ export function ActivityDialog({
                       name="activity-type"
                       value={t}
                       checked={type === t}
+                      disabled={uploading}
                       onChange={() => {
                         if (t !== type) {
                           setType(t);
@@ -171,28 +173,32 @@ export function ActivityDialog({
         {has("src") && (
           <Field
             id="act-src"
-            label={type === "video" ? "Видеофайл" : "Файл (необязательно)"}
-            error={uploadOnly && fields.src ? "Загрузите видеофайл" : fields.src}
+            label={type === "video" ? "Видеофайл" : type === "presentation" ? "Файл презентации" : "Файл PDF"}
+            error={type === "video" && uploadOnly && fields.src ? "Загрузите видеофайл" : fields.src}
             hint={
               uploaded
                 ? `Загружен: ${uploaded}`
-                : uploadOnly
-                  ? "Длительность определяется из файла"
-                  : type === "video"
-                    ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
-                    : "Загрузите PDF или укажите ссылку на файл"
+                : uploadOnly && v.src
+                  ? "Файл прикреплён. Загрузите другой файл для замены."
+                  : type === "video" && uploadOnly
+                    ? "Длительность определяется из файла"
+                    : type === "video"
+                      ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
+                      : undefined
             }
           >
             <div className="mb-2">
               <FileUpload
                 key={type}
                 id={uploadOnly ? "act-src" : undefined}
-                kind={type === "video" ? "video" : "document"}
+                kind={type === "video" ? "video" : type === "presentation" ? "presentation" : "document"}
                 courseId={courseId}
                 disabled={pending}
+                onBusyChange={setUploading}
                 onUploaded={(file, durationMin) => {
                   set("src", file.url);
                   if (type === "video") set("durationMin", durationMin?.toString() ?? "");
+                  if (type === "presentation") set("pages", "");
                   setUploaded(file.fileName);
                 }}
               />
@@ -212,7 +218,7 @@ export function ActivityDialog({
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {has("pages") && type === "presentation" && (
+          {has("pages") && type === "presentation" && editing && !v.src && (
             <Field id="act-pages" label="Слайдов" error={fields.pages}>
               <Input
                 id="act-pages"

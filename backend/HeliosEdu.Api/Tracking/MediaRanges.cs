@@ -42,11 +42,11 @@ public sealed record MediaRanges(long[][] Watched, long[][] Active, long Positio
         var watched = Union(prior.Watched, Watched);
         var active = Union(prior.Active, Active);
         var covered = Length(watched);
-        var pdf = row.ActivityType == "pdf";
+        var paged = row.ActivityType is "pdf" or "presentation";
         var coverage = (int)Math.Min(100, Math.Floor(covered * 100d / limit + 0.5));
         row.Coverage = Math.Max(row.Coverage, coverage);
-        row.Completed |= row.Coverage >= (pdf ? 80 : 90);
-        if (pdf) row.PagesViewed = Math.Max(row.PagesViewed ?? 0, (int)Math.Min(limit, covered));
+        row.Completed |= row.Coverage >= (paged ? 80 : 90);
+        if (paged) row.PagesViewed = Math.Max(row.PagesViewed ?? 0, (int)Math.Min(limit, covered));
         row.ActiveTimeSec = (int)Math.Min(604800, row.ActiveTimeSec + Length(active) / 1000 - Length(prior.Active) / 1000);
         if (position.HasValue && PositionAt >= prior.PositionAt) row.Position = position;
         row.Media = JsonSerializer.SerializeToElement(new MediaRanges(watched, active, Math.Max(PositionAt, prior.PositionAt)),

@@ -46,6 +46,15 @@ services:
     depends_on:
       - api
 
+  presentation-converter:
+    <<: *defaults
+    image: gotenberg/gotenberg:9.4.0-libreoffice
+    environment:
+      API_TIMEOUT: 45s
+      API_BODY_LIMIT: 55MB
+      LIBREOFFICE_DENY_LIST: ".*"
+    networks: [conversion]
+
   api:
     <<: *defaults
     image: ${HELIOS_IMAGES:-ghcr.io/darumort/helios-edu}-api:${HELIOS_VERSION:?Нет номера версии — запускайте через scripts/server/deploy.sh}
@@ -64,14 +73,18 @@ services:
       Storage__AccessKey: ${STORAGE_ACCESS_KEY:?Задайте STORAGE_ACCESS_KEY в .env}
       Storage__SecretKey: ${STORAGE_SECRET_KEY:?Задайте STORAGE_SECRET_KEY в .env}
       Storage__Bucket: helios-media
+      PresentationConverter__Url: http://presentation-converter:3000
       Storage__AllowedOrigins: ${SITE_URL}
     volumes:
       - mail_keys:/var/helios-mail-keys
+    networks: [default, conversion]
     depends_on:
       db:
         condition: service_healthy
       storage:
         condition: service_healthy
+      presentation-converter:
+        condition: service_started
 
   db:
     <<: *defaults
@@ -102,6 +115,10 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+networks:
+  conversion:
+    internal: true
 
 volumes:
   postgres_data:

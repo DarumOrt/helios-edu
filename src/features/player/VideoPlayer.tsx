@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Card, CardBody, Badge, Progress } from "@/shared/ui";
 import { Eye, Gauge, MousePointerClick, Pause, CheckCircle2, Activity } from "lucide-react";
 import { fmtDuration } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
 import { MaterialActions } from "./MaterialActions";
 import { isActiveTab, useMediaTracking } from "./useMediaTracking";
 
@@ -15,6 +16,7 @@ export function VideoPlayer({
   onViewed,
   onComplete,
   navigation,
+  standalone,
 }: {
   courseId: string;
   activityId: string;
@@ -23,6 +25,7 @@ export function VideoPlayer({
   onViewed?: () => void;
   onComplete?: (coverage: number) => void;
   navigation?: ReactNode;
+  standalone?: boolean;
 }) {
   const tracking = useMediaTracking(courseId, activityId, "video", onViewed, onComplete);
   const stats = tracking.stats;
@@ -80,7 +83,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div className={cn("grid gap-4", !standalone && "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]")}>
       <div className="min-w-0 space-y-3">
         <Card className="overflow-hidden">
           {tracking.readyToView ? (
@@ -88,7 +91,7 @@ export function VideoPlayer({
               src={src}
               aria-label={title}
               controls
-              className="aspect-video w-full bg-black"
+              className={cn("aspect-video w-full bg-black", standalone && "max-h-[calc(100dvh-7rem)]")}
               preload="metadata"
               onError={() => setFailed(true)}
               onLoadedMetadata={({ currentTarget: v }) => {

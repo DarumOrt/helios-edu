@@ -20,6 +20,7 @@ export function FileUpload({
   kind,
   courseId,
   onUploaded,
+  onBusyChange,
   label = "Загрузить файл",
   disabled,
 }: {
@@ -27,6 +28,7 @@ export function FileUpload({
   kind: FileKind;
   courseId: string;
   onUploaded: (file: UploadedFile, durationMin?: number) => void;
+  onBusyChange?: (busy: boolean) => void;
   label?: string;
   disabled?: boolean;
 }) {
@@ -49,6 +51,7 @@ export function FileUpload({
 
   async function pick(file: File | undefined) {
     if (!file) return;
+    onBusyChange?.(true);
     setProgress(0);
     try {
       const uploaded = await uploadFile(kind, courseId, file, setProgress);
@@ -57,6 +60,7 @@ export function FileUpload({
     } catch (failure) {
       toast.error("Файл не загружен", { description: apiErrorInfo(failure).error ?? "Попробуйте ещё раз" });
     } finally {
+      if (mounted.current) onBusyChange?.(false);
       setProgress(null);
       if (input.current) input.current.value = "";
     }
@@ -73,7 +77,12 @@ export function FileUpload({
           onClick={() => input.current?.click()}
           disabled={!server || preview || disabled || progress !== null}
         >
-          <Upload size={15} aria-hidden /> {progress === null ? label : `Загрузка… ${progress}%`}
+          <Upload size={15} aria-hidden />{" "}
+          {progress === null
+            ? label
+            : kind === "presentation" && progress === 100
+              ? "Готовим слайды…"
+              : `Загрузка… ${progress}%`}
         </Button>
         <span className="text-xs text-muted-foreground">{hint}</span>
       </div>

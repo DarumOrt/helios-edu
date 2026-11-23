@@ -47,6 +47,15 @@ services:
       timeout: 3s
       retries: 20
 
+  presentation-converter:
+    image: gotenberg/gotenberg:9.4.0-libreoffice
+    profiles: [backend]
+    environment:
+      API_TIMEOUT: 45s
+      API_BODY_LIMIT: 55MB
+      LIBREOFFICE_DENY_LIST: ".*"
+    networks: [conversion]
+
   api:
     build: ./backend
     profiles: [backend]
@@ -63,17 +72,25 @@ services:
       Storage__AccessKey: ${STORAGE_ACCESS_KEY:-helios_local_only}
       Storage__SecretKey: ${STORAGE_SECRET_KEY:-helios_local_only_secret}
       Storage__Bucket: helios-media
+      PresentationConverter__Url: http://presentation-converter:3000
       # откуда браузеру можно загружать файлы напрямую в хранилище (CORS)
       Storage__AllowedOrigins: ${STORAGE_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
       - mail_keys:/var/helios-mail-keys
+    networks: [default, conversion]
     depends_on:
       db:
         condition: service_healthy
       storage:
         condition: service_healthy
+      presentation-converter:
+        condition: service_started
+
+networks:
+  conversion:
+    internal: true
 
 volumes:
   postgres_data:
