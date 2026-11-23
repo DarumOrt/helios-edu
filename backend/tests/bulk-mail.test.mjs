@@ -151,7 +151,9 @@ test("общие курсы, CSV, активация и SMTP с очередью
         }),
         201,
       );
-      await expect(await send("PATCH", `/api/courses/${course.id}`, { status: "published" }));
+      await expect(
+        await send("PATCH", `/api/courses/${course.id}`, { faculty: "ИНЭК", status: "published" }),
+      );
       await expect(await send("PATCH", `/api/courses/${course.id}`, { title: "Изменено для трёх групп" }));
       for (const result of createdUsers) {
         const actor = await login(apiUrl, result.user.email, result.temporaryPassword);
@@ -482,7 +484,11 @@ test("общие курсы, CSV, активация и SMTP с очередью
       );
       await expect(await send("PATCH", `/api/courses/${course.id}`, { status: "draft" }));
       await expect(
-        await send("PATCH", `/api/courses/${course.id}`, { status: "published", cohortIds: [groups[2].id] }),
+        await send("PATCH", `/api/courses/${course.id}`, {
+          faculty: "ИНЭК",
+          status: "published",
+          cohortIds: [groups[2].id],
+        }),
       );
       const history = await expect(await get(apiUrl, "/api/mail/campaigns", admin.cookie));
       const publication = history.find(

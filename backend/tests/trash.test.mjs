@@ -64,7 +64,7 @@ test("C#: корзина курса и корзина курсов, оконча
     201,
   );
   const root = `/api/courses/${course.id}`;
-  await expect(await send(organizer, "PATCH", root, { status: "published" }), 200);
+  await expect(await send(organizer, "PATCH", root, { faculty: "ИНЭК", status: "published" }), 200);
   const group = await expect(await send(organizer, "POST", "/api/cohorts", { name: `К-${unique}` }), 201);
   const created = await expect(
     await send(organizer, "POST", "/api/users", {

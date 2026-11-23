@@ -36,6 +36,10 @@ describe("validateCourse", () => {
 
   it("корректный курс", () => {
     expect(validateCourse(course)).toEqual({});
+    expect(validateCourse({ ...course, status: "published" }).faculty).toBe(
+      "Для публикации выберите факультет",
+    );
+    expect(validateCourse({ ...course, status: "published", faculty: "ИНЭК" })).toEqual({});
   });
 
   it("назначения групп необязательны, принимают несколько групп и проверяют предел", () => {

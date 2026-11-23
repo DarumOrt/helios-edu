@@ -128,8 +128,8 @@
 
 **`PATCH /api/courses/{id}`** `{ title?, category?, description?, tutorId?, faculty?, academicYear?, status? }` → `200 CourseSummary`.
 Передан `code` → `400 fields.code = "Код курса изменить нельзя"`. Право `course.edit`: преподаватель правит
-только свой курс (чужой → `404`) и без `tutorId`, `faculty`, `academicYear` →
-`403 { error: "Преподавателя, факультет и учебный год курса меняет организатор" }`.
+только свой курс (чужой → `404`) и без `tutorId`, `academicYear` →
+`403 { error: "Преподавателя и учебный год курса меняет организатор" }`.
 
 `CourseSummary` и `CourseDetail` дополнить полями `status` и `coverColor`.
 

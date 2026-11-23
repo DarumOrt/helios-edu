@@ -20,8 +20,8 @@ public static partial class ManagementEndpoints
             .AddEndpointFilter<ManagementWriteFilter>().MapPatch("/{id}", UpdateCourseAsync);
     }
 
-    /// <summary>Поля карточки, которые меняет только управление: преподавателя курса, факультет и учебный год.</summary>
-    private static readonly string[] ManagedCourseFields = ["tutorId", "faculty", "academicYear"];
+    /// <summary>Поля карточки, которые меняет только управление: преподавателя курса и учебный год.</summary>
+    private static readonly string[] ManagedCourseFields = ["tutorId", "academicYear"];
 
     private static async Task ValidateTutor(ManagementInput input, bool partial, HttpContext context, LearningDbContext db,
         Dictionary<string, string> fields)
@@ -60,6 +60,7 @@ public static partial class ManagementEndpoints
             Status = "draft", CoverColor = CoverColors[RandomNumberGenerator.GetInt32(CoverColors.Length)],
             Faculty = input.OptionalText("faculty"), AcademicYear = input.OptionalText("academicYear") };
         var position = await db.Courses.MaxAsync(item => (int?)EF.Property<int>(item, "Position"), context.RequestAborted) ?? -1;
+        await LockCourseGroups(input, context, db);
         db.Courses.Add(course);
         db.Entry(course).Property("Position").CurrentValue = position + 1;
         await SetCourseGroups(input, course, context, db);
@@ -73,18 +74,27 @@ public static partial class ManagementEndpoints
     {
         var actor = Actor(context);
         // чужой курс преподавателю не виден — 404, как у GET
-        var course = await AccessRules.VisibleCourses(db, context.User)
-            .SingleOrDefaultAsync(course => course.Id == id, context.RequestAborted);
-        if (course is null || !AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
+        var visible = await AccessRules.VisibleCourses(db, context.User).AsNoTracking()
+            .SingleOrDefaultAsync(c => c.Id == id, context.RequestAborted);
+        if (visible is null || !AccessRules.CanEditCourse(actor, visible)) return Fail(404, "not found");
         var input = await ManagementInput.ReadAsync(context.Request);
         if (input is null) return Fail(400, "Некорректный запрос");
         if (actor.Role == "tutor" && ManagedCourseFields.Any(input.Has))
-            return Fail(403, "Преподавателя, факультет и учебный год курса меняет организатор");
+            return Fail(403, "Преподавателя и учебный год курса меняет организатор");
         if (input.Has("code")) return Fail(400, "Код курса изменить нельзя", new() { ["code"] = "Код курса изменить нельзя" });
         var fields = ManagementValidation.Course(input, true);
+        await ValidateCourseGroups(input, context, db, fields);
+        if (fields.Count > 0) return Invalid(fields);
+        await LockCourseGroups(input, context, db);
+        var course = await db.Courses.FromSqlInterpolated($"SELECT * FROM \"Courses\" WHERE \"Id\" = {id} FOR UPDATE")
+            .SingleOrDefaultAsync(context.RequestAborted);
+        if (course is null || course.DeletedAt != null || !AccessRules.CanEditCourse(actor, course)) return Fail(404, "not found");
+        if ((input.Has("status") || input.Has("faculty")) &&
+            (input.Has("status") ? input.Choice("status") : course.Status) == "published" &&
+            (input.Has("faculty") ? input.OptionalText("faculty") : course.Faculty) == null)
+            fields["faculty"] = "Для публикации выберите факультет";
         if (input.Has("faculty")) await ValidateFaculty(context, db, input.OptionalText("faculty"), fields, course.Faculty);
         if (input.Text("tutorId") != course.TutorId) await ValidateTutor(input, true, context, db, fields);
-        await ValidateCourseGroups(input, context, db, fields);
         if (fields.Count > 0) return Invalid(fields);
         var before = (course.Title, course.Category, course.Description, course.Faculty, course.AcademicYear, course.Status,
             Tutor: await TutorName(db, course.TutorId, context.RequestAborted));

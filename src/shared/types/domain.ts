@@ -112,6 +112,7 @@ export interface EnrollmentInfo {
   keyEnabled: boolean;
   cohortIds: string[];
   students: EnrolledStudent[];
+  excluded: EnrolledStudent[];
 }
 
 export interface Section {

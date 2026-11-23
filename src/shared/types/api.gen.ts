@@ -278,6 +278,7 @@ export type EnrollmentInfo = {
   keyEnabled: boolean;
   cohortIds: string[];
   students: EnrolledStudent[];
+  excluded: EnrolledStudent[];
 };
 
 export type FacultyInfo = {

@@ -683,6 +683,21 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("CourseEnrollments");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CourseExclusion", b =>
+                {
+                    b.Property<string>("CourseId")
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("CourseId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CourseExclusions");
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Courses.TrashItem", b =>
                 {
                     b.Property<string>("Id")
@@ -1598,6 +1613,21 @@ namespace HeliosEdu.Api.Migrations
                 });
 
             modelBuilder.Entity("HeliosEdu.Api.Courses.CourseEnrollment", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Auth.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CourseExclusion", b =>
                 {
                     b.HasOne("HeliosEdu.Api.Courses.Course", null)
                         .WithMany()
