@@ -69,6 +69,8 @@ public static partial class ManagementEndpoints
         var token = http.RequestAborted;
         var faculty = await LockedFaculty(db, tenant, code, token);
         if (faculty is null) return Fail(404, "Факультет не найден");
+        if (await db.CatalogCollectionFaculties.AnyAsync(link => link.TenantId == tenant && link.FacultyCode == code, token))
+            return Fail(409, "Факультет используется в межфакультетском разделе. Уберите его из раздела или отправьте в архив.");
         var usage = new FacultyUsage(await db.Accounts.CountAsync(a => a.Faculty == code, token),
             await db.Cohorts.CountAsync(g => g.Faculty == code, token), await db.Courses.CountAsync(c => c.Faculty == code, token),
             await db.Accounts.CountAsync(a => a.OrganizerFaculties != null && a.OrganizerFaculties.Contains(code), token));

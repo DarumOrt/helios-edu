@@ -24,7 +24,7 @@ const statusHint: Record<CourseStatus, string> = {
 };
 
 // Создание курса и правка его карточки. Содержание (модули, материалы) — в конструкторе курса.
-// managed={false} — карточка своего курса у преподавателя: без преподавателя, факультета и года (MANAGED_COURSE_FIELDS).
+// managed={false} — карточка своего курса у преподавателя: без преподавателя и года (MANAGED_COURSE_FIELDS).
 type CourseDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -80,8 +80,8 @@ function CourseDialogForm({
     const card = managed
       ? { ...meta, tutorId, faculty, academicYear, cohortIds }
       : editing
-        ? meta
-        : { ...meta, tutorId };
+        ? { ...meta, faculty }
+        : { ...meta, faculty, tutorId };
     const payload: CoursePayload = editing ? { ...card, status } : { ...card, code: code.toUpperCase() };
     const clientErrors = validateCourse(
       payload,
@@ -190,18 +190,23 @@ function CourseDialogForm({
             </Field>
           )}
         </div>
-        {managed && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="course-faculty" label="Факультет" error={fields.faculty}>
-              <FacultySelect
-                id="course-faculty"
-                className="w-full"
-                value={values.faculty}
-                onChange={(e) => set("faculty", e.target.value)}
-                disabled={pending}
-                {...describedBy("course-faculty", fields.faculty)}
-              />
-            </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            id="course-faculty"
+            label="Факультет"
+            hint="Обязателен для публикации курса"
+            error={fields.faculty}
+          >
+            <FacultySelect
+              id="course-faculty"
+              className="w-full"
+              value={values.faculty}
+              onChange={(e) => set("faculty", e.target.value)}
+              disabled={pending}
+              {...describedBy("course-faculty", fields.faculty, true)}
+            />
+          </Field>
+          {managed && (
             <Field
               id="course-year"
               label="Учебный год"
@@ -218,8 +223,8 @@ function CourseDialogForm({
                 {...describedBy("course-year", fields.academicYear, true)}
               />
             </Field>
-          </div>
-        )}
+          )}
+        </div>
         {managed && (
           <>
             <CheckList

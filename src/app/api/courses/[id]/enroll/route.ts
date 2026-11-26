@@ -3,7 +3,13 @@ import { backendForward } from "@/shared/lib/backend";
 import { demoActorWith, fail, readJson, str } from "@/mocks/management-guards";
 import { findDemoCourse } from "@/mocks/course-store";
 import { findDemoUser } from "@/mocks/users-store";
-import { enrollStudent, isEnrolled, matchesKeyword, selfEnrollmentEnabled } from "@/mocks/enrollment-store";
+import {
+  enrollStudent,
+  isEnrolled,
+  isExcluded,
+  matchesKeyword,
+  selfEnrollmentEnabled,
+} from "@/mocks/enrollment-store";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,6 +20,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const course = findDemoCourse(id);
   if (!course || course.status !== "published" || findDemoUser(course.tutorId)?.tenantId !== actor.tenantId)
     return fail(404, "not found");
+  if (isExcluded(id, actor.id)) return fail(403, "Доступ к курсу может восстановить преподаватель");
   if (isEnrolled(id, actor)) return NextResponse.json({ ok: true });
   const body = await readJson(req);
   if (!body) return fail(400, "Некорректный запрос");

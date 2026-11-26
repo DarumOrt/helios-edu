@@ -15,6 +15,8 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public string? OrganizerId { get; set; }
     public string[] ManagedFaculties { get; set; } = [];
     public DbSet<Faculty> Faculties => Set<Faculty>();
+    public DbSet<CatalogCollection> CatalogCollections => Set<CatalogCollection>();
+    public DbSet<CatalogCollectionFaculty> CatalogCollectionFaculties => Set<CatalogCollectionFaculty>();
     public bool SuppressMail { get; set; }
     public bool SuppressInvitations { get; set; }
     private void ProtectLearningEvents()
@@ -56,6 +58,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
     public DbSet<Cohort> Cohorts => Set<Cohort>();
     public DbSet<CohortCourse> CohortCourses => Set<CohortCourse>();
+    public DbSet<CourseExclusion> CourseExclusions => Set<CourseExclusion>();
     public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
     public DbSet<Skill> Skills => Set<Skill>();
     public DbSet<SkillPrerequisite> SkillPrerequisites => Set<SkillPrerequisite>();
@@ -86,6 +89,17 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         var faculties = modelBuilder.Entity<Faculty>();
         faculties.HasKey(f => new { f.TenantId, f.Code });
         faculties.HasIndex(f => new { f.TenantId, f.NormalizedCode }).IsUnique();
+        var collections = modelBuilder.Entity<CatalogCollection>();
+        collections.HasIndex(item => new { item.TenantId, item.NormalizedName }).IsUnique();
+        collections.HasMany(item => item.Faculties).WithOne().HasForeignKey(link => link.CollectionId);
+        collections.HasMany(item => item.Courses).WithOne().HasForeignKey(link => link.CollectionId);
+        var collectionFaculties = modelBuilder.Entity<CatalogCollectionFaculty>();
+        collectionFaculties.HasKey(link => new { link.CollectionId, link.FacultyCode });
+        collectionFaculties.HasOne<Faculty>().WithMany()
+            .HasForeignKey(link => new { link.TenantId, Code = link.FacultyCode }).OnDelete(DeleteBehavior.Restrict);
+        var collectionCourses = modelBuilder.Entity<CatalogCollectionCourse>();
+        collectionCourses.HasKey(link => new { link.CollectionId, link.CourseId });
+        collectionCourses.HasOne<Course>().WithMany().HasForeignKey(link => link.CourseId);
         modelBuilder.Entity<Account>().HasOne<Faculty>().WithMany()
             .HasForeignKey(a => new { a.TenantId, Code = a.Faculty }).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Cohort>().HasOne<Faculty>().WithMany()
@@ -106,6 +120,10 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
                 l.CourseId == c.Id && Cohorts.Any(g => g.Id == l.CohortId))));
         modelBuilder.ConfigureAdaptive();
         modelBuilder.ConfigureMail();
+        var exclusion = modelBuilder.Entity<CourseExclusion>();
+        exclusion.HasKey(item => new { item.CourseId, item.UserId });
+        exclusion.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
+        exclusion.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
         var enrollment = modelBuilder.Entity<CourseEnrollment>();
         enrollment.HasKey(item => new { item.CourseId, item.UserId });
         enrollment.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
@@ -123,6 +141,7 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         trash.HasOne<Course>().WithMany().HasForeignKey(item => item.CourseId).OnDelete(DeleteBehavior.Cascade);
         // прогресс — один на ученика и материал курса (id материалов уникальны только внутри курса)
         var progress = modelBuilder.Entity<Tracking.ActivityProgress>();
+        progress.Property(item => item.Media).HasColumnType("jsonb");
         progress.HasKey(item => new { item.UserId, item.CourseId, item.ActivityId });
         progress.HasIndex(item => new { item.CourseId, item.ActivityId });
         progress.HasOne<Account>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);

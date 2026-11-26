@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import { useSession } from "@/shared/auth/session";
@@ -16,20 +16,31 @@ import { Progress } from "./Progress";
  * В демо хранилища нет — кнопка неактивна с подсказкой (упор на серверный режим, AGENTS.md).
  */
 export function FileUpload({
+  id,
   kind,
   courseId,
   onUploaded,
+  onBusyChange,
   label = "Загрузить файл",
   disabled,
 }: {
+  id?: string;
   kind: FileKind;
   courseId: string;
-  onUploaded: (file: UploadedFile) => void;
+  onUploaded: (file: UploadedFile, durationMin?: number) => void;
+  onBusyChange?: (busy: boolean) => void;
   label?: string;
   disabled?: boolean;
 }) {
   const server = useSession((s) => s.dataSource.source === "server");
   const preview = useSession((s) => Boolean(s.user.previewContext));
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const input = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const hint = preview
@@ -40,12 +51,16 @@ export function FileUpload({
 
   async function pick(file: File | undefined) {
     if (!file) return;
+    onBusyChange?.(true);
     setProgress(0);
     try {
-      onUploaded(await uploadFile(kind, courseId, file, setProgress));
+      const uploaded = await uploadFile(kind, courseId, file, setProgress);
+      const duration = kind === "video" ? await videoMinutes(file) : undefined;
+      if (mounted.current) onUploaded(uploaded, duration);
     } catch (failure) {
       toast.error("Файл не загружен", { description: apiErrorInfo(failure).error ?? "Попробуйте ещё раз" });
     } finally {
+      if (mounted.current) onBusyChange?.(false);
       setProgress(null);
       if (input.current) input.current.value = "";
     }
@@ -55,13 +70,19 @@ export function FileUpload({
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <Button
+          id={id}
           type="button"
           variant="outline"
           size="sm"
           onClick={() => input.current?.click()}
           disabled={!server || preview || disabled || progress !== null}
         >
-          <Upload size={15} aria-hidden /> {progress === null ? label : `Загрузка… ${progress}%`}
+          <Upload size={15} aria-hidden />{" "}
+          {progress === null
+            ? label
+            : kind === "presentation" && progress === 100
+              ? "Готовим слайды…"
+              : `Загрузка… ${progress}%`}
         </Button>
         <span className="text-xs text-muted-foreground">{hint}</span>
       </div>
@@ -77,4 +98,25 @@ export function FileUpload({
       />
     </div>
   );
+}
+
+// Для списка материалов храним минуты. Плеер показывает точное время из самого файла.
+function videoMinutes(file: File): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(file);
+    const finish = () => {
+      const minutes = Math.ceil(video.duration / 60);
+      clearTimeout(timer);
+      video.onloadedmetadata = video.onerror = null;
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(url);
+      resolve(minutes > 0 && minutes <= 600 ? minutes : undefined);
+    };
+    const timer = setTimeout(finish, 5000);
+    video.preload = "metadata";
+    video.onloadedmetadata = video.onerror = finish;
+    video.src = url;
+  });
 }

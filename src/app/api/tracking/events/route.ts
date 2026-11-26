@@ -10,8 +10,8 @@ export async function POST(req: Request) {
   if (forwarded) return forwarded;
   if ((await getDemoActor()).role === "admin") return NextResponse.json({ ok: true, accepted: 0 });
   try {
-    const body = (await req.json()) as { events: TrackingEvent[] };
-    if (Array.isArray(body.events)) ingest(body.events);
+    const body = (await req.json()) as { events: TrackingEvent[]; courseId: string };
+    if (Array.isArray(body.events)) ingest(body.events, body.courseId);
     return NextResponse.json({ ok: true, accepted: body.events?.length ?? 0 });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });

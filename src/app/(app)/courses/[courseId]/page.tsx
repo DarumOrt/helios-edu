@@ -49,7 +49,7 @@ import { useSession } from "@/shared/auth/session";
 import { nextCourseMaterial, pendingDeadlines } from "@/shared/lib/learning-progress";
 import { formatDate, pluralCount } from "@/shared/lib/format";
 import { activityHref } from "@/shared/lib/activity-href";
-import type { Course } from "@/shared/types/domain";
+import type { CatalogCourse, Course } from "@/shared/types/domain";
 
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
@@ -58,6 +58,9 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const user = useSession((s) => s.user);
   const canSeeStats = can(role, "analytics.view");
   const learner = can(role, "quiz.take");
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const { data: catalog } = useSWR<CatalogCourse[]>(learner && aboutOpen ? "/api/catalog" : null, fetcher);
+  const tutor = catalog?.find((entry) => entry.id === courseId)?.tutor.name;
   const next = learner && course ? nextCourseMaterial(course) : null;
   const deadline = learner && course ? pendingDeadlines([course])[0] : undefined;
   // преподаватель правит только свой курс; администратор и организатор — любой
@@ -77,7 +80,39 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
         {course && (
           <>
             {learner ? (
-              <StudentCourseHero course={course} next={next} />
+              <>
+                <StudentCourseHero course={course} next={next} />
+                <div className={cn("mb-5 grid items-start gap-2.5", deadline && "md:grid-cols-2")}>
+                  <Disclosure title="О курсе" icon={<BookOpen size={17} />} onOpenChange={setAboutOpen}>
+                    <p className="py-2 text-sm leading-relaxed wrap-break-word whitespace-pre-line">
+                      {course.description || "Описание пока не добавлено."}
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 pb-2 text-xs text-muted-foreground">
+                      {tutor && <span>Преподаватель {tutor}</span>}
+                      {course.faculty && <span>Факультет {course.faculty}</span>}
+                      <span>{pluralCount(course.enrolled, "участник", "участника", "участников")}</span>
+                    </div>
+                  </Disclosure>
+                  {deadline && (
+                    <Link
+                      href={activityHref(course.id, deadline.activity)}
+                      className="flex min-h-14 items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 shadow-card hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-inset sm:px-4"
+                    >
+                      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+                        <CalendarClock size={17} aria-hidden />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs text-muted-foreground">
+                          Срок сдачи {formatDate(deadline.due)}
+                        </span>
+                        <span className="block text-sm leading-snug font-semibold wrap-break-word">
+                          {deadline.activity.title}
+                        </span>
+                      </span>
+                    </Link>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 <PageHeader
@@ -194,12 +229,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               </div>
             )}
 
-            {tab === "content" && !building && <AnnouncementsCard courseId={course.id} />}
+            {tab === "content" && !building && !learner && <AnnouncementsCard courseId={course.id} />}
             {tab === "content" &&
               (building ? (
                 <CourseBuilder course={course} />
               ) : (
-                <div className={cn("grid gap-5", learner && "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.58fr)]")}>
+                <>
                   <section className="min-w-0 space-y-2.5" aria-labelledby="course-content-title">
                     <h2 id="course-content-title" className="px-0.5 text-lg font-semibold tracking-tight">
                       Содержание курса
@@ -222,38 +257,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                     )}
                   </section>
                   {learner && (
-                    <section className="min-w-0 space-y-2.5" aria-labelledby="course-about-title">
-                      <h2 id="course-about-title" className="px-0.5 text-lg font-semibold tracking-tight">
-                        О курсе
-                      </h2>
-                      {deadline && (
-                        <Disclosure title="К сдаче" icon={<CalendarClock size={17} />} defaultOpen>
-                          <Link
-                            href={activityHref(course.id, deadline.activity)}
-                            className="block rounded-md px-1.5 py-2 text-sm hover:bg-muted/60"
-                          >
-                            <span className="block font-medium">{deadline.activity.title}</span>
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              До {formatDate(deadline.due)}
-                            </span>
-                          </Link>
-                        </Disclosure>
-                      )}
+                    <div className="mt-5 space-y-2.5">
+                      <AnnouncementsCard courseId={course.id} collapsed />
                       <AdaptiveRoute course={course} />
-                      <Disclosure title="Описание курса" icon={<BookOpen size={17} />}>
-                        <div className="space-y-2 py-2.5">
-                          <CourseCover course={course} variant="banner" className="h-20 rounded-lg" />
-                          <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                            {course.description || "Описание пока не добавлено."}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {pluralCount(course.enrolled, "участник", "участника", "участников")}
-                          </p>
-                        </div>
-                      </Disclosure>
-                    </section>
+                    </div>
                   )}
-                </div>
+                </>
               ))}
             {announcing && <AnnouncementDialog courseId={course.id} onClose={() => setAnnouncing(false)} />}
             {editingCard && (

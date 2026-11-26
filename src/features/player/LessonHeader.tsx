@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { activityIcon, activityKindLabel, activityLabel } from "@/shared/lib/activity-meta";
 import { Breadcrumbs, WavePanel } from "@/shared/ui";
 import type { ActivityType } from "@/shared/types/domain";
@@ -10,6 +11,7 @@ export function LessonHeader({
   type,
   durationMin,
   actions,
+  standalone,
 }: {
   courseId: string;
   courseCode?: string;
@@ -17,9 +19,22 @@ export function LessonHeader({
   type: ActivityType;
   durationMin?: number;
   actions?: ReactNode;
+  standalone?: boolean;
 }) {
   const Icon = activityIcon[type];
   const kind = activityKindLabel(type, title);
+  if (standalone)
+    return (
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="min-w-0 text-base font-semibold wrap-break-word sm:text-lg">{title}</h1>
+        <Link
+          href={`/courses/${encodeURIComponent(courseId)}`}
+          className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+        >
+          К курсу
+        </Link>
+      </header>
+    );
   return (
     <div className="mb-5 space-y-3">
       <Breadcrumbs

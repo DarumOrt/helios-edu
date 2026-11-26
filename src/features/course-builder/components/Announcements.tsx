@@ -5,55 +5,73 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import { Megaphone, Trash2 } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
-import { Button, Card, CardBody, CardHeader, Dialog, Field, Input, Textarea, describedBy } from "@/shared/ui";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Dialog,
+  Disclosure,
+  Field,
+  Input,
+  Textarea,
+  describedBy,
+} from "@/shared/ui";
 import { FormError, useFormSubmit } from "@/shared/ui/form-submit";
 import { formatDateTime } from "@/shared/lib/format";
 import type { Announcement } from "@/shared/types/domain";
 import { builderApi, refreshCourse } from "../api";
 
 /** Последние объявления курса — видят все, кому виден курс */
-export function AnnouncementsCard({ courseId }: { courseId: string }) {
+export function AnnouncementsCard({ courseId, collapsed }: { courseId: string; collapsed?: boolean }) {
   const { data } = useSWR<Announcement[]>(`/api/courses/${courseId}/announcements`, fetcher);
   const [deleting, setDeleting] = useState<Announcement | null>(null);
   const [expanded, setExpanded] = useState(false);
   if (!data?.length) return null;
-  return (
+  const content = (
+    <>
+      <ul className="divide-y">
+        {(expanded ? data : data.slice(0, 3)).map((a) => (
+          <li key={a.id} className="py-3 first:pt-0 last:pb-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="text-sm font-medium">{a.title}</div>
+              {a.canDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Удалить объявление «${a.title}»`}
+                  onClick={() => setDeleting(a)}
+                  className="shrink-0 text-danger"
+                >
+                  <Trash2 size={15} aria-hidden />
+                </Button>
+              )}
+            </div>
+            <p className="mt-1 text-sm whitespace-pre-line text-foreground/80">{a.body}</p>
+            <div className="mt-1.5 text-xs text-muted-foreground">
+              {a.authorName}, <span className="font-mono">{formatDateTime(a.createdAt)}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {data.length > 3 && (
+        <Button variant="ghost" size="sm" className="mt-3" onClick={() => setExpanded((value) => !value)}>
+          {expanded ? "Свернуть" : `Все объявления (${data.length})`}
+        </Button>
+      )}
+      {deleting && (
+        <DeleteAnnouncement courseId={courseId} item={deleting} onClose={() => setDeleting(null)} />
+      )}
+    </>
+  );
+  return collapsed ? (
+    <Disclosure title="Объявления" icon={<Megaphone size={17} />} meta={data.length}>
+      <div className="py-2">{content}</div>
+    </Disclosure>
+  ) : (
     <Card className="mb-5">
       <CardHeader title="Объявления" icon={<Megaphone size={18} />} />
-      <CardBody className="pt-1">
-        <ul className="divide-y">
-          {(expanded ? data : data.slice(0, 3)).map((a) => (
-            <li key={a.id} className="py-3 first:pt-0 last:pb-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="text-sm font-medium">{a.title}</div>
-                {a.canDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Удалить объявление «${a.title}»`}
-                    onClick={() => setDeleting(a)}
-                    className="shrink-0 text-danger"
-                  >
-                    <Trash2 size={15} aria-hidden />
-                  </Button>
-                )}
-              </div>
-              <p className="mt-1 text-sm whitespace-pre-line text-foreground/80">{a.body}</p>
-              <div className="mt-1.5 text-xs text-muted-foreground">
-                {a.authorName}, <span className="font-mono">{formatDateTime(a.createdAt)}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-        {data.length > 3 && (
-          <Button variant="ghost" size="sm" className="mt-3" onClick={() => setExpanded((value) => !value)}>
-            {expanded ? "Свернуть" : `Все объявления (${data.length})`}
-          </Button>
-        )}
-        {deleting && (
-          <DeleteAnnouncement courseId={courseId} item={deleting} onClose={() => setDeleting(null)} />
-        )}
-      </CardBody>
+      <CardBody className="pt-1">{content}</CardBody>
     </Card>
   );
 }

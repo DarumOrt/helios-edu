@@ -60,7 +60,8 @@ public static class CourseProgress
                          where courseIds.Contains(link.CourseId) && account.Role == "student" &&
                              (db.OrganizerId == null || db.Courses.Any(c => c.Id == link.CourseId && db.ManagedFaculties.Contains(c.Faculty!)))
                          select new { link.CourseId, account.Id };
-        var rows = await grouped.Union(individual).ToListAsync(token);
+        var rows = await grouped.Union(individual)
+            .Where(row => !db.CourseExclusions.Any(x => x.CourseId == row.CourseId && x.UserId == row.Id)).ToListAsync(token);
         return rows.GroupBy(row => row.CourseId).ToDictionary(group => group.Key, group => group.Select(row => row.Id).ToList());
     }
 

@@ -35,10 +35,17 @@ for (const [name, baseUrl] of [
       groups = [];
     let course;
     try {
-      const payload = { code, title: `Курс преподавателя ${unique}`, category: "Практика", description: "" };
+      const payload = {
+        code,
+        title: `Курс преподавателя ${unique}`,
+        category: "Практика",
+        faculty: "ИНЭК",
+        description: "",
+      };
       await expect(await send(student, "POST", "/api/courses", payload), 403);
       await expect(await send(tutor, "POST", "/api/courses", { ...payload, tutorId: stranger.user.id }), 403);
       course = await expect(await send(tutor, "POST", "/api/courses", payload), 201);
+      assert.equal(course.faculty, "ИНЭК");
       assert.equal(course.tutorId, tutor.user.id);
       assert.equal(course.status, "draft");
       const root = `/api/courses/${course.id}`;
@@ -157,6 +164,53 @@ for (const [name, baseUrl] of [
       // Повторная запись через другой способ не удваивает участника; снятие группы не отнимает индивидуальную запись.
       await expect(await send(tutor, "POST", `${root}/enrollment/students`, { userId: users[0].user.id }));
       assert.equal((await expect(await get(baseUrl, root, tutor.cookie))).enrolled, 4);
+      const access = (actor, action, target, studentIds = []) =>
+        send(actor, "POST", `${root}/enrollment/access/${action}/${target}`, { studentIds });
+      for (const [action, target] of [
+        ["exclude", grouped.user.id],
+        ["restore", grouped.user.id],
+        ["exclude-group", groups[0].id],
+        ["detach", groups[0].id],
+      ]) {
+        await expect(await access(student, action, target), 403);
+        await expect(await access(stranger, action, target), 404);
+      }
+      await expect(await access(tutor, "exclude", grouped.user.id), 204);
+      await expect(await get(baseUrl, root, grouped.cookie), 404);
+      await expect(await send(grouped, "POST", `${root}/enroll`, { keyword: "Секрет 2026" }), 403);
+      await expect(
+        await send(tutor, "POST", `${root}/enrollment/students`, { userId: grouped.user.id }),
+        409,
+      );
+      info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
+      assert.deepEqual(
+        info.excluded.map((s) => s.id),
+        [grouped.user.id],
+      );
+      assert.equal((await expect(await get(baseUrl, root, tutor.cookie))).enrolled, 3);
+      await expect(await access(tutor, "restore", grouped.user.id), 204);
+      await expect(await get(baseUrl, root, grouped.cookie));
+      // В первой группе теперь два студента, у одного также индивидуальная запись.
+      await expect(
+        await send(organizer, "PATCH", `/api/users/${users[1].user.id}`, { group: groups[0].name }),
+      );
+      await expect(await access(tutor, "exclude-group", groups[0].id, [grouped.user.id]), 409);
+      await expect(
+        await access(tutor, "exclude-group", groups[0].id, [grouped.user.id, users[1].user.id]),
+        204,
+      );
+      info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
+      assert.equal(info.excluded.length, 2);
+      assert.ok(info.cohortIds.includes(groups[0].id));
+      await expect(await get(baseUrl, root, manual.cookie));
+      await expect(await access(tutor, "restore", grouped.user.id), 204);
+      await expect(await access(tutor, "restore", users[1].user.id), 204);
+      await expect(await access(tutor, "detach", groups[0].id, [users[1].user.id]), 204);
+      await expect(await get(baseUrl, root, grouped.cookie));
+      info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));
+      assert.ok(!info.cohortIds.includes(groups[0].id));
+      assert.ok(!info.students.some((s) => s.id === users[1].user.id));
+      await expect(await send(tutor, "PATCH", root, { cohortIds: groups.map((g) => g.id) }));
       const groupedEnrollment = `${root}/enrollment/students/${grouped.user.id}`;
       const manualEnrollment = `${root}/enrollment/students/${manual.user.id}`;
       info = await expect(await get(baseUrl, `${root}/enrollment`, tutor.cookie));

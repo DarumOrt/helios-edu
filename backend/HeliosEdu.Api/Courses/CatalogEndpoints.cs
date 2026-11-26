@@ -17,6 +17,9 @@ public sealed record CatalogCourse(string Id, string Code, string Title, string 
 
 public static class CatalogEndpoints
 {
+    internal static IQueryable<Course> PublishedCourses(LearningDbContext db) =>
+        db.Courses.AsNoTracking().Where(course => course.Status == "published" && course.DeletedAt == null);
+
     public static void MapCatalogEndpoints(this WebApplication app)
     {
         app.MapGet("/api/catalog", async (LearningDbContext db, HttpContext context, CancellationToken token) =>
@@ -24,8 +27,7 @@ public static class CatalogEndpoints
             var accountId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var tenant = await db.Accounts.Where(account => account.Id == accountId)
                 .Select(account => account.TenantId).SingleAsync(token);
-            var courses = await db.Courses.AsNoTracking().AsSplitQuery()
-                .Where(course => course.Status == "published" && course.DeletedAt == null)
+            var courses = await PublishedCourses(db).AsSplitQuery()
                 .Include(course => course.Sections.OrderBy(section => section.Order))
                 .ThenInclude(section => section.Activities)
                 .OrderBy(course => EF.Property<int>(course, "Position"))
@@ -43,13 +45,15 @@ public static class CatalogEndpoints
                 .ToListAsync(token);
             var accessible = (await AccessRules.VisibleCourses(db, context.User)
                 .Where(course => ids.Contains(course.Id)).Select(course => course.Id).ToListAsync(token)).ToHashSet();
+            var excluded = (await db.CourseExclusions.Where(x => x.UserId == accountId && ids.Contains(x.CourseId))
+                .Select(x => x.CourseId).ToListAsync(token)).ToHashSet();
             return Results.Ok(courses.Select(course => new CatalogCourse(course.Id, course.Code, course.Title,
                 course.Description, course.Cover, course.CoverColor, course.Category, course.Faculty, course.AcademicYear,
                 new CatalogTutor(course.TutorId, tutors.GetValueOrDefault(course.TutorId, "")),
                 links.Where(link => link.CourseId == course.Id).Select(link => link.Cohort).ToList(),
                 course.Sections.OrderBy(section => section.Order)
                     .Select(section => new CatalogSection(section.Title, section.Activities.Count)).ToList(),
-                accessible.Contains(course.Id), course.EnrollmentKeyHash is not null)));
+                accessible.Contains(course.Id), course.EnrollmentKeyHash is not null && !excluded.Contains(course.Id))));
         }).RequireAuthorization().Produces<CatalogCourse[]>();
     }
 }

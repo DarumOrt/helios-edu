@@ -58,13 +58,14 @@ export function ActivityDialog({
     sectionId,
   });
   const { pending, fields, error, run, setFields } = useFormSubmit();
-  // имя только что загруженного файла — в поле ссылки остаётся /api/files/…
   const [uploaded, setUploaded] = useState<string>();
+  const [uploading, setUploading] = useState(false);
   const has = (k: string) => (ACTIVITY_FIELDS[type] as string[]).includes(k);
   const set = (key: keyof typeof v, value: string) => setV((x) => ({ ...x, [key]: value }));
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (uploading) return;
     const all: ActivityPayload = {
       title: v.title,
       src: v.src || null,
@@ -110,7 +111,7 @@ export function ActivityDialog({
           <Button variant="ghost" onClick={onClose} disabled={pending}>
             Отмена
           </Button>
-          <Button type="submit" form="activity-form" disabled={pending}>
+          <Button type="submit" form="activity-form" disabled={pending || uploading}>
             {pending ? "Сохраняем…" : editing ? "Сохранить" : "Добавить"}
           </Button>
         </>
@@ -138,11 +139,18 @@ export function ActivityDialog({
                       name="activity-type"
                       value={t}
                       checked={type === t}
-                      onChange={() => setType(t)}
+                      disabled={uploading}
+                      onChange={() => {
+                        if (t !== type) {
+                          setType(t);
+                          setUploaded(undefined);
+                          setV((x) => ({ ...x, src: "", pages: "", durationMin: "" }));
+                        }
+                      }}
                       className="sr-only"
                     />
                     <Icon size={20} aria-hidden />
-                    {activityLabel[t].replace(" (PDF)", "")}
+                    {activityLabel[t]}
                   </label>
                 );
               })}
@@ -164,46 +172,42 @@ export function ActivityDialog({
         {has("src") && (
           <Field
             id="act-src"
-            label={type === "video" ? "Видеофайл" : "Файл (необязательно)"}
-            error={fields.src}
+            label={
+              type === "video" ? "Видеофайл" : type === "presentation" ? "Файл презентации" : "Файл конспекта"
+            }
+            error={type === "video" && fields.src ? "Загрузите видеофайл" : fields.src}
             hint={
               uploaded
                 ? `Загружен: ${uploaded}`
-                : type === "video"
-                  ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
-                  : "Загрузите PDF или укажите ссылку на файл"
+                : v.src
+                  ? "Файл прикреплён. Загрузите другой файл для замены."
+                  : type === "video"
+                    ? "Длительность определяется из файла"
+                    : undefined
             }
           >
             <div className="mb-2">
               <FileUpload
-                kind={type === "video" ? "video" : "document"}
+                key={type}
+                id="act-src"
+                kind={type === "video" ? "video" : type === "presentation" ? "presentation" : "document"}
                 courseId={courseId}
                 disabled={pending}
-                onUploaded={(file) => {
+                onBusyChange={setUploading}
+                onUploaded={(file, durationMin) => {
                   set("src", file.url);
+                  if (type === "video") set("durationMin", durationMin?.toString() ?? "");
+                  if (type === "presentation") set("pages", "");
                   setUploaded(file.fileName);
                 }}
               />
             </div>
-            <Input
-              id="act-src"
-              inputMode="url"
-              className="font-mono"
-              value={v.src}
-              onChange={(e) => set("src", e.target.value)}
-              disabled={pending}
-              {...describedBy("act-src", fields.src, type === "video")}
-            />
           </Field>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {has("pages") && (
-            <Field
-              id="act-pages"
-              label={type === "presentation" ? "Слайдов" : "Страниц"}
-              error={fields.pages}
-            >
+          {has("pages") && type === "presentation" && editing && !v.src && (
+            <Field id="act-pages" label="Слайдов" error={fields.pages}>
               <Input
                 id="act-pages"
                 type="number"
@@ -216,12 +220,8 @@ export function ActivityDialog({
               />
             </Field>
           )}
-          {has("durationMin") && (
-            <Field
-              id="act-duration"
-              label={type === "video" ? "Длительность, мин" : "Примерное время, мин"}
-              error={fields.durationMin}
-            >
+          {has("durationMin") && type !== "video" && (
+            <Field id="act-duration" label="Примерное время, мин" error={fields.durationMin}>
               <Input
                 id="act-duration"
                 type="number"

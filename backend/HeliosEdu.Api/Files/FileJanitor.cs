@@ -72,7 +72,7 @@ public sealed class FileJanitor(IServiceScopeFactory scopes, FileStorage storage
         {
             if (file.Status == "pending" && now - file.CreatedAt > Grace)
             {
-                await storage.DeleteAsync(file.ObjectKey, token);
+                await DeleteFileAsync(storage, file, token);
                 db.Files.Remove(file);
                 abandoned++;
             }
@@ -90,7 +90,7 @@ public sealed class FileJanitor(IServiceScopeFactory scopes, FileStorage storage
             }
             else if (file.Status == "trash" && now - (file.TrashedAt ?? now) > TrashLifetime)
             {
-                await storage.DeleteAsync(file.ObjectKey, token);
+                await DeleteFileAsync(storage, file, token);
                 db.Files.Remove(file);
                 deleted++;
             }
@@ -98,6 +98,8 @@ public sealed class FileJanitor(IServiceScopeFactory scopes, FileStorage storage
         await db.SaveChangesAsync(token);
 
         var keys = files.Select(file => file.ObjectKey).ToHashSet();
+        foreach (var file in files)
+            if (file.PreviewKey is { } previewKey) keys.Add(previewKey);
         foreach (var (key, modified) in await storage.ListAsync(token))
             if (!keys.Contains(key) && now - modified > Grace)
             {
@@ -105,6 +107,12 @@ public sealed class FileJanitor(IServiceScopeFactory scopes, FileStorage storage
                 orphans++;
             }
         return new CleanupResult(abandoned, trashed, restored, deleted, orphans);
+    }
+
+    private static async Task DeleteFileAsync(FileStorage storage, StoredFile file, CancellationToken token)
+    {
+        if (file.PreviewKey is { } previewKey) await storage.DeleteAsync(previewKey, token);
+        await storage.DeleteAsync(file.ObjectKey, token);
     }
 
     /// <summary>Файлы, на которые ссылаются материалы, обложки и сданные работы.</summary>

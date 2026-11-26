@@ -1,6 +1,4 @@
-import { Sidebar } from "@/shared/layout/Sidebar";
-import { Header } from "@/shared/layout/Header";
-import { PasswordReminder } from "@/shared/layout/PasswordReminder";
+import { AppChrome } from "@/shared/layout/AppChrome";
 import { redirect } from "next/navigation";
 import { backendGet, getDataSource } from "@/shared/lib/backend";
 import { SessionProvider } from "@/shared/auth/session";
@@ -34,14 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         data-helios-preview={user?.previewContext ?? undefined}
         data-helios-inspection={user?.role === "admin" ? "" : undefined}
       >
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Header />
-          <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 sm:py-8">
-            <PasswordReminder />
-            {children}
-          </main>
-        </div>
+        <AppChrome>{children}</AppChrome>
       </div>
     </SessionProvider>
   );

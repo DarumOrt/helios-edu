@@ -113,6 +113,13 @@ export type CatalogCohort = {
   profile: string | null;
 };
 
+export type CatalogCollectionInfo = {
+  id: string;
+  name: string;
+  facultyCodes: string[];
+  courseIds: string[];
+};
+
 export type CatalogCourse = {
   id: string;
   code: string;
@@ -278,6 +285,7 @@ export type EnrollmentInfo = {
   keyEnabled: boolean;
   cohortIds: string[];
   students: EnrolledStudent[];
+  excluded: EnrolledStudent[];
 };
 
 export type FacultyInfo = {
@@ -412,6 +420,12 @@ export type MailSettingsInput = {
   coursePublished: boolean;
 };
 
+export type MediaRanges = {
+  watched: number[][];
+  active: number[][];
+  positionAt: number;
+};
+
 export type MySubmission = {
   submission: SubmissionInfo | null;
 };
@@ -465,6 +479,7 @@ export type ProgressInfo = {
   firstAt: number;
   lastAt: number;
   sessions: number;
+  media: MediaRanges | null;
 };
 
 export type RecipientInfo = {

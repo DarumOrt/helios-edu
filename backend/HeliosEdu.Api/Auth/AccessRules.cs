@@ -12,7 +12,8 @@ public static class AccessRules
     /// Перевод в другую группу не отменяет индивидуальную запись.
     /// </summary>
     public static IQueryable<Account> CourseStudents(LearningDbContext db, string courseId) =>
-        db.Accounts.Where(account => account.Role == "student" && (db.CourseEnrollments.Any(link =>
+        db.Accounts.Where(account => account.Role == "student" &&
+            !db.CourseExclusions.Any(x => x.CourseId == courseId && x.UserId == account.Id) && (db.CourseEnrollments.Any(link =>
             link.CourseId == courseId && link.UserId == account.Id && (db.OrganizerId == null || db.Courses.Any(c =>
                 c.Id == courseId && db.ManagedFaculties.Contains(c.Faculty!)))) || db.CohortCourses.Any(link =>
             link.CourseId == courseId && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
@@ -54,7 +55,8 @@ public static class AccessRules
         var accountId = user.FindFirstValue(ClaimTypes.NameIdentifier);
         if (user.IsInRole("tutor")) return active.Where(course => course.TutorId == accountId);
         // Эталон — visibleDemoCourses.
-        return active.Where(course => course.Status == "published" && (db.CourseEnrollments.Any(link =>
+        return active.Where(course => course.Status == "published" &&
+            !db.CourseExclusions.Any(x => x.CourseId == course.Id && x.UserId == accountId) && (db.CourseEnrollments.Any(link =>
             link.CourseId == course.Id && link.UserId == accountId) || db.CohortCourses.Any(link =>
             link.CourseId == course.Id && db.Cohorts.Any(cohort => cohort.Id == link.CohortId &&
                 db.Accounts.Any(account => account.Id == accountId && account.Role == "student" &&

@@ -4,12 +4,14 @@ import { listCohorts } from "@/mocks/cohorts-store";
 import { findDemoUser } from "@/mocks/users-store";
 import { visibleDemoCourses } from "@/mocks/demo-courses";
 import { withCover } from "@/mocks/course-cover-store";
-import { selfEnrollmentEnabled } from "@/mocks/enrollment-store";
+import { getDemoActor } from "@/mocks/demo-actor";
+import { isExcluded, selfEnrollmentEnabled } from "@/mocks/enrollment-store";
 import type { CatalogCourse } from "@/shared/types/domain";
 
 // Поиск курсов в демо — те же правила, что CatalogEndpoints в C#: опубликованные курсы для всех ролей,
 // без материалов; accessible — курс виден пользователю целиком (visibleDemoCourses).
 export async function demoCatalog(): Promise<CatalogCourse[]> {
+  const actor = await getDemoActor();
   const visible = new Set((await visibleDemoCourses()).map((c) => c.id));
   const cohorts = listCohorts().sort((a, b) => a.name.localeCompare(b.name, "ru"));
   return listDemoCourses()
@@ -39,6 +41,6 @@ export async function demoCatalog(): Promise<CatalogCourse[]> {
         })),
       sections: (c.sections ?? []).map((s) => ({ title: s.title, activities: s.activities.length })),
       accessible: visible.has(c.id),
-      selfEnrollment: selfEnrollmentEnabled(c.id),
+      selfEnrollment: selfEnrollmentEnabled(c.id) && !isExcluded(c.id, actor.id),
     }));
 }

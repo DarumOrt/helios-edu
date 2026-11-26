@@ -45,6 +45,7 @@ export const courses: Course[] = [
             id: "md1",
             type: "pdf",
             title: "Конспект: требования к качеству ЦОР",
+            src: "/demo/quality-guide.pdf",
             pages: 8,
           },
           {

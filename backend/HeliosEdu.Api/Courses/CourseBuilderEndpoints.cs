@@ -30,7 +30,7 @@ public static class CourseBuilderEndpoints
             CourseTrash.RestoreItemAsync(itemId, context, db, Current(context), section => Positions(db, section)));
     }
 
-    /// <summary>Загруженный файл материала — этого курса и нужного вида (видео — video, PDF и презентация — document).</summary>
+    /// <summary>Загруженный файл материала — этого курса и нужного вида.</summary>
     private static async Task<string?> SourceError(LearningDbContext db, ContentInput values, string type, string courseId,
         CancellationToken token) =>
         FileKinds.ForActivity(type) is { } kind

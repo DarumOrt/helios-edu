@@ -31,8 +31,13 @@ public sealed class FileStorage : IDisposable
     private readonly AmazonS3Client? client;
     private readonly AmazonS3Client? signer;
 
-    public FileStorage(IConfiguration configuration)
+    private readonly IHttpClientFactory httpClients;
+    private readonly string? converterUrl;
+
+    public FileStorage(IConfiguration configuration, IHttpClientFactory httpClients)
     {
+        this.httpClients = httpClients;
+        converterUrl = configuration["PresentationConverter:Url"]?.TrimEnd('/');
         options = configuration.GetSection("Storage").Get<StorageOptions>() ?? new StorageOptions();
         if (string.IsNullOrWhiteSpace(options.ServiceUrl)) return;
         var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
@@ -41,6 +46,7 @@ public sealed class FileStorage : IDisposable
     }
 
     public bool IsConfigured => client is not null;
+    public bool CanPreparePdf => !string.IsNullOrEmpty(converterUrl);
     public StorageOptions Options => options;
 
     private static AmazonS3Config Config(string url) => new()
@@ -94,7 +100,7 @@ public sealed class FileStorage : IDisposable
         });
 
     /// <summary>Временная ссылка на чтение; имя файла — для «Сохранить как».</summary>
-    public Task<string> DownloadUrlAsync(string key, string fileName, string contentType, DateTime expires)
+    public Task<string> DownloadUrlAsync(string key, string fileName, string contentType, DateTime expires, bool attachment)
     {
         var request = new GetPreSignedUrlRequest
         {
@@ -102,7 +108,7 @@ public sealed class FileStorage : IDisposable
         };
         request.ResponseHeaderOverrides.ContentType = contentType;
         request.ResponseHeaderOverrides.ContentDisposition =
-            $"inline; filename*=UTF-8''{Uri.EscapeDataString(fileName)}";
+            $"{(attachment ? "attachment" : "inline")}; filename*=UTF-8''{Uri.EscapeDataString(fileName)}";
         return Signer.GetPreSignedURLAsync(request);
     }
 
@@ -121,6 +127,43 @@ public sealed class FileStorage : IDisposable
     }
 
     public Task DeleteAsync(string key, CancellationToken token) => Client.DeleteObjectAsync(options.Bucket, key, token);
+
+    public async Task<bool> PreparePdfAsync(StoredFile file, string previewKey, CancellationToken token)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(55));
+        var deadline = timeout.Token;
+        // LibreOffice может прочитать произвольный текст даже под расширением офисного пакета.
+        if (Path.GetExtension(file.FileName).ToLowerInvariant() is ".docx" or ".odt" or ".pptx" or ".odp")
+        {
+            if (file.Size < 4) return false;
+            using var header = await Client.GetObjectAsync(new GetObjectRequest
+            {
+                BucketName = options.Bucket, Key = file.ObjectKey, ByteRange = new ByteRange(0, 3),
+            }, deadline);
+            var signature = new byte[4];
+            await header.ResponseStream.ReadAtLeastAsync(signature, signature.Length, false, deadline);
+            if (!signature.AsSpan().SequenceEqual("PK\x03\x04"u8)) return false;
+        }
+        using var source = await Client.GetObjectAsync(options.Bucket, file.ObjectKey, deadline);
+        using var form = new MultipartFormDataContent();
+        var content = new StreamContent(source.ResponseStream);
+        content.Headers.ContentLength = file.Size;
+        form.Add(content, "files", file.FileName);
+        using var request = new HttpRequestMessage(HttpMethod.Post, converterUrl + "/forms/libreoffice/convert") { Content = form };
+        using var converter = httpClients.CreateClient();
+        using var response = await converter.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline);
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest) return false;
+        response.EnsureSuccessStatusCode();
+        if (response.Content.Headers.ContentType?.MediaType != "application/pdf") return false;
+        await response.Content.LoadIntoBufferAsync(FileKinds.All[file.Kind].MaxBytes, deadline);
+        await using var pdf = await response.Content.ReadAsStreamAsync(deadline);
+        await Client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = options.Bucket, Key = previewKey, ContentType = "application/pdf", InputStream = pdf,
+        }, deadline);
+        return true;
+    }
 
     /// <summary>Все объекты хранилища с датой изменения — для поиска «осиротевших» файлов.</summary>
     public async Task<List<(string Key, DateTimeOffset Modified)>> ListAsync(CancellationToken token)

@@ -89,7 +89,7 @@ public static class ManagementValidation
             fields["description"] = "Описание — до 1000 символов";
         if (assignedTutor is null && (!partial || input.Has("tutorId")) && input.Text("tutorId").Length == 0)
             fields["tutorId"] = "Назначьте преподавателя";
-        // Факультет и учебный год необязательны: по ним курс находят в поиске.
+        // Факультет нужен при публикации; итоговое состояние карточки проверяет UpdateCourseAsync.
         if (input.OptionalText("academicYear") is { } year && !Faculties.IsAcademicYear(year))
             fields["academicYear"] = "Учебный год в формате 2026/2027";
         if (partial && input.Has("status") && !CourseStatuses.Contains(input.Choice("status")))
@@ -130,6 +130,7 @@ public sealed class ManagementWriteFilter : IEndpointFilter
                 "PK_Faculties" or "IX_Faculties_TenantId_NormalizedCode" => ManagementValidation.Duplicate("code", "Такой код уже есть"),
                 "IX_Accounts_NormalizedEmail" => ManagementValidation.Duplicate("email", "Эта почта уже зарегистрирована"),
                 "IX_Courses_Code" => ManagementValidation.Duplicate("code", "Курс с таким кодом уже есть"),
+                "IX_CatalogCollections_TenantId_NormalizedName" => ManagementValidation.Duplicate("name", "Раздел с таким названием уже есть"),
                 "IX_Cohorts_TenantId_NormalizedName" => ManagementValidation.Duplicate("name", "Группа с таким названием уже есть"),
                 _ => throw new InvalidOperationException("Неизвестное ограничение уникальности.", exception)
             };

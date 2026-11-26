@@ -4,12 +4,13 @@ import { useMemo } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Search, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Layers3, Search, X } from "lucide-react";
 import { fetcher } from "@/shared/lib/api-client";
 import { useFaculties } from "@/shared/lib/use-faculties";
 import { facultyName } from "@/shared/lib/faculties";
 import { Button, DataState, EmptyState, Input, Select } from "@/shared/ui";
 import type { CatalogCourse } from "@/shared/types/domain";
+import type { CatalogCollectionInfo } from "@/shared/types/api.gen";
 import {
   FILTER_KEYS,
   applyFilters,
@@ -33,10 +34,17 @@ const filterLabels: Record<FilterKey, string> = {
 
 export function CourseSearch() {
   const { data, error, isLoading } = useSWR<CatalogCourse[]>("/api/catalog", fetcher);
+  const {
+    data: collections,
+    error: collectionError,
+    isLoading: loadingCollections,
+  } = useSWR<CatalogCollectionInfo[]>("/api/catalog-collections", fetcher);
   const { data: facultyDirectory } = useFaculties();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const collectionId = params.get("collection");
+  const selectedCollection = collections?.find((item) => item.id === collectionId);
 
   const filters: Filters = Object.fromEntries(
     (["q", ...FILTER_KEYS] as const).map((k) => [k, params.get(k) ?? undefined]),
@@ -46,9 +54,14 @@ export function CourseSearch() {
     () => (facultyDirectory ?? []).filter((f) => !f.archived || courses.some((c) => c.faculty === f.code)),
     [facultyDirectory, courses],
   );
-  const options = useMemo(() => facets(courses, faculties), [courses, faculties]);
-  const results = applyFilters(courses, filters);
-  const active = hasFilters(filters);
+  const available = useMemo(
+    () =>
+      collectionId ? courses.filter((course) => selectedCollection?.courseIds.includes(course.id)) : courses,
+    [collectionId, courses, selectedCollection],
+  );
+  const options = useMemo(() => facets(available, faculties), [available, faculties]);
+  const results = applyFilters(available, filters);
+  const active = Boolean(collectionId) || hasFilters(filters);
 
   // Фильтры — в адресе страницы: поиском можно поделиться, «назад» возвращает прошлый фильтр
   function update(patch: Filters) {
@@ -110,7 +123,10 @@ export function CourseSearch() {
         </div>
       </section>
 
-      <DataState loading={isLoading} error={error}>
+      <DataState
+        loading={isLoading || Boolean(collectionId && loadingCollections)}
+        error={error ?? (collectionId ? collectionError : undefined)}
+      >
         {active ? (
           <section aria-labelledby="search-results" className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -119,10 +135,23 @@ export function CourseSearch() {
                 className="text-sm font-medium text-muted-foreground"
                 aria-live="polite"
               >
-                {filters.faculty && !filters.q
-                  ? `${facultyName(filters.faculty, facultyDirectory ?? [])} · `
-                  : "Найдено: "}
-                {coursesCount(results.length)}
+                {selectedCollection ? (
+                  <>
+                    <span className="block text-lg font-semibold text-foreground">
+                      {selectedCollection.name}
+                    </span>
+                    {coursesCount(results.length)}
+                  </>
+                ) : (
+                  <>
+                    {filters.faculty && !filters.q && (
+                      <span className="mr-2 font-semibold">
+                        {facultyName(filters.faculty, facultyDirectory ?? [])}
+                      </span>
+                    )}
+                    {coursesCount(results.length)}
+                  </>
+                )}
               </h2>
               <Button variant="ghost" size="sm" onClick={() => router.replace(pathname, { scroll: false })}>
                 {filters.faculty && !filters.q ? (
@@ -130,7 +159,11 @@ export function CourseSearch() {
                 ) : (
                   <X size={16} aria-hidden />
                 )}
-                {filters.faculty && !filters.q ? "Все факультеты" : "Сбросить"}
+                {collectionId
+                  ? "Весь каталог"
+                  : filters.faculty && !filters.q
+                    ? "Все факультеты"
+                    : "Сбросить"}
               </Button>
             </div>
             {results.length ? (
@@ -144,7 +177,7 @@ export function CourseSearch() {
             ) : (
               <EmptyState
                 icon={Search}
-                title="Курсов не нашлось"
+                title={collectionId && !selectedCollection ? "Раздел недоступен" : "Курсов не нашлось"}
                 description={
                   filters.faculty && !filters.q
                     ? "На этом факультете курсы ещё не созданы."
@@ -152,14 +185,45 @@ export function CourseSearch() {
                 }
                 action={
                   <Link href={pathname} className="text-sm text-primary underline-offset-4 hover:underline">
-                    Показать все факультеты
+                    Вернуться в каталог
                   </Link>
                 }
               />
             )}
           </section>
         ) : (
-          <FacultyGrid faculties={faculties} courses={courses} onPick={(faculty) => update({ faculty })} />
+          <>
+            {!!collections?.length && (
+              <section aria-labelledby="catalog-collections" className="space-y-3">
+                <h2 id="catalog-collections" className="text-sm font-medium text-muted-foreground">
+                  Межфакультетские разделы
+                </h2>
+                <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {collections.map((item) => (
+                    <li key={item.id}>
+                      <Link
+                        href={`${pathname}?collection=${encodeURIComponent(item.id)}`}
+                        className="flex h-full min-h-16 items-center gap-3 rounded-xl border bg-card px-4 py-3 shadow-card hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+                      >
+                        <Layers3 size={20} className="shrink-0 text-primary" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold wrap-break-word">{item.name}</span>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {item.facultyCodes.join(", ")}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            {coursesCount(item.courseIds.length)}
+                          </span>
+                        </span>
+                        <ChevronRight size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            <FacultyGrid faculties={faculties} courses={courses} onPick={(faculty) => update({ faculty })} />
+          </>
         )}
       </DataState>
     </div>

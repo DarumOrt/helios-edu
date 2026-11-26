@@ -15,9 +15,9 @@ export function StudentCourseHero({
 }) {
   const { done, total, percent } = materialProgress([course]);
   return (
-    <div className="mb-5 space-y-3">
+    <div className="mb-2.5 space-y-3">
       <Breadcrumbs items={[{ label: "Мои курсы", href: "/courses" }, { label: course.code }]} />
-      <WavePanel className="grid min-h-44 items-center gap-4 p-4 sm:p-7 xl:grid-cols-[minmax(0,1fr)_15rem]">
+      <WavePanel className="grid min-h-44 items-center gap-3 p-4 sm:gap-4 sm:p-7 xl:grid-cols-[minmax(0,1fr)_15rem]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-medium">
             <span className="inline-flex items-center gap-1.5">
@@ -25,25 +25,27 @@ export function StudentCourseHero({
             </span>
             <span>{pluralCount(course.sections?.length ?? 0, "модуль", "модуля", "модулей")}</span>
           </div>
-          <h1 className="mt-2 text-2xl leading-tight font-bold tracking-tight text-balance wrap-break-word sm:text-4xl">
+          <h1 className="mt-2 text-[clamp(1.25rem,6vw,1.5rem)] leading-tight font-bold tracking-tight text-balance wrap-break-word sm:text-4xl">
             {course.title}
           </h1>
-          {course.description && (
-            <p className="mt-2 line-clamp-2 max-w-xl text-sm leading-relaxed">{course.description}</p>
-          )}
           {next && (
             <Link
               href={activityHref(course.id, next.activity)}
-              className={buttonVariants({ size: "lg", className: "mt-3 shadow-card" })}
+              className={buttonVariants({ size: "lg", className: "mt-3 min-h-11 shadow-card" })}
             >
-              Открыть следующий материал <ArrowRight size={16} aria-hidden />
+              Продолжить курс <ArrowRight size={16} aria-hidden />
             </Link>
           )}
         </div>
         {total > 0 && (
           <Card className="min-w-0 border-border/60 bg-card/85 p-3 sm:p-4">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Материалы курса</span>
+              <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
+                Материалы курса
+              </span>
+              <span className="text-xs font-medium text-muted-foreground sm:hidden">
+                Завершено {done} из {total}
+              </span>
               <strong className="text-2xl leading-none font-semibold tabular-nums">{percent}%</strong>
             </div>
             <Progress
@@ -52,7 +54,7 @@ export function StudentCourseHero({
               className="mt-2.5"
               tone={done === total ? "success" : "primary"}
             />
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-2 hidden text-xs text-muted-foreground sm:block">
               Завершено {done} из {total}
             </p>
           </Card>

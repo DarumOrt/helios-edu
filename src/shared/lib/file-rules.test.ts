@@ -25,7 +25,8 @@ describe("правила загрузки файлов (зеркало FileKinds
   });
 
   it("подсказка и accept для выбора файла", () => {
-    expect(formatsOf("document")).toBe("pdf");
+    expect(formatsOf("document")).toBe("pdf, doc, docx, odt, rtf, txt");
+    expect(acceptOf("document")).toBe(".pdf,.doc,.docx,.odt,.rtf,.txt");
     expect(acceptOf("video")).toBe(".mp4,.webm");
   });
 });

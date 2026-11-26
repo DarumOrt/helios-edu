@@ -11,8 +11,8 @@ export async function POST(req: Request) {
   if (forwarded) return forwarded;
   if ((await getDemoActor()).role === "admin") return NextResponse.json({ ok: true, accepted: 0 });
   try {
-    const snapshot = (await req.json()) as ProgressSnapshot;
-    upsert(snapshot);
+    const snapshot = (await req.json()) as ProgressSnapshot & { courseId: string };
+    upsert(snapshot, snapshot.courseId);
     return NextResponse.json({ ok: true, accepted: 1 });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
@@ -29,5 +29,5 @@ export async function GET(req: Request) {
   if (!userId || !activityId) {
     return NextResponse.json({ error: "userId and activityId required" }, { status: 400 });
   }
-  return NextResponse.json(getProgress(userId, activityId));
+  return NextResponse.json(getProgress(userId, activityId, url.searchParams.get("courseId")));
 }
