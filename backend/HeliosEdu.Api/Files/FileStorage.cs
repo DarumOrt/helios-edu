@@ -46,7 +46,7 @@ public sealed class FileStorage : IDisposable
     }
 
     public bool IsConfigured => client is not null;
-    public bool CanConvertPresentations => !string.IsNullOrEmpty(converterUrl);
+    public bool CanPreparePdf => !string.IsNullOrEmpty(converterUrl);
     public StorageOptions Options => options;
 
     private static AmazonS3Config Config(string url) => new()
@@ -128,7 +128,7 @@ public sealed class FileStorage : IDisposable
 
     public Task DeleteAsync(string key, CancellationToken token) => Client.DeleteObjectAsync(options.Bucket, key, token);
 
-    public async Task<bool> PreparePresentationAsync(StoredFile file, string previewKey, CancellationToken token)
+    public async Task<bool> PreparePdfAsync(StoredFile file, string previewKey, CancellationToken token)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromSeconds(55));
@@ -144,7 +144,7 @@ public sealed class FileStorage : IDisposable
         if (response.StatusCode == System.Net.HttpStatusCode.BadRequest) return false;
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentType?.MediaType != "application/pdf") return false;
-        await response.Content.LoadIntoBufferAsync(FileKinds.Presentation.MaxBytes, deadline);
+        await response.Content.LoadIntoBufferAsync(FileKinds.All[file.Kind].MaxBytes, deadline);
         await using var pdf = await response.Content.ReadAsStreamAsync(deadline);
         await Client.PutObjectAsync(new PutObjectRequest
         {

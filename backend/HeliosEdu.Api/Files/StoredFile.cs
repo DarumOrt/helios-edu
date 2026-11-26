@@ -22,7 +22,8 @@ public sealed class StoredFile
     public DateTimeOffset? TrashedAt { get; set; }
 
     public string Url => $"/api/files/{Id}";
-    public string? PreviewKey => Kind == FileKinds.Presentation.Name && ContentType != "application/pdf"
+    public string? PreviewKey => (Kind == FileKinds.Document.Name || Kind == FileKinds.Presentation.Name)
+        && ContentType != "application/pdf"
         ? ObjectKey + ".pdf" : null;
 }
 
@@ -44,6 +45,11 @@ public static class FileKinds
     public static readonly FileKind Document = new("document", 50 * Mb, "50 МБ", new Dictionary<string, string>
     {
         [".pdf"] = "application/pdf",
+        [".doc"] = "application/msword",
+        [".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        [".odt"] = "application/vnd.oasis.opendocument.text",
+        [".rtf"] = "application/rtf",
+        [".txt"] = "text/plain",
     });
     public static readonly FileKind Presentation = new("presentation", 50 * Mb, "50 МБ", new Dictionary<string, string>
     {
@@ -74,7 +80,7 @@ public static class FileKinds
     public static readonly IReadOnlyDictionary<string, FileKind> All =
         new[] { Video, Document, Presentation, Cover, Submission }.ToDictionary(kind => kind.Name);
 
-    /// <summary>Какой вид файла подходит материалу курса (src у видео, PDF и презентации).</summary>
+    /// <summary>Какой вид файла подходит материалу курса (src у видео, конспекта и презентации).</summary>
     public static string? ForActivity(string activityType) => activityType switch
     {
         "video" => Video.Name,

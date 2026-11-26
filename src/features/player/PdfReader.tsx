@@ -40,7 +40,7 @@ export default function PdfReader({
 }) {
   const tracking = useMediaTracking(courseId, activityId, kind, onViewed, onComplete);
   const slides = kind === "presentation";
-  const file = slides && src?.startsWith("/api/files/") ? src + "?preview=1" : src;
+  const file = src?.startsWith("/api/files/") ? src + "?preview=1" : src;
   const [totalPages, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [rendered, setRendered] = useState<number | null>(null);
@@ -116,7 +116,7 @@ export default function PdfReader({
         <Card className="overflow-hidden">
           <div ref={frame} className="min-w-0">
             {!src ? (
-              <p className="p-4">PDF-файл пока не добавлен.</p>
+              <p className="p-4">Файл пока не добавлен.</p>
             ) : !tracking.readyToView ? (
               <p className="p-4">Загрузка прогресса…</p>
             ) : (

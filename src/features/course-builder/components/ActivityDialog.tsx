@@ -151,7 +151,7 @@ export function ActivityDialog({
                       className="sr-only"
                     />
                     <Icon size={20} aria-hidden />
-                    {activityLabel[t].replace(" (PDF)", "")}
+                    {activityLabel[t]}
                   </label>
                 );
               })}
@@ -173,7 +173,9 @@ export function ActivityDialog({
         {has("src") && (
           <Field
             id="act-src"
-            label={type === "video" ? "Видеофайл" : type === "presentation" ? "Файл презентации" : "Файл PDF"}
+            label={
+              type === "video" ? "Видеофайл" : type === "presentation" ? "Файл презентации" : "Файл конспекта"
+            }
             error={type === "video" && uploadOnly && fields.src ? "Загрузите видеофайл" : fields.src}
             hint={
               uploaded

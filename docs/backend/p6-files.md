@@ -12,7 +12,7 @@
 браузер ── GET /api/files/{id} ──────► C#: доступ → 302 на временную ссылку хранилища (Range работает)
 ```
 
-Ссылки на загруженные файлы хранятся строкой `/api/files/{id}`: `Activity.Src` (видео, PDF, презентация),
+Ссылки на загруженные файлы хранятся строкой `/api/files/{id}`: `Activity.Src` (видео, конспект, презентация),
 `Course.Cover`, `Submission.FileId`. Старые адреса `/media/…` и внешние `https://…` продолжают работать.
 
 ## Виды файлов (`FileKinds` = `src/shared/lib/file-rules.ts`)
@@ -20,7 +20,7 @@
 | `kind` | Форматы | Размер | Кто загружает |
 | --- | --- | --- | --- |
 | `video` | mp4, webm | до 1 ГБ | тот, кто правит курс |
-| `document` | pdf | до 50 МБ | тот, кто правит курс |
+| `document` | pdf, doc, docx, odt, rtf, txt | до 50 МБ | тот, кто правит курс |
 | `presentation` | pdf, pptx, ppt, odp | до 50 МБ | тот, кто правит курс |
 | `cover` | jpg, jpeg, png, webp | до 5 МБ | тот, кто правит курс |
 | `submission` | pdf, doc, docx, odt, pptx, xlsx, txt, zip, png, jpg, jpeg | до 50 МБ | студент курса |
@@ -35,16 +35,17 @@
 | --- | --- | --- |
 | `POST /api/files` | `{ kind, courseId, fileName, size }` | `201 UploadTicket { id, uploadUrl, contentType, expiresAt }` (ссылка — 1 час). `400 fields.kind = "Неизвестный вид файла"`, `fields.fileName = "Этот формат не подходит. Можно: …"`, `fields.size = "Файл пустой"` / `"Файл больше 1 ГБ"`; курс не виден — `404`; нет прав — `403` |
 | `POST /api/files/{id}/complete` | — | `200 StoredFileInfo { id, kind, courseId, fileName, contentType, size, url }`. Не загружен — `409 "Файл не загружен — попробуйте ещё раз"`; размер не совпал — файл удаляется, `400 fields.size`; чужая запись — `404` |
-| `GET /api/files/{id}` | — | `302` на временную ссылку (1 час). `?preview=1` открывает PDF-копию офисной презентации. `?download=1` скачивает оригинал. Нет доступа или файл не готов — `404` |
+| `GET /api/files/{id}` | — | `302` на временную ссылку (1 час). `?preview=1` открывает PDF-копию или исходный PDF. `?download=1` скачивает оригинал. Нет доступа или файл не готов — `404` |
 | `POST /api/files/cleanup` | — | только администратор: `200 CleanupResult { abandoned, trashed, restored, deleted, orphans }` |
 | `PUT /api/courses/{id}/cover` | `{ coverColor?, cover? }` | `200 CourseSummary`; `cover` — `/api/files/{id}` вида `cover` этого курса или `null`; `coverColor: null` — цвет по умолчанию. `400 fields.coverColor = "Неизвестный цвет обложки"`, `fields.cover = "Картинка не найдена — загрузите её ещё раз"` |
 
 Материал (`POST/PATCH …/activities`) с `src = /api/files/{id}` принимается, только если файл этого курса и
-подходящего вида (видео — `video`, PDF — `document`, презентация — `presentation` или прежний `document`): иначе `400 fields.src = "Файл не найден —
+подходящего вида (видео — `video`, конспект — `document`, презентация — `presentation` или прежний PDF вида `document`): иначе `400 fields.src = "Файл не найден —
 загрузите его ещё раз"`. Сдача работы принимает `fileId` своего файла вида `submission`: иначе `400 fields.fileId`.
 
-Для PPTX, PPT и ODP запрос `complete` сначала готовит PDF через Gotenberg и сохраняет его рядом с оригиналом.
-При ошибке преобразования файл остаётся в `pending`. Очистка удаляет оригинал и PDF-копию вместе.
+Для конспектов и презентаций в форматах DOC, DOCX, ODT, RTF, TXT, PPTX, PPT и ODP запрос `complete`
+готовит PDF через Gotenberg и сохраняет его рядом с оригиналом. Исходный PDF открывается напрямую.
+При ошибке преобразования файл остаётся в `pending`. У оригинала и PDF-копии общая проверка доступа. Очистка удаляет их вместе.
 
 **Кто читает:** обложку — все вошедшие (она в каталоге); файлы курса — те, кому виден курс;
 файл работы — автор и проверяющие курса (администратор, преподаватель своего курса).

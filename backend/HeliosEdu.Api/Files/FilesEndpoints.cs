@@ -17,6 +17,8 @@ public static class FilesEndpoints
 
     private static Account Actor(HttpContext context) => (Account)context.Items[typeof(Account)]!;
     private static IResult Unavailable() => Fail(503, "Хранилище файлов не подключено");
+    private static IResult ConverterUnavailable() =>
+        Fail(503, "Сервис подготовки PDF недоступен. Попробуйте позже или загрузите PDF.");
 
     public static void MapFilesEndpoints(this WebApplication app)
     {
@@ -63,8 +65,8 @@ public static class FilesEndpoints
         };
         // ключ без имени файла: имя хранится в записи, в ключе нет кириллицы и пробелов
         file.ObjectKey = $"{course.Id}/{kind.Name}/{file.Id}";
-        if (file.PreviewKey is not null && !storage.CanConvertPresentations)
-            return Fail(503, "Сервис подготовки презентаций не подключён");
+        if (file.PreviewKey is not null && !storage.CanPreparePdf)
+            return ConverterUnavailable();
         db.Files.Add(file);
         await db.SaveChangesAsync(context.RequestAborted);
         var expires = now.Add(UploadLifetime);
@@ -92,19 +94,19 @@ public static class FilesEndpoints
         }
         if (file.PreviewKey is { } previewKey)
         {
-            if (!storage.CanConvertPresentations) return Fail(503, "Сервис подготовки презентаций не подключён");
+            if (!storage.CanPreparePdf) return ConverterUnavailable();
             try
             {
-                if (!await storage.PreparePresentationAsync(file, previewKey, context.RequestAborted))
-                    return Fail(422, "Не удалось открыть презентацию. Сохраните её как PDF или загрузите другой файл.");
+                if (!await storage.PreparePdfAsync(file, previewKey, context.RequestAborted))
+                    return Fail(422, "Не удалось преобразовать файл в PDF. Сохраните его как PDF или выберите другой файл.");
             }
             catch (HttpRequestException)
             {
-                return Fail(503, "Не удалось подготовить презентацию. Попробуйте ещё раз или загрузите PDF.");
+                return Fail(503, "Не удалось подготовить PDF. Попробуйте ещё раз или выберите другой файл.");
             }
             catch (OperationCanceledException) when (!context.RequestAborted.IsCancellationRequested)
             {
-                return Fail(503, "Подготовка презентации заняла слишком много времени. Попробуйте загрузить PDF.");
+                return Fail(503, "Подготовка PDF заняла слишком много времени. Загрузите PDF или выберите другой файл.");
             }
         }
         file.Status = "ready";
@@ -173,7 +175,8 @@ public static class FilesEndpoints
         if (url is null || !url.StartsWith(UrlPrefix, StringComparison.Ordinal)) return null;
         var id = url[UrlPrefix.Length..];
         var ok = await db.Files.AnyAsync(file => file.Id == id && file.CourseId == courseId &&
-            (file.Kind == kind || kind == FileKinds.Presentation.Name && file.Kind == FileKinds.Document.Name) &&
+            (file.Kind == kind || kind == FileKinds.Presentation.Name &&
+                file.Kind == FileKinds.Document.Name && file.ContentType == "application/pdf") &&
             file.Status != "pending" && (ownerId == null || file.OwnerId == ownerId), token);
         return ok ? null : "Файл не найден — загрузите его ещё раз";
     }

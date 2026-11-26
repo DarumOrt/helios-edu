@@ -59,7 +59,7 @@
 | Тип | Поля | Обязательно при создании |
 | --- | --- | --- |
 | `video` | `title`, `src`, `durationMin` | `src` |
-| `pdf` | `title`, `pages`, `src` | число страниц определяет PDF.js |
+| `pdf` | `title`, `pages`, `src` | конспект PDF, DOC, DOCX, ODT, RTF или TXT. Для просмотра PDF.js определяет число страниц исходного PDF или PDF-копии |
 | `presentation` | `title`, `pages`, `src` | число слайдов из PDF для просмотра, у старых материалов без файла — `pages` |
 | `quiz` | `title`, `due`, `durationMin`, `maxAttempts` | `maxAttempts` — 1…20 или пусто (без ограничения): «Попыток — от 1 до 20 или без ограничения» |
 | `assignment` | `title`, `due`, `description`, `maxGrade` | — (`maxGrade` по умолчанию 100) |

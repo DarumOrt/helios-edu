@@ -17,7 +17,18 @@ interface Rule {
 
 export const FILE_RULES: Record<FileKind, Rule> = {
   video: { maxBytes: 1024 * MB, limitText: "1 ГБ", types: { ".mp4": "video/mp4", ".webm": "video/webm" } },
-  document: { maxBytes: 50 * MB, limitText: "50 МБ", types: { ".pdf": "application/pdf" } },
+  document: {
+    maxBytes: 50 * MB,
+    limitText: "50 МБ",
+    types: {
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".odt": "application/vnd.oasis.opendocument.text",
+      ".rtf": "application/rtf",
+      ".txt": "text/plain",
+    },
+  },
   presentation: {
     maxBytes: 50 * MB,
     limitText: "50 МБ",
