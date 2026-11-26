@@ -276,6 +276,15 @@
     color: hsl(var(--highlight-foreground));
   }
 
+  /* PDF.js измеряет текст на canvas со стандартными настройками типографики. */
+  .react-pdf__Page .textLayer {
+    text-rendering: auto;
+  }
+
+  .react-pdf__Page .textLayer ::selection {
+    color: transparent;
+  }
+
   *,
   *::before,
   *::after {
