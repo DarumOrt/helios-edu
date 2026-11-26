@@ -60,7 +60,6 @@ export function ActivityDialog({
   const { pending, fields, error, run, setFields } = useFormSubmit();
   const [uploaded, setUploaded] = useState<string>();
   const [uploading, setUploading] = useState(false);
-  const uploadOnly = type !== "video" || !editing;
   const has = (k: string) => (ACTIVITY_FIELDS[type] as string[]).includes(k);
   const set = (key: keyof typeof v, value: string) => setV((x) => ({ ...x, [key]: value }));
 
@@ -176,23 +175,21 @@ export function ActivityDialog({
             label={
               type === "video" ? "Видеофайл" : type === "presentation" ? "Файл презентации" : "Файл конспекта"
             }
-            error={type === "video" && uploadOnly && fields.src ? "Загрузите видеофайл" : fields.src}
+            error={type === "video" && fields.src ? "Загрузите видеофайл" : fields.src}
             hint={
               uploaded
                 ? `Загружен: ${uploaded}`
-                : uploadOnly && v.src
+                : v.src
                   ? "Файл прикреплён. Загрузите другой файл для замены."
-                  : type === "video" && uploadOnly
+                  : type === "video"
                     ? "Длительность определяется из файла"
-                    : type === "video"
-                      ? "Загрузите файл или укажите ссылку https://… или путь /media/lesson-matan.mp4"
-                      : undefined
+                    : undefined
             }
           >
             <div className="mb-2">
               <FileUpload
                 key={type}
-                id={uploadOnly ? "act-src" : undefined}
+                id="act-src"
                 kind={type === "video" ? "video" : type === "presentation" ? "presentation" : "document"}
                 courseId={courseId}
                 disabled={pending}
@@ -205,17 +202,6 @@ export function ActivityDialog({
                 }}
               />
             </div>
-            {!uploadOnly && (
-              <Input
-                id="act-src"
-                inputMode="url"
-                className="font-mono"
-                value={v.src}
-                onChange={(e) => set("src", e.target.value)}
-                disabled={pending}
-                {...describedBy("act-src", fields.src, type === "video")}
-              />
-            )}
           </Field>
         )}
 

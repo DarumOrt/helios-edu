@@ -259,12 +259,21 @@ for (const [name, baseUrl] of [
   });
 }
 
-test("C#: корзина — неиспользуемый файл через сутки в корзине, через 7 дней удалён", async () => {
+test("C#: корзина — оригинал и PDF-копия через сутки в корзине, через 7 дней удалены", async () => {
   const { send, expect, upload } = client(apiUrl);
   const tutor = await login(apiUrl, "tutor@pspu.ru");
   const admin = await login(apiUrl, "admin@pspu.ru");
-  const file = await upload(tutor, "document", "c-dor-ai", "Конспект.pdf");
-  const location = (await send(tutor, "GET", file.url)).headers.get("location");
+  const rtf = String.raw`{\rtf1\ansi Cleanup fixture}`;
+  const file = await upload(tutor, "document", "c-dor-ai", "Конспект.rtf", new TextEncoder().encode(rtf));
+  const urls = [file.url, file.url + "?preview=1"];
+  const locations = [];
+  for (const url of urls) {
+    const response = await send(tutor, "GET", url);
+    assert.equal(response.status, 302);
+    locations.push(response.headers.get("location"));
+  }
+  assert.notEqual(locations[0], locations[1]);
+  assert.equal((await (await fetch(locations[1])).text()).slice(0, 5), "%PDF-");
   const cleanup = () => send(admin, "POST", "/api/files/cleanup", {});
   assert.equal((await cleanup()).status, 200);
   assert.equal((await send(tutor, "POST", "/api/files/cleanup", {})).status, 403);
@@ -274,10 +283,12 @@ test("C#: корзина — неиспользуемый файл через с
   await sql(`UPDATE "Files" SET "ReadyAt" = now() - interval '2 days' WHERE "Id" = '${file.id}'`);
   assert.ok((await expect(await cleanup(), 200)).trashed >= 1);
   assert.equal(await status(), "trash");
-  assert.equal((await send(tutor, "GET", file.url)).status, 404, "из корзины файл не открывается");
+  for (const url of urls)
+    assert.equal((await send(tutor, "GET", url)).status, 404, "из корзины файл не открывается");
 
   await sql(`UPDATE "Files" SET "TrashedAt" = now() - interval '8 days' WHERE "Id" = '${file.id}'`);
   assert.ok((await expect(await cleanup(), 200)).deleted >= 1);
   assert.equal(await status(), "");
-  assert.equal((await fetch(location)).status, 404, "объект удалён из хранилища");
+  for (const location of locations)
+    assert.equal((await fetch(location)).status, 404, "объект удалён из хранилища");
 });
