@@ -78,6 +78,7 @@ app.MapAuthEndpoints();
 app.MapManagementEndpoints();
 app.MapCourseBuilderEndpoints();
 app.MapCatalogEndpoints();
+app.MapCatalogCollectionEndpoints();
 app.MapEnrollmentEndpoints();
 app.MapAdaptiveEndpoints();
 app.MapGradesEndpoints();

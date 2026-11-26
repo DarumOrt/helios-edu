@@ -113,6 +113,13 @@ export type CatalogCohort = {
   profile: string | null;
 };
 
+export type CatalogCollectionInfo = {
+  id: string;
+  name: string;
+  facultyCodes: string[];
+  courseIds: string[];
+};
+
 export type CatalogCourse = {
   id: string;
   code: string;

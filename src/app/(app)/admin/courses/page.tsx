@@ -17,6 +17,7 @@ import {
   Button,
   Badge,
   CourseCover,
+  buttonVariants,
 } from "@/shared/ui";
 import { useSession } from "@/shared/auth/session";
 import { canEditCourse } from "@/shared/auth/management";
@@ -45,12 +46,19 @@ export default function AdminCoursesPage() {
         title="Управление курсами"
         subtitle={data ? `${data.length} курсов` : undefined}
         actions={
-          canManage && (
-            <Button onClick={() => setEditing(null)}>
-              <Plus size={16} aria-hidden />
-              Создать курс
-            </Button>
-          )
+          <div className="flex flex-wrap gap-2">
+            {can(role, "system.manage") && (
+              <Link href="/admin/courses/collections" className={buttonVariants({ variant: "outline" })}>
+                Межфакультетские разделы
+              </Link>
+            )}
+            {canManage && (
+              <Button onClick={() => setEditing(null)}>
+                <Plus size={16} aria-hidden />
+                Создать курс
+              </Button>
+            )}
+          </div>
         }
       />
       <Card className="overflow-hidden">

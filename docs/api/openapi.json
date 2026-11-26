@@ -1155,6 +1155,106 @@
         }
       }
     },
+    "/api/catalog-collections": {
+      "get": {
+        "tags": ["CatalogCollectionEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCollectionInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["HeliosEdu.Api"],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogCollectionInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog-collections/manage": {
+      "get": {
+        "tags": ["CatalogCollectionEndpoints"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCollectionInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog-collections/{id}": {
+      "put": {
+        "tags": ["CatalogCollectionEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogCollectionInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["CatalogCollectionEndpoints"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/courses/{id}/enrollment": {
       "get": {
         "tags": ["EnrollmentEndpoints"],
@@ -2986,6 +3086,30 @@
           },
           "profile": {
             "type": ["null", "string"]
+          }
+        }
+      },
+      "CatalogCollectionInfo": {
+        "required": ["id", "name", "facultyCodes", "courseIds"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "facultyCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "courseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -4987,6 +5111,9 @@
     },
     {
       "name": "CourseBuilderEndpoints"
+    },
+    {
+      "name": "CatalogCollectionEndpoints"
     },
     {
       "name": "EnrollmentEndpoints"

@@ -586,6 +586,65 @@ namespace HeliosEdu.Api.Migrations
                     b.ToTable("LoginSessions");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CatalogCollection", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("CatalogCollections");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CatalogCollectionCourse", b =>
+                {
+                    b.Property<string>("CollectionId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourseId")
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("CollectionId", "CourseId");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("CatalogCollectionCourse");
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CatalogCollectionFaculty", b =>
+                {
+                    b.Property<string>("CollectionId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FacultyCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("CollectionId", "FacultyCode");
+
+                    b.HasIndex("TenantId", "FacultyCode");
+
+                    b.ToTable("CatalogCollectionFaculties");
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Courses.Course", b =>
                 {
                     b.Property<string>("Id")
@@ -1529,6 +1588,36 @@ namespace HeliosEdu.Api.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CatalogCollectionCourse", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.CatalogCollection", null)
+                        .WithMany("Courses")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Courses.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CatalogCollectionFaculty", b =>
+                {
+                    b.HasOne("HeliosEdu.Api.Courses.CatalogCollection", null)
+                        .WithMany("Faculties")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HeliosEdu.Api.Management.Faculty", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "FacultyCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("HeliosEdu.Api.Courses.Course", b =>
                 {
                     b.HasOne("HeliosEdu.Api.Management.Faculty", null)
@@ -1800,6 +1889,13 @@ namespace HeliosEdu.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HeliosEdu.Api.Courses.CatalogCollection", b =>
+                {
+                    b.Navigation("Courses");
+
+                    b.Navigation("Faculties");
                 });
 #pragma warning restore 612, 618
         }

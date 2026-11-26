@@ -68,6 +68,9 @@ public static class AuditLog
             ["faculty.created"] = ("Создан факультет", "settings"),
             ["faculty.updated"] = ("Изменён факультет", "settings"),
             ["faculty.deleted"] = ("Удалён факультет", "settings"),
+            ["catalog_collection.created"] = ("Создан межфакультетский раздел", "courses"),
+            ["catalog_collection.updated"] = ("Изменён межфакультетский раздел", "courses"),
+            ["catalog_collection.deleted"] = ("Удалён межфакультетский раздел", "courses"),
             ["settings.updated"] = ("Изменены настройки", "settings"),
         };
 

@@ -15,6 +15,8 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
     public string? OrganizerId { get; set; }
     public string[] ManagedFaculties { get; set; } = [];
     public DbSet<Faculty> Faculties => Set<Faculty>();
+    public DbSet<CatalogCollection> CatalogCollections => Set<CatalogCollection>();
+    public DbSet<CatalogCollectionFaculty> CatalogCollectionFaculties => Set<CatalogCollectionFaculty>();
     public bool SuppressMail { get; set; }
     public bool SuppressInvitations { get; set; }
     private void ProtectLearningEvents()
@@ -87,6 +89,17 @@ public sealed class LearningDbContext(DbContextOptions<LearningDbContext> option
         var faculties = modelBuilder.Entity<Faculty>();
         faculties.HasKey(f => new { f.TenantId, f.Code });
         faculties.HasIndex(f => new { f.TenantId, f.NormalizedCode }).IsUnique();
+        var collections = modelBuilder.Entity<CatalogCollection>();
+        collections.HasIndex(item => new { item.TenantId, item.NormalizedName }).IsUnique();
+        collections.HasMany(item => item.Faculties).WithOne().HasForeignKey(link => link.CollectionId);
+        collections.HasMany(item => item.Courses).WithOne().HasForeignKey(link => link.CollectionId);
+        var collectionFaculties = modelBuilder.Entity<CatalogCollectionFaculty>();
+        collectionFaculties.HasKey(link => new { link.CollectionId, link.FacultyCode });
+        collectionFaculties.HasOne<Faculty>().WithMany()
+            .HasForeignKey(link => new { link.TenantId, Code = link.FacultyCode }).OnDelete(DeleteBehavior.Restrict);
+        var collectionCourses = modelBuilder.Entity<CatalogCollectionCourse>();
+        collectionCourses.HasKey(link => new { link.CollectionId, link.CourseId });
+        collectionCourses.HasOne<Course>().WithMany().HasForeignKey(link => link.CourseId);
         modelBuilder.Entity<Account>().HasOne<Faculty>().WithMany()
             .HasForeignKey(a => new { a.TenantId, Code = a.Faculty }).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Cohort>().HasOne<Faculty>().WithMany()

@@ -17,6 +17,9 @@ public sealed record CatalogCourse(string Id, string Code, string Title, string 
 
 public static class CatalogEndpoints
 {
+    internal static IQueryable<Course> PublishedCourses(LearningDbContext db) =>
+        db.Courses.AsNoTracking().Where(course => course.Status == "published" && course.DeletedAt == null);
+
     public static void MapCatalogEndpoints(this WebApplication app)
     {
         app.MapGet("/api/catalog", async (LearningDbContext db, HttpContext context, CancellationToken token) =>
@@ -24,8 +27,7 @@ public static class CatalogEndpoints
             var accountId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var tenant = await db.Accounts.Where(account => account.Id == accountId)
                 .Select(account => account.TenantId).SingleAsync(token);
-            var courses = await db.Courses.AsNoTracking().AsSplitQuery()
-                .Where(course => course.Status == "published" && course.DeletedAt == null)
+            var courses = await PublishedCourses(db).AsSplitQuery()
                 .Include(course => course.Sections.OrderBy(section => section.Order))
                 .ThenInclude(section => section.Activities)
                 .OrderBy(course => EF.Property<int>(course, "Position"))

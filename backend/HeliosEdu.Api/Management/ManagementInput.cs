@@ -130,6 +130,7 @@ public sealed class ManagementWriteFilter : IEndpointFilter
                 "PK_Faculties" or "IX_Faculties_TenantId_NormalizedCode" => ManagementValidation.Duplicate("code", "Такой код уже есть"),
                 "IX_Accounts_NormalizedEmail" => ManagementValidation.Duplicate("email", "Эта почта уже зарегистрирована"),
                 "IX_Courses_Code" => ManagementValidation.Duplicate("code", "Курс с таким кодом уже есть"),
+                "IX_CatalogCollections_TenantId_NormalizedName" => ManagementValidation.Duplicate("name", "Раздел с таким названием уже есть"),
                 "IX_Cohorts_TenantId_NormalizedName" => ManagementValidation.Duplicate("name", "Группа с таким названием уже есть"),
                 _ => throw new InvalidOperationException("Неизвестное ограничение уникальности.", exception)
             };
