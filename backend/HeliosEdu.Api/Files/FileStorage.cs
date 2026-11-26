@@ -133,6 +133,18 @@ public sealed class FileStorage : IDisposable
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromSeconds(55));
         var deadline = timeout.Token;
+        // LibreOffice может прочитать произвольный текст даже под расширением офисного пакета.
+        if (Path.GetExtension(file.FileName).ToLowerInvariant() is ".docx" or ".odt" or ".pptx" or ".odp")
+        {
+            if (file.Size < 4) return false;
+            using var header = await Client.GetObjectAsync(new GetObjectRequest
+            {
+                BucketName = options.Bucket, Key = file.ObjectKey, ByteRange = new ByteRange(0, 3),
+            }, deadline);
+            var signature = new byte[4];
+            await header.ResponseStream.ReadAtLeastAsync(signature, signature.Length, false, deadline);
+            if (!signature.AsSpan().SequenceEqual("PK\x03\x04"u8)) return false;
+        }
         using var source = await Client.GetObjectAsync(options.Bucket, file.ObjectKey, deadline);
         using var form = new MultipartFormDataContent();
         var content = new StreamContent(source.ResponseStream);
